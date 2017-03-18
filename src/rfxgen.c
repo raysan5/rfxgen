@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v1.0 - raylib FX sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v1.0 - raylib FX sound generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -8,7 +8,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       1.0  (20-Feb-2017) First stable version
+*       1.0  (18-Mar-2017) First release
 *       0.9x (XX-Jan-2017) Review complete file...
 *       0.95 (14-Sep-2016) Reviewed comments and .rfx format
 *       0.9  (12-Sep-2016) Defined WaveParams struct and command line functionality
@@ -20,11 +20,12 @@
 *   DEPENDENCIES:
 *       raylib 1.7              - This program uses latest raylib audio module functionality.
 *       raygui 1.0              - Simple IMGUI library (based on raylib)
-*       tinyfiledialogs 2.7.2   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       tinyfiledialogs 2.8     - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (MinGW 5.3):
-*       gcc -o rfxgen.exe rfxen.c external/tinyfiledialogs.c -s -I../.. -lraylib -lglfw3 -lopengl32 -lgdi32 /
-*           -lopenal32 -lwinmm -lcomdlg32 -lole32 -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
+*       gcc -o rfxgen.exe rfxen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
+*           -lraylib -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -lcomdlg32 -lole32 / 
+*           -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
 *
 *
 *   LICENSE: zlib/libpng
@@ -154,6 +155,8 @@ static void SaveWAV(const char *fileName, Wave wave);                   // Expor
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
 static const char *GetExtension(const char *fileName);                  // Get extension from filename
 
+static void ShowCommandLineInfo(void);              // Show command line usage parameters
+
 // Buttons functions
 static void BtnPickupCoin(void);    // Generate sound: Pickup/Coin
 static void BtnLaserShoot(void);    // Generate sound: Laser shoot
@@ -175,20 +178,18 @@ static void BtnExportWav(Wave wave); // Export current sound as .wav
 int main(int argc, char *argv[])
 {
     // Command line utility to generate wav files directly from .sfs and .rfx
-    // NOTE: Default generation parameters: sampleRate = 44100, sampleSize = 16, channels = 1
     if (argc > 1)
     {
-        // TODO: Parse args parameters: -r 44100 -b 16 -c 2
-        /*
-        -? | -h : print help for command-line parameters
-        -v : print rfxgen version
-        -r value : define parameter sample rate (supported: 22050, 44100)
-        -b value : define parameter bit rate (supported: 8, 16, 32)
-        -c value : define parameter channels (supported: 1-mono, 2-stereo)
-        -i input : input filename
-        -o output: output filename
-        */
+        char inputFileName[128] = "\0";
+        char outputFileName[128] = "\0";
         
+        int sampleRate = 44100;
+        int sampleSize = 16;
+        int channels = 1;
+        
+        printf("\n");
+        
+        // Parse arguments parameters (i.e. -r 44100 -b 16 -c 2)
         for (int i = 1; i < argc; i++)
         {
             if (argv[i][0] == '-')
@@ -196,37 +197,150 @@ int main(int argc, char *argv[])
                 switch(argv[i][1])
                 {
                     case '?':
-                    case 'h': break;
+                    case 'h': ShowCommandLineInfo(); break;
                     case 'v':
-                    case 'V': break;
+                    case 'V': 
+                    {
+                        printf("rFXGen - raylib fx sound generator\n");  
+                        printf("v1.0.0 (based on raylib v1.7)\n\n");
+                        printf("LICENSE: zlib/libpng\n");
+                        printf("Copyright (c) 2017 Ramon Santamaria (@raysan5)\n");
+                    } break;
                     case 'i':
+                    {
+                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
+                        {
+                            // Check if input filename is valid
+                            if ((strcmp(GetExtension(argv[i + 1]), "rfx") == 0) ||
+                                (strcmp(GetExtension(argv[i + 1]), "sfs") == 0))
+                            {
+                                strcpy(inputFileName, argv[i + 1]);
+                                i++;
+                            }
+                            else printf("WARNING: Input file extension not recognized\n");
+                        }
+                        else
+                        {
+                            printf("WARNING: Wrong command line parameter!\n\n");
+                            ShowCommandLineInfo();
+                        }
+                    } break;
                     case 'o':
-                    case 'r':
+                    {
+                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
+                        {
+                            // Check if output filename is valid
+                            if (strcmp(GetExtension(argv[i + 1]), "wav") == 0)
+                            {
+                                strcpy(outputFileName, argv[i + 1]);
+                                i++;
+                            }
+                            else printf("WARNING: Output file extension not recognized\n");
+                        }
+                        else
+                        {
+                            printf("WARNING: Wrong command line parameter!\n\n");
+                            ShowCommandLineInfo();
+                        }
+                    } break;
+                    case 'r': 
+                    {
+                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
+                        {
+                            sampleRate = atoi(argv[i + 1]);
+                            
+                            // Check if sample rate is valid
+                            if ((sampleRate != 44100) && (sampleRate != 22050))
+                            {
+                                printf("WARNING: Sample rate not supported\n");
+                                sampleRate = 44100;
+                            }
+                            
+                            i++;
+                        }
+                        else
+                        {
+                            printf("WARNING: Wrong command line parameter!\n\n");
+                            ShowCommandLineInfo();
+                        }
+                        
+                    } break;
                     case 'b':
-                    case 'c':
+                    {
+                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
+                        {
+                            sampleSize = atoi(argv[i + 1]);
+                            
+                            // Check if sample size is valid
+                            if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
+                            {
+                                printf("WARNING: Sample size not supported\n");
+                                sampleSize = 16;
+                            }
+                            
+                            i++;
+                        }
+                        else
+                        {
+                            printf("WARNING: Wrong command line parameter!\n\n");
+                            ShowCommandLineInfo();
+                        }
+                    } break;
+                    case 'c': 
+                    {
+                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
+                        {
+                            channels = atoi(argv[i + 1]);
+                            
+                            // Check if channels number is valid
+                            if ((channels != 1) && (channels != 2))
+                            {
+                                printf("WARNING: Channels number not supported\n");
+                                channels = 1;
+                            }
+                            
+                            i++;
+                        }
+                        else
+                        {
+                            printf("WARNING: Wrong command line parameter!\n\n");
+                            ShowCommandLineInfo();
+                        }
+                    } break;
                     default: break;
                 }
             }
         }
-
-        for (int i = 1; i < argc; i++)
+        
+        if (outputFileName[0] == '\0')
         {
-            if ((strcmp(GetExtension(argv[i]), "rfx") == 0) ||
-                (strcmp(GetExtension(argv[i]), "sfs") == 0))
-            {
-                params = LoadSoundParams(argv[i]);
-                Wave wave = GenerateWave(params);
+            // Output filename equal to input filename
+            strcpy(outputFileName, inputFileName);
+            int len = strlen(outputFileName);
+            outputFileName[len - 3] = 'w';
+            outputFileName[len - 2] = 'a';
+            outputFileName[len - 1] = 'v';
+        }
 
-                // TODO: Format wave data to desired sampleRate, sampleSize and channels
-                //WaveFormat(&wave, sampleRate, sampleSize, channels);
+        if ((inputFileName[0] != '\0') && (outputFileName[0] != '\0'))
+        {
+            printf("\nInput file:     %s", inputFileName);
+            printf("\nOutput file:    %s", outputFileName);
+            printf("\nSample rate:    %i", sampleRate);
+            printf("\nSample size:    %i", sampleSize);
+            printf("\nChannels:       %i\n", channels);
 
-                argv[i][strlen(argv[i]) - 3] = 'w';
-                argv[i][strlen(argv[i]) - 2] = 'a';
-                argv[i][strlen(argv[i]) - 1] = 'v';
+            params = LoadSoundParams(inputFileName);
+            
+            // NOTE: Default generation parameters: sampleRate = 44100, sampleSize = 16, channels = 1
+            Wave wave = GenerateWave(params);
 
-                SaveWAV(argv[i], wave);
-                UnloadWave(wave);
-            }
+            // Format wave data to desired sampleRate, sampleSize and channels
+            WaveFormat(&wave, sampleRate, sampleSize, channels);
+
+            SaveWAV(outputFileName, wave);
+
+            if (wave.data != NULL) free(wave.data);  // Unload wave data
         }
 
         return 0;
@@ -238,7 +352,7 @@ int main(int argc, char *argv[])
     int screenHeight = 500;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "rFXGen - FX Sound Generator");
+    InitWindow(screenWidth, screenHeight, "rFXGen - raylib FX Sound Generator");
 
     InitAudioDevice();
 
@@ -565,7 +679,7 @@ int main(int argc, char *argv[])
             playOnChangeValue = GuiCheckBox(chkboxPlayOnChangeRec, " Play on change", playOnChangeValue);
             //--------------------------------------------------------------------------------
 
-            // ComboBox
+            // ComboBox - sampleRate and sampleSize
             //--------------------------------------------------------------------------------
             comboxSampleRateValue = GuiComboBox(comboxSampleRateRec, 2, comboxSampleRateText, comboxSampleRateValue);
             comboxSampleSizeValue = GuiComboBox(comboxSampleSizeRec, 3, comboxSampleSizeText, comboxSampleSizeValue);
@@ -578,7 +692,7 @@ int main(int argc, char *argv[])
             else if (comboxSampleSizeValue == 2) wavSampleSize = 32;
             //--------------------------------------------------------------------------------
 
-            // ToggleGroup
+            // ToggleGroup - channels
             //--------------------------------------------------------------------------------
             int previousWaveTypeValue = params.waveTypeValue;
             params.waveTypeValue = GuiToggleGroup(tgroupWaveTypeRec, 4, tgroupWaveTypeText, params.waveTypeValue);
@@ -1250,6 +1364,19 @@ static void SaveWAV(const char *fileName, Wave wave)
     fwrite(wave.data, 1, wave.sampleCount*wave.channels*wave.sampleSize/8, wavFile);
 
     fclose(wavFile);
+}
+
+// Show command line usage parameters
+static void ShowCommandLineInfo()
+{
+    printf("Command line Usage options:\n\n");
+    printf("-? | -h   : print help for command-line parameters\n");
+    printf("-v        : print rfxgen version\n");
+    printf("-r value  : define parameter sample rate (supported: 22050, 44100)\n");
+    printf("-b value  : define parameter bit rate (supported: 8, 16, 32)\n");
+    printf("-c value  : define parameter channels (supported: 1-mono, 2-stereo)\n");
+    printf("-i input  : input filename\n");
+    printf("-o output : output filename\n");
 }
 
 //--------------------------------------------------------------------------------------------
