@@ -16,6 +16,6 @@ raylib fx sound generator, a tool to generate sound waves procedurally, based on
 
 ## License
 
-rFXGen is licensed under MIT License. Check [LICENSE](LICENSE) for further details.
+rFXGen is licensed under zlib/libpng license. Check [LICENSE](LICENSE) for further details.
 
 *Copyright (c) 2017 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))*
