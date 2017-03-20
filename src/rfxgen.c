@@ -768,44 +768,44 @@ int main(int argc, char *argv[])
 static void ResetParams(WaveParams *params)
 {
     // Wave type
-	params->waveTypeValue = 0;
+    params->waveTypeValue = 0;
 
     // Wave envelope params
-	params->attackTimeValue = 0.0f;
-	params->sustainTimeValue = 0.3f;
-	params->sustainPunchValue = 0.0f;
-	params->decayTimeValue = 0.4f;
+    params->attackTimeValue = 0.0f;
+    params->sustainTimeValue = 0.3f;
+    params->sustainPunchValue = 0.0f;
+    params->decayTimeValue = 0.4f;
 
     // Frequency params
-	params->startFrequencyValue = 0.3f;
-	params->minFrequencyValue = 0.0f;
-	params->slideValue = 0.0f;
-	params->deltaSlideValue = 0.0f;
-	params->vibratoDepthValue = 0.0f;
-	params->vibratoSpeedValue = 0.0f;
-	//params->vibratoPhaseDelay = 0.0f;
+    params->startFrequencyValue = 0.3f;
+    params->minFrequencyValue = 0.0f;
+    params->slideValue = 0.0f;
+    params->deltaSlideValue = 0.0f;
+    params->vibratoDepthValue = 0.0f;
+    params->vibratoSpeedValue = 0.0f;
+    //params->vibratoPhaseDelay = 0.0f;
 
     // Tone change params
     params->changeAmountValue = 0.0f;
-	params->changeSpeedValue = 0.0f;
+    params->changeSpeedValue = 0.0f;
 
     // Square wave params
     params->squareDutyValue = 0.0f;
-	params->dutySweepValue = 0.0f;
+    params->dutySweepValue = 0.0f;
 
     // Repeat params
-	params->repeatSpeedValue = 0.0f;
+    params->repeatSpeedValue = 0.0f;
 
     // Phaser params
-	params->phaserOffsetValue = 0.0f;
-	params->phaserSweepValue = 0.0f;
+    params->phaserOffsetValue = 0.0f;
+    params->phaserSweepValue = 0.0f;
 
     // Filter params
-	params->lpfCutoffValue = 1.0f;
-	params->lpfCutoffSweepValue = 0.0f;
-	params->lpfResonanceValue = 0.0f;
-	params->hpfCutoffValue = 0.0f;
-	params->hpfCutoffSweepValue = 0.0f;
+    params->lpfCutoffValue = 1.0f;
+    params->lpfCutoffSweepValue = 0.0f;
+    params->lpfResonanceValue = 0.0f;
+    params->hpfCutoffValue = 0.0f;
+    params->hpfCutoffSweepValue = 0.0f;
 }
 
 // Generates new wave from wave parameters
@@ -857,20 +857,20 @@ static Wave GenerateWave(WaveParams params)
 
     // Reset sample parameters
     //----------------------------------------------------------------------------------------
-	fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
-	period = (int)fperiod;
-	fmaxperiod = 100.0/(params.minFrequencyValue*params.minFrequencyValue + 0.001);
-	fslide = 1.0 - pow((double)params.slideValue, 3.0)*0.01;
-	fdslide = -pow((double)params.deltaSlideValue, 3.0)*0.000001;
-	squareDuty = 0.5f - params.squareDutyValue*0.5f;
-	squareSlide = -params.dutySweepValue*0.00005f;
+    fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
+    period = (int)fperiod;
+    fmaxperiod = 100.0/(params.minFrequencyValue*params.minFrequencyValue + 0.001);
+    fslide = 1.0 - pow((double)params.slideValue, 3.0)*0.01;
+    fdslide = -pow((double)params.deltaSlideValue, 3.0)*0.000001;
+    squareDuty = 0.5f - params.squareDutyValue*0.5f;
+    squareSlide = -params.dutySweepValue*0.00005f;
 
-	if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - pow((double)params.changeAmountValue, 2.0)*0.9;
-	else arpeggioModulation = 1.0 + pow((double)params.changeAmountValue, 2.0)*10.0;
+    if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - pow((double)params.changeAmountValue, 2.0)*0.9;
+    else arpeggioModulation = 1.0 + pow((double)params.changeAmountValue, 2.0)*10.0;
 
-	arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
+    arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
-	if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;
+    if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT!
 
     // Reset filter parameters
     fltw = pow(params.lpfCutoffValue, 3.0f)*0.1f;
@@ -910,9 +910,9 @@ static Wave GenerateWave(WaveParams params)
     bool generatingSample = true;
     int sampleCount = 0;
 
-	for (int i = 0; i < MAX_WAVE_LENGTH_SECONDS*WAVE_SAMPLE_RATE; i++)
-	{
-		if (!generatingSample)
+    for (int i = 0; i < MAX_WAVE_LENGTH_SECONDS*WAVE_SAMPLE_RATE; i++)
+    {
+        if (!generatingSample)
         {
             sampleCount = i;
             break;
@@ -920,12 +920,12 @@ static Wave GenerateWave(WaveParams params)
 
         // Generate sample using selected parameters
         //------------------------------------------------------------------------------------
-		repeatTime++;
+        repeatTime++;
 
-		if (repeatLimit != 0 && repeatTime >= repeatLimit)
-		{
+        if ((repeatLimit != 0) && (repeatTime >= repeatLimit))
+        {
             // Reset sample parameters (only some of them)
-			repeatTime = 0;
+            repeatTime = 0;
 
             fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
             period = (int)fperiod;
@@ -941,154 +941,156 @@ static Wave GenerateWave(WaveParams params)
             arpeggioTime = 0;
             arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
-            if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;
-		}
+            if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT!
+        }
 
-		// Frequency envelopes/arpeggios
-		arpeggioTime++;
+        // Frequency envelopes/arpeggios
+        arpeggioTime++;
 
-		if (arpeggioLimit !=0 && arpeggioTime >= arpeggioLimit)
-		{
-			arpeggioLimit = 0;
-			fperiod *= arpeggioModulation;
-		}
+        if ((arpeggioLimit != 0) && (arpeggioTime >= arpeggioLimit))
+        {
+            arpeggioLimit = 0;
+            fperiod *= arpeggioModulation;
+        }
 
-		fslide += fdslide;
-		fperiod *= fslide;
+        fslide += fdslide;
+        fperiod *= fslide;
 
-		if (fperiod > fmaxperiod)
-		{
-			fperiod = fmaxperiod;
+        if (fperiod > fmaxperiod)
+        {
+            fperiod = fmaxperiod;
 
-			if (params.minFrequencyValue > 0.0f) generatingSample = false;
-		}
+            if (params.minFrequencyValue > 0.0f) generatingSample = false;
+        }
 
-		float rfperiod = fperiod;
+        float rfperiod = fperiod;
 
-		if (vibratoAmplitude > 0.0f)
-		{
-			vibratoPhase += vibratoSpeed;
-			rfperiod = fperiod*(1.0 + sinf(vibratoPhase)*vibratoAmplitude);
-		}
+        if (vibratoAmplitude > 0.0f)
+        {
+            vibratoPhase += vibratoSpeed;
+            rfperiod = fperiod*(1.0 + sinf(vibratoPhase)*vibratoAmplitude);
+        }
 
-		period = (int)rfperiod;
+        period = (int)rfperiod;
 
-		if (period < 8) period=8;
+        if (period < 8) period=8;
 
-		squareDuty += squareSlide;
+        squareDuty += squareSlide;
 
-		if (squareDuty < 0.0f) squareDuty = 0.0f;
-		if (squareDuty > 0.5f) squareDuty = 0.5f;	
+        if (squareDuty < 0.0f) squareDuty = 0.0f;
+        if (squareDuty > 0.5f) squareDuty = 0.5f;    
 
-		// Volume envelope
-		envelopeTime++;
+        // Volume envelope
+        envelopeTime++;
 
-		if (envelopeTime>envelopeLength[envelopeStage])
-		{
-			envelopeTime = 0;
-			envelopeStage++;
+        if (envelopeTime > envelopeLength[envelopeStage])
+        {
+            envelopeTime = 0;
+            envelopeStage++;
 
-			if (envelopeStage == 3) generatingSample = false;
-		}
+            if (envelopeStage == 3) generatingSample = false;
+        }
 
-		if (envelopeStage == 0) envelopeVolume = (float)envelopeTime/envelopeLength[0];
-		if (envelopeStage == 1) envelopeVolume = 1.0f + pow(1.0f - (float)envelopeTime/envelopeLength[1], 1.0f)*2.0f*params.sustainPunchValue;
-		if (envelopeStage == 2) envelopeVolume = 1.0f - (float)envelopeTime/envelopeLength[2];
+        if (envelopeStage == 0) envelopeVolume = (float)envelopeTime/envelopeLength[0];
+        if (envelopeStage == 1) envelopeVolume = 1.0f + pow(1.0f - (float)envelopeTime/envelopeLength[1], 1.0f)*2.0f*params.sustainPunchValue;
+        if (envelopeStage == 2) envelopeVolume = 1.0f - (float)envelopeTime/envelopeLength[2];
 
-		// Phaser step
-		fphase += fdphase;
-		iphase = abs((int)fphase);
+        // Phaser step
+        fphase += fdphase;
+        iphase = abs((int)fphase);
 
-		if (iphase > 1023) iphase = 1023;
+        if (iphase > 1023) iphase = 1023;
 
-		if (flthpd != 0.0f)
-		{
-			flthp *= flthpd;
-			if (flthp < 0.00001f) flthp = 0.00001f;
-			if (flthp > 0.1f) flthp = 0.1f;
-		}
+        if (flthpd != 0.0f)     // WATCH OUT!
+        {
+            flthp *= flthpd;
+            if (flthp < 0.00001f) flthp = 0.00001f;
+            if (flthp > 0.1f) flthp = 0.1f;
+        }
 
-		float ssample = 0.0f;
+        float ssample = 0.0f;
 
         #define MAX_SUPERSAMPLING   8
 
         // Supersampling x8
-		for (int si = 0; si < MAX_SUPERSAMPLING; si++)
-		{
-			float sample = 0.0f;
-			phase++;
+        for (int si = 0; si < MAX_SUPERSAMPLING; si++)
+        {
+            float sample = 0.0f;
+            phase++;
 
-			if (phase >= period)
-			{
+            if (phase >= period)
+            {
                 //phase = 0;
-				phase %= period;
+                phase %= period;
 
-				if (params.waveTypeValue == 3)
+                if (params.waveTypeValue == 3)
                 {
-					for (int i = 0;i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;
+                    for (int i = 0;i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;
                 }
-			}
+            }
 
-			// base waveform
-			float fp = (float)phase/period;
+            // base waveform
+            float fp = (float)phase/period;
 
-			switch (params.waveTypeValue)
-			{
+            switch (params.waveTypeValue)
+            {
                 case 0: // Square wave
                 {
                     if (fp < squareDuty) sample = 0.5f;
                     else sample = -0.5f;
+                    
                 } break;
                 case 1: sample = 1.0f - fp*2; break;    // Sawtooth wave
                 case 2: sample = sinf(fp*2*PI); break;  // Sine wave
                 case 3: sample = noiseBuffer[phase*32/period]; break; // Noise wave
                 default: break;
-			}
+            }
 
-			// LP filter
-			float pp = fltp;
-			fltw *= fltwd;
+            // LP filter
+            float pp = fltp;
+            fltw *= fltwd;
 
-			if (fltw < 0.0f) fltw = 0.0f;
-			if (fltw > 0.1f) fltw = 0.1f;
-			if (params.lpfCutoffValue != 1.0f)
-			{
-				fltdp += (sample-fltp)*fltw;
-				fltdp -= fltdp*fltdmp;
-			}
-			else
-			{
-				fltp = sample;
-				fltdp = 0.0f;
-			}
+            if (fltw < 0.0f) fltw = 0.0f;
+            if (fltw > 0.1f) fltw = 0.1f;
+            
+            if (params.lpfCutoffValue != 1.0f)  // WATCH OUT!
+            {
+                fltdp += (sample-fltp)*fltw;
+                fltdp -= fltdp*fltdmp;
+            }
+            else
+            {
+                fltp = sample;
+                fltdp = 0.0f;
+            }
 
-			fltp += fltdp;
+            fltp += fltdp;
 
-			// HP filter
-			fltphp += fltp - pp;
-			fltphp -= fltphp*flthp;
-			sample = fltphp;
+            // HP filter
+            fltphp += fltp - pp;
+            fltphp -= fltphp*flthp;
+            sample = fltphp;
 
-			// Phaser
-			phaserBuffer[ipp&1023] = sample;
-			sample += phaserBuffer[(ipp - iphase + 1024) & 1023];
-			ipp = (ipp + 1) & 1023;
+            // Phaser
+            phaserBuffer[ipp & 1023] = sample;
+            sample += phaserBuffer[(ipp - iphase + 1024) & 1023];
+            ipp = (ipp + 1) & 1023;
 
-			// Final accumulation and envelope application
-			ssample += sample*envelopeVolume;
-		}
+            // Final accumulation and envelope application
+            ssample += sample*envelopeVolume;
+        }
 
         #define SAMPLE_SCALE_COEFICIENT 0.2f    // NOTE: Used to scale sample value to [-1..1]
 
-		ssample = (ssample/MAX_SUPERSAMPLING)*SAMPLE_SCALE_COEFICIENT;
+        ssample = (ssample/MAX_SUPERSAMPLING)*SAMPLE_SCALE_COEFICIENT;
         //------------------------------------------------------------------------------------
 
         // Accumulate samples in the buffer
-		if (ssample > 1.0f) ssample = 1.0f;
-		if (ssample < -1.0f) ssample = -1.0f;
+        if (ssample > 1.0f) ssample = 1.0f;
+        if (ssample < -1.0f) ssample = -1.0f;
 
         buffer[i] = ssample;
-	}
+    }
 
     Wave wave;
     wave.sampleCount = sampleCount;
@@ -1193,7 +1195,43 @@ static WaveParams LoadSoundParams(const char *fileName)
 
         fclose(rfxFile);
     }
+/*
+    printf("waveTypeValue: %i\n", params.waveTypeValue);
+    printf("attackTimeValue: %f\n", params.attackTimeValue);
+    printf("sustainTimeValue: %f\n", params.sustainTimeValue);
+    printf("sustainPunchValue: %f\n", params.sustainPunchValue);
+    printf("decayTimeValue: %f\n", params.decayTimeValue);
 
+    // Frequency parameters
+    printf("startFrequencyValue: %f\n", params.startFrequencyValue);
+    printf("minFrequencyValue: %f\n", params.minFrequencyValue);
+    printf("slideValue: %f\n", params.slideValue);
+    printf("deltaSlideValue: %f\n", params.deltaSlideValue);
+    printf("vibratoDepthValue: %f\n", params.vibratoDepthValue);
+    printf("vibratoSpeedValue: %f\n", params.vibratoSpeedValue);
+    //float vibratoPhaseDelayValue;
+
+    // Tone change parameters
+    printf("changeAmountValue: %f\n", params.changeAmountValue);
+    printf("changeSpeedValue: %f\n", params.changeSpeedValue);
+    // Square wave parameters
+    printf("squareDutyValue: %f\n", params.squareDutyValue);
+    printf("dutySweepValue: %f\n", params.dutySweepValue);
+    
+    // Repeat parameters
+    printf("repeatSpeedValue: %f\n", params.repeatSpeedValue);
+
+    // Phaser parameters
+    printf("phaserOffsetValue: %f\n", params.phaserOffsetValue);
+    printf("phaserSweepValue: %f\n", params.phaserSweepValue);
+
+    // Filter parameters
+    printf("lpfCutoffValue: %f\n", params.lpfCutoffValue);
+    printf("lpfCutoffSweepValue: %f\n", params.lpfCutoffSweepValue);
+    printf("lpfResonanceValue: %f\n", params.lpfResonanceValue);
+    printf("hpfCutoffValue: %f\n", params.hpfCutoffValue);
+    printf("hpfCutoffSweepValue: %f\n", params.hpfCutoffSweepValue);
+*/
     return params;
 }
 
@@ -1265,6 +1303,43 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
 
         fclose(rfxFile);
     }
+/*
+    printf("waveTypeValue: %i\n", params.waveTypeValue);
+    printf("attackTimeValue: %f\n", params.attackTimeValue);
+    printf("sustainTimeValue: %f\n", params.sustainTimeValue);
+    printf("sustainPunchValue: %f\n", params.sustainPunchValue);
+    printf("decayTimeValue: %f\n", params.decayTimeValue);
+
+    // Frequency parameters
+    printf("startFrequencyValue: %f\n", params.startFrequencyValue);
+    printf("minFrequencyValue: %f\n", params.minFrequencyValue);
+    printf("slideValue: %f\n", params.slideValue);
+    printf("deltaSlideValue: %f\n", params.deltaSlideValue);
+    printf("vibratoDepthValue: %f\n", params.vibratoDepthValue);
+    printf("vibratoSpeedValue: %f\n", params.vibratoSpeedValue);
+    //float vibratoPhaseDelayValue;
+
+    // Tone change parameters
+    printf("changeAmountValue: %f\n", params.changeAmountValue);
+    printf("changeSpeedValue: %f\n", params.changeSpeedValue);
+    // Square wave parameters
+    printf("squareDutyValue: %f\n", params.squareDutyValue);
+    printf("dutySweepValue: %f\n", params.dutySweepValue);
+    
+    // Repeat parameters
+    printf("repeatSpeedValue: %f\n", params.repeatSpeedValue);
+
+    // Phaser parameters
+    printf("phaserOffsetValue: %f\n", params.phaserOffsetValue);
+    printf("phaserSweepValue: %f\n", params.phaserSweepValue);
+
+    // Filter parameters
+    printf("lpfCutoffValue: %f\n", params.lpfCutoffValue);
+    printf("lpfCutoffSweepValue: %f\n", params.lpfCutoffSweepValue);
+    printf("lpfResonanceValue: %f\n", params.lpfResonanceValue);
+    printf("hpfCutoffValue: %f\n", params.hpfCutoffValue);
+    printf("hpfCutoffSweepValue: %f\n", params.hpfCutoffSweepValue);
+*/
 }
 
 // Draw wave data
