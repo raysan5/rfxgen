@@ -1292,7 +1292,12 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
         FILE *rfxFile = fopen(fileName, "wb");
 
         // Save .rfx sound parameters
+
+#ifdef MSC_VER
         unsigned char signature[4] = "rFX ";
+#else
+        unsigned char signature[5] = "rFX ";
+#endif
         fwrite(signature, 4, sizeof(unsigned char), rfxFile);
 
         int version = 100;
