@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v1.1 - raylib FX sound generator (based on Tomas Petterson sfxr)
+*   rFXGen v1.2 - raylib FX sound generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -8,6 +8,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
+*       1.2  (Mar-2018) Working on some code improvements
 *       1.1  (01-Oct-2017) Code review, simplified
 *       1.0  (18-Mar-2017) First release
 *       0.9x (XX-Jan-2017) Review complete file...
@@ -19,19 +20,18 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 1.7              - This program uses latest raylib audio module functionality.
-*       raygui 1.0              - Simple IMGUI library (based on raylib)
-*       tinyfiledialogs 2.8     - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       raylib 1.9.4            - This program uses latest raylib audio module functionality.
+*       raygui 2.0              - Simple IMGUI library (based on raylib)
+*       tinyfiledialogs 3.3.1   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
-*   COMPILATION (MinGW 5.3):
+*   COMPILATION (MinGW 7.2):
 *       gcc -o rfxgen.exe rfxen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
-*           -lraylib -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -lcomdlg32 -lole32 / 
-*           -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
+*           -lraylib -lopengl32 -lgdi32 -lcomdlg32 -lole32 -std=c99 -Wl,--subsystem,windows
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -65,14 +65,21 @@
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
 
-#include "twitter.h"                    // Twitter icon embedded
-
 #if defined(_WIN32)
     #include <direct.h>
     #define GetCurrentDir _getcwd
 #else
     #include <unistd.h>
     #define GetCurrentDir getcwd
+#endif
+
+#if defined(_WIN32)
+//#define WIN32_LEAN_AND_MEAN
+//#include <windows.h>
+//#include <shellapi.h>
+
+// NOTE: Requires linkage with shell32.dll
+//void *ShellExecute(void *hwnd, const char *lpOperation, const char *lpFile, const char *lpParameters, const char *lpDirectory, int nShowCmd);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -154,7 +161,6 @@ static void SaveSoundParams(const char *fileName, WaveParams params);   // Save 
 
 static void SaveWAV(const char *fileName, Wave wave);                   // Export sound to .wav file
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
-static const char *GetExtension(const char *fileName);                  // Get extension from filename
 
 static void ShowCommandLineInfo(void);              // Show command line usage parameters
 
@@ -178,6 +184,10 @@ static void BtnExportWav(Wave wave); // Export current sound as .wav
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    // ISSUE: not working, undefined reference to ShellExecute 
+    //#define SW_SHOWNORMAL 1
+    //ShellExecute(NULL, "open", "twitter.bmp", NULL, NULL, SW_SHOWNORMAL);
+    
     // Command line utility to generate wav files directly from .sfs and .rfx
     if (argc > 1)
     {
@@ -359,25 +369,6 @@ int main(int argc, char *argv[])
 
     Rectangle paramsRec = { 117, 43, 265, 373 };    // Parameters rectangle box
 
-    // Twitter logo image (grayscale)
-    Image mask;
-    mask.width = 16;
-    mask.height = 16;
-    mask.mipmaps = 1;
-    mask.format = UNCOMPRESSED_GRAYSCALE;
-    mask.data = imTwitter;
-
-    Color *pixels = (Color *)malloc(16*16*sizeof(Color));
-    for (int i = 0; i < 16*16; i++) pixels[i] = WHITE;
-    Image twitter = LoadImageEx(pixels, 16, 16);
-    free(pixels);
-
-    ImageAlphaMask(&twitter, mask);      // Add alpha mask to image
-    ImageFormat(&twitter, UNCOMPRESSED_GRAY_ALPHA);
-
-    Texture2D texTwitter = LoadTextureFromImage(twitter);
-    UnloadImage(twitter);
-
     // SliderBar data
     //----------------------------------------------------------------------------------------
     Rectangle sldrAttackTimeRec = { paramsRec.x + 127, paramsRec.y + 5, 100, 10 };
@@ -417,15 +408,15 @@ int main(int argc, char *argv[])
 
     // ComboBox data
     //----------------------------------------------------------------------------------------
-    char *comboxSampleRateText[2] = { "22050 Hz", "44100 Hz" };
-    char *comboxSampleSizeText[3] = { "8 bit", "16 bit", "32 bit" };
+    const char *comboxSampleRateText[2] = { "22050 Hz", "44100 Hz" };
+    const char *comboxSampleSizeText[3] = { "8 bit", "16 bit", "32 bit" };
     int comboxSampleRateValue = 1;
     int comboxSampleSizeValue = 1;
     //----------------------------------------------------------------------------------------
 
     // ToggleGroup data
     //----------------------------------------------------------------------------------------
-    char *tgroupWaveTypeText[4] = { "Square", "Sawtooth", "Sinewave", "Noise" };
+    const char *tgroupWaveTypeText[4] = { "Square", "Sawtooth", "Sinewave", "Noise" };
     //----------------------------------------------------------------------------------------
 
     Wave wave;
@@ -621,13 +612,14 @@ int main(int argc, char *argv[])
 
             // CheckBox
             //--------------------------------------------------------------------------------
-            playOnChangeValue = GuiCheckBox((Rectangle){ 394, 115, 10, 10 }, " Play on change", playOnChangeValue);
+            playOnChangeValue = GuiCheckBox((Rectangle){ 394, 115, 10, 10 }, playOnChangeValue);
+            GuiLabel((Rectangle){ 410, 115, 10, 10 }, "Play on change");
             //--------------------------------------------------------------------------------
 
             // ComboBox - sampleRate and sampleSize
             //--------------------------------------------------------------------------------
-            comboxSampleRateValue = GuiComboBox((Rectangle){ 394, 340, 61, 20 }, 2, comboxSampleRateText, comboxSampleRateValue);
-            comboxSampleSizeValue = GuiComboBox((Rectangle){ 394, 364, 61, 20 }, 3, comboxSampleSizeText, comboxSampleSizeValue);
+            comboxSampleRateValue = GuiComboBox((Rectangle){ 394, 340, 92, 20 }, comboxSampleRateText, 2, comboxSampleRateValue);
+            comboxSampleSizeValue = GuiComboBox((Rectangle){ 394, 364, 92, 20 }, comboxSampleSizeText, 3, comboxSampleSizeValue);
 
             if (comboxSampleRateValue == 0) wavSampleRate = 22050;
             else if (comboxSampleRateValue == 1) wavSampleRate = 44100;
@@ -640,7 +632,7 @@ int main(int argc, char *argv[])
             // ToggleGroup - channels
             //--------------------------------------------------------------------------------
             int previousWaveTypeValue = params.waveTypeValue;
-            params.waveTypeValue = GuiToggleGroup((Rectangle){ 117, 15, 64, 20 }, 4, tgroupWaveTypeText, params.waveTypeValue);
+            params.waveTypeValue = GuiToggleGroup((Rectangle){ 117, 15, 265, 20 }, tgroupWaveTypeText, 4, params.waveTypeValue);
             if (params.waveTypeValue != previousWaveTypeValue) regenerate = true;
             //--------------------------------------------------------------------------------
 
@@ -681,9 +673,6 @@ int main(int argc, char *argv[])
             DrawText("raylib", 419, 223, 20, BLACK);
 
             DrawText("@raysan5", 421, 21, 10, GRAY);
-            DrawTexture(texTwitter, 400, 18, Fade(BLACK, 0.4f));
-
-            //DrawRectangleRec((Rectangle){ 243, 48, 102, 362 }, Fade(RED, 0.2f));
 
         EndDrawing();
         //------------------------------------------------------------------------------------
@@ -693,14 +682,11 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
     UnloadSound(sound);
     UnloadWave(wave);
-
 #if defined(RENDER_WAVE_TO_TEXTURE)
     UnloadRenderTexture(waveTarget);
 #endif
-    UnloadTexture(texTwitter);
 
     CloseAudioDevice();
-
     CloseWindow();          // Close window and OpenGL context
     //----------------------------------------------------------------------------------------
 
@@ -1744,16 +1730,4 @@ static void BtnExportWav(Wave wave)
     SaveWAV(fileName, cwave);
 
     UnloadWave(cwave);
-}
-
-//--------------------------------------------------------------------------------------------
-// Helper functions
-//--------------------------------------------------------------------------------------------
-
-// Get the extension for a filename
-static const char *GetExtension(const char *fileName)
-{
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
 }
