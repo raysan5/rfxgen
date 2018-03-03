@@ -1,25 +1,32 @@
 /*******************************************************************************************
 *
-*   raygui v1.0 - IMGUI (Immedite Mode GUI) library for raylib (www.raylib.com)
+*   raygui v2.0 - A simple and easy-to-use immedite-mode-gui library for raylib (www.raylib.com)
 *
 *   DESCRIPTION:
 *
-*   raygui is a library for creating simple IMGUI interfaces using raylib.
-*   It provides a set of basic components:
+*   raygui is a library for creating simple IMGUI interfaces using raylib, intended for tools dev. 
+*   
+*   Basic controls provided:
 *
 *       - Label
 *       - Button
+*       - LabelButton
+*       - ImageButton
+*       - ImageButtonEx
 *       - ToggleButton
 *       - ToggleGroup
-*       - ComboBox
 *       - CheckBox
+*       - ComboBox
+*       - GroupBox
+*       - TextBox
 *       - Slider
 *       - SliderBar
 *       - ProgressBar
 *       - Spinner
-*       - TextBox
+*       - ListView
+*       - ColorPicker
 *
-*   It also provides a set of functions for styling the components based on its properties (size, color).
+*   It also provides a set of functions for styling the controls based on its properties (size, color).
 *
 *   CONFIGURATION:
 *
@@ -37,35 +44,36 @@
 *       internally in the library and input management and drawing functions must be provided by
 *       the user (check library implementation for further details).
 *
-*   #define RAYGUI_NO_STYLE_SAVE_LOAD
-*       Avoid including style customization and save/load functions, useful when just using default
-*       raygui style. Simplyfies library functionality and code size.
-*
-*   #define RAYGUI_MALLOC()
-*   #define RAYGUI_FREE()
-*       You can define your own malloc/free implementation replacing stdlib.h malloc()/free() functions.
-*       Otherwise it will include stdlib.h and use the C standard library malloc()/free() function.
+*   #define RAYGUI_STYLE_SAVE_LOAD
+*       Include style customization and save/load functions, useful when required.
 *
 *   LIMITATIONS:
-*       // TODO.
+*       Some controls missing, like panels.
 *
 *   VERSIONS HISTORY:
+*       2.0 (Jan-2018)    Added new controls.
+*       1.5 (21-Jun-2017) Working in an improved styles system
+*       1.4 (15-Jun-2017) Rewritten all GUI functions (removed useless ones)
+*       1.3 (12-Jun-2017) Redesigned styles system
+*       1.1 (01-Jun-2017) Complete review of the library
 *       1.0 (07-Jun-2016) Converted to header-only by Ramon Santamaria.
 *       0.9 (07-Mar-2016) Reviewed and tested by Albert Martos, Ian Eito, Sergio Martinez and Ramon Santamaria.
 *       0.8 (27-Aug-2015) Initial release. Implemented by Kevin Gato, Daniel Nicolás and Ramon Santamaria.
 *
 *   CONTRIBUTORS:
-*       Kevin Gato:         Initial implementation of basic components (2013)
-*       Daniel Nicolas:     Initial implementation of basic components (2013)
+*       Ramon Santamaria:   Supervision, review, redesign, update and maintenance...
+*       Kevin Gato:         Initial implementation of basic components (2014)
+*       Daniel Nicolas:     Initial implementation of basic components (2014)
 *       Albert Martos:      Review and testing of the library (2015)
 *       Ian Eito:           Review and testing of the library (2015)
 *       Sergio Martinez:    Review and testing of the library (2015)
-*       Ramon Santamaria:   Supervision, review, update and maintenance
+*       Adria Arranz:       Testing and Implementation of additional controls (2018)
+*       Jordi Jorba:        Testing and Implementation of additional controls (2018)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -105,7 +113,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define NUM_PROPERTIES       99
+#define NUM_PROPERTIES       155
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -124,6 +132,13 @@
         float x;
         float y;
     } Vector2;
+    
+    // Vector3 type
+    typedef struct Vector3 {
+        float x;
+        float y;
+        float z;
+    } Vector3;
 
     // Color type, RGBA (32bit)
     typedef struct Color {
@@ -144,105 +159,177 @@
 
 // Gui properties enumeration
 typedef enum GuiProperty {
-    GLOBAL_BASE_COLOR = 0,
-    GLOBAL_BORDER_COLOR,
-    GLOBAL_TEXT_COLOR,
-    GLOBAL_TEXT_FONTSIZE,
-    GLOBAL_BORDER_WIDTH,
-    BACKGROUND_COLOR,
-    LINES_COLOR,
-    LABEL_BORDER_WIDTH,
-    LABEL_TEXT_COLOR,
-    LABEL_TEXT_PADDING,
+    //--------------------------------------------
+    // NOTE: This first set of properties is for general style,
+    // following control-specific properties overwritte those styles
+    DEFAULT_BACKGROUND_COLOR = 0,
+    DEFAULT_LINES_COLOR,
+    DEFAULT_TEXT_FONT,
+    DEFAULT_TEXT_SIZE,
+    DEFAULT_BORDER_WIDTH,
+    DEFAULT_BORDER_COLOR_NORMAL,
+    DEFAULT_BASE_COLOR_NORMAL,
+    DEFAULT_TEXT_COLOR_NORMAL,
+    DEFAULT_BORDER_COLOR_FOCUSED,
+    DEFAULT_BASE_COLOR_FOCUSED,
+    DEFAULT_TEXT_COLOR_FOCUSED,
+    DEFAULT_BORDER_COLOR_PRESSED,
+    DEFAULT_BASE_COLOR_PRESSED,
+    DEFAULT_TEXT_COLOR_PRESSED,
+    DEFAULT_BORDER_COLOR_DISABLED,
+    DEFAULT_BASE_COLOR_DISABLED,
+    DEFAULT_TEXT_COLOR_DISABLED,
+    //--------------------------------------------
+    // Label
+    LABEL_TEXT_COLOR_NORMAL,
+    LABEL_TEXT_COLOR_FOCUSED,
+    LABEL_TEXT_COLOR_PRESSED,
+    LABEL_TEXT_COLOR_DISABLED,
+    // Button
     BUTTON_BORDER_WIDTH,
-    BUTTON_TEXT_PADDING,
-    BUTTON_DEFAULT_BORDER_COLOR,
-    BUTTON_DEFAULT_INSIDE_COLOR,
-    BUTTON_DEFAULT_TEXT_COLOR,
-    BUTTON_HOVER_BORDER_COLOR,
-    BUTTON_HOVER_INSIDE_COLOR,
-    BUTTON_HOVER_TEXT_COLOR,
-    BUTTON_PRESSED_BORDER_COLOR,
-    BUTTON_PRESSED_INSIDE_COLOR,
-    BUTTON_PRESSED_TEXT_COLOR,
-    TOGGLE_TEXT_PADDING,
+    BUTTON_BORDER_COLOR_NORMAL,
+    BUTTON_BASE_COLOR_NORMAL,
+    BUTTON_TEXT_COLOR_NORMAL,
+    BUTTON_BORDER_COLOR_FOCUSED,
+    BUTTON_BASE_COLOR_FOCUSED,
+    BUTTON_TEXT_COLOR_FOCUSED,
+    BUTTON_BORDER_COLOR_PRESSED,
+    BUTTON_BASE_COLOR_PRESSED,
+    BUTTON_TEXT_COLOR_PRESSED,
+    BUTTON_BORDER_COLOR_DISABLED,
+    BUTTON_BASE_COLOR_DISABLED,
+    BUTTON_TEXT_COLOR_DISABLED,
+    // Toggle
     TOGGLE_BORDER_WIDTH,
-    TOGGLE_DEFAULT_BORDER_COLOR,
-    TOGGLE_DEFAULT_INSIDE_COLOR,
-    TOGGLE_DEFAULT_TEXT_COLOR,
-    TOGGLE_HOVER_BORDER_COLOR,
-    TOGGLE_HOVER_INSIDE_COLOR,
-    TOGGLE_HOVER_TEXT_COLOR,
-    TOGGLE_PRESSED_BORDER_COLOR,
-    TOGGLE_PRESSED_INSIDE_COLOR,
-    TOGGLE_PRESSED_TEXT_COLOR,
-    TOGGLE_ACTIVE_BORDER_COLOR,
-    TOGGLE_ACTIVE_INSIDE_COLOR,
-    TOGGLE_ACTIVE_TEXT_COLOR,
+    TOGGLE_BORDER_COLOR_NORMAL,
+    TOGGLE_BASE_COLOR_NORMAL,
+    TOGGLE_TEXT_COLOR_NORMAL,
+    TOGGLE_BORDER_COLOR_FOCUSED,
+    TOGGLE_BASE_COLOR_FOCUSED,
+    TOGGLE_TEXT_COLOR_FOCUSED,
+    TOGGLE_BORDER_COLOR_PRESSED,
+    TOGGLE_BASE_COLOR_PRESSED,
+    TOGGLE_TEXT_COLOR_PRESSED,
+    TOGGLE_BORDER_COLOR_DISABLED,
+    TOGGLE_BASE_COLOR_DISABLED,
+    TOGGLE_TEXT_COLOR_DISABLED,
     TOGGLEGROUP_PADDING,
+    // Slider
     SLIDER_BORDER_WIDTH,
-    SLIDER_BUTTON_BORDER_WIDTH,
-    SLIDER_BORDER_COLOR,
-    SLIDER_INSIDE_COLOR,
-    SLIDER_DEFAULT_COLOR,
-    SLIDER_HOVER_COLOR,
-    SLIDER_ACTIVE_COLOR,
-    SLIDERBAR_BORDER_COLOR,
-    SLIDERBAR_INSIDE_COLOR,
-    SLIDERBAR_DEFAULT_COLOR,
-    SLIDERBAR_HOVER_COLOR,
-    SLIDERBAR_ACTIVE_COLOR,
-    SLIDERBAR_ZERO_LINE_COLOR,
-    PROGRESSBAR_BORDER_COLOR,
-    PROGRESSBAR_INSIDE_COLOR,
-    PROGRESSBAR_PROGRESS_COLOR,
+    SLIDER_SLIDER_WIDTH,
+    SLIDER_BORDER_COLOR_NORMAL,
+    SLIDER_BASE_COLOR_NORMAL,
+    SLIDER_BORDER_COLOR_FOCUSED,
+    SLIDER_BASE_COLOR_FOCUSED,
+    SLIDER_BORDER_COLOR_PRESSED,
+    SLIDER_BASE_COLOR_PRESSED,
+    SLIDER_BORDER_COLOR_DISABLED,
+    SLIDER_BASE_COLOR_DISABLED,
+    // SliderBar
+    SLIDERBAR_INNER_PADDING,
+    SLIDERBAR_BORDER_WIDTH,
+    SLIDERBAR_BORDER_COLOR_NORMAL,
+    SLIDERBAR_BASE_COLOR_NORMAL,
+    SLIDERBAR_BORDER_COLOR_FOCUSED,
+    SLIDERBAR_BASE_COLOR_FOCUSED,
+    SLIDERBAR_BORDER_COLOR_PRESSED,
+    SLIDERBAR_BASE_COLOR_PRESSED,
+    SLIDERBAR_BORDER_COLOR_DISABLED,
+    SLIDERBAR_BASE_COLOR_DISABLED,
+    // ProgressBar
+    PROGRESSBAR_INNER_PADDING,
     PROGRESSBAR_BORDER_WIDTH,
-    SPINNER_LABEL_BORDER_COLOR,
-    SPINNER_LABEL_INSIDE_COLOR,
-    SPINNER_DEFAULT_BUTTON_BORDER_COLOR,
-    SPINNER_DEFAULT_BUTTON_INSIDE_COLOR,
-    SPINNER_DEFAULT_SYMBOL_COLOR,
-    SPINNER_DEFAULT_TEXT_COLOR,
-    SPINNER_HOVER_BUTTON_BORDER_COLOR,
-    SPINNER_HOVER_BUTTON_INSIDE_COLOR,
-    SPINNER_HOVER_SYMBOL_COLOR,
-    SPINNER_HOVER_TEXT_COLOR,
-    SPINNER_PRESSED_BUTTON_BORDER_COLOR,
-    SPINNER_PRESSED_BUTTON_INSIDE_COLOR,
-    SPINNER_PRESSED_SYMBOL_COLOR,
-    SPINNER_PRESSED_TEXT_COLOR,
-    COMBOBOX_PADDING,
-    COMBOBOX_BUTTON_WIDTH,
-    COMBOBOX_BUTTON_HEIGHT,
+    PROGRESSBAR_BORDER_COLOR_NORMAL,
+    PROGRESSBAR_BASE_COLOR_NORMAL,
+    PROGRESSBAR_BORDER_COLOR_FOCUSED,
+    PROGRESSBAR_BASE_COLOR_FOCUSED,
+    PROGRESSBAR_BORDER_COLOR_PRESSED,
+    PROGRESSBAR_BASE_COLOR_PRESSED,
+    PROGRESSBAR_BORDER_COLOR_DISABLED,
+    PROGRESSBAR_BASE_COLOR_DISABLED,
+    // Spinner
+    SPINNER_BUTTON_PADDING,
+    SPINNER_BUTTONS_WIDTH,
+    SPINNER_BORDER_COLOR_NORMAL,
+    SPINNER_BASE_COLOR_NORMAL,
+    SPINNER_TEXT_COLOR_NORMAL,
+    SPINNER_BORDER_COLOR_FOCUSED,
+    SPINNER_BASE_COLOR_FOCUSED,
+    SPINNER_TEXT_COLOR_FOCUSED,
+    SPINNER_BORDER_COLOR_PRESSED,
+    SPINNER_BASE_COLOR_PRESSED,
+    SPINNER_TEXT_COLOR_PRESSED,
+    SPINNER_BORDER_COLOR_DISABLED,
+    SPINNER_BASE_COLOR_DISABLED,
+    SPINNER_TEXT_COLOR_DISABLED,
+    // ComboBox
     COMBOBOX_BORDER_WIDTH,
-    COMBOBOX_DEFAULT_BORDER_COLOR,
-    COMBOBOX_DEFAULT_INSIDE_COLOR,
-    COMBOBOX_DEFAULT_TEXT_COLOR,
-    COMBOBOX_DEFAULT_LIST_TEXT_COLOR,
-    COMBOBOX_HOVER_BORDER_COLOR,
-    COMBOBOX_HOVER_INSIDE_COLOR,
-    COMBOBOX_HOVER_TEXT_COLOR,
-    COMBOBOX_HOVER_LIST_TEXT_COLOR,
-    COMBOBOX_PRESSED_BORDER_COLOR,
-    COMBOBOX_PRESSED_INSIDE_COLOR,
-    COMBOBOX_PRESSED_TEXT_COLOR,
-    COMBOBOX_PRESSED_LIST_BORDER_COLOR,
-    COMBOBOX_PRESSED_LIST_INSIDE_COLOR,
-    COMBOBOX_PRESSED_LIST_TEXT_COLOR,
-    CHECKBOX_DEFAULT_BORDER_COLOR,
-    CHECKBOX_DEFAULT_INSIDE_COLOR,
-    CHECKBOX_HOVER_BORDER_COLOR,
-    CHECKBOX_HOVER_INSIDE_COLOR,
-    CHECKBOX_CLICK_BORDER_COLOR,
-    CHECKBOX_CLICK_INSIDE_COLOR,
-    CHECKBOX_STATUS_ACTIVE_COLOR,
-    CHECKBOX_INSIDE_WIDTH,
+    COMBOBOX_BUTTON_PADDING,
+    COMBOBOX_SELECTOR_WIDTH,
+    COMBOBOX_BORDER_COLOR_NORMAL,
+    COMBOBOX_BASE_COLOR_NORMAL,
+    COMBOBOX_TEXT_COLOR_NORMAL,
+    COMBOBOX_BORDER_COLOR_FOCUSED,
+    COMBOBOX_BASE_COLOR_FOCUSED,
+    COMBOBOX_TEXT_COLOR_FOCUSED,
+    COMBOBOX_BORDER_COLOR_PRESSED,
+    COMBOBOX_BASE_COLOR_PRESSED,
+    COMBOBOX_TEXT_COLOR_PRESSED,
+    COMBOBOX_BORDER_COLOR_DISABLED,
+    COMBOBOX_BASE_COLOR_DISABLED,
+    COMBOBOX_TEXT_COLOR_DISABLED,
+    // CheckBox
+    CHECKBOX_BORDER_WIDTH,
+    CHECKBOX_INNER_PADDING,
+    CHECKBOX_BORDER_COLOR_NORMAL,
+    CHECKBOX_BASE_COLOR_NORMAL,
+    CHECKBOX_BORDER_COLOR_FOCUSED,
+    CHECKBOX_BASE_COLOR_FOCUSED,
+    CHECKBOX_BORDER_COLOR_PRESSED,
+    CHECKBOX_BASE_COLOR_PRESSED,
+    CHECKBOX_BORDER_COLOR_DISABLED,
+    CHECKBOX_BASE_COLOR_DISABLED,
+    // TextBox
     TEXTBOX_BORDER_WIDTH,
-    TEXTBOX_BORDER_COLOR,
-    TEXTBOX_INSIDE_COLOR,
-    TEXTBOX_TEXT_COLOR,
-    TEXTBOX_LINE_COLOR,
-    TEXTBOX_TEXT_FONTSIZE
+    TEXTBOX_BORDER_COLOR_NORMAL,
+    TEXTBOX_BASE_COLOR_NORMAL,
+    TEXTBOX_TEXT_COLOR_NORMAL,
+    TEXTBOX_BORDER_COLOR_FOCUSED,
+    TEXTBOX_BASE_COLOR_FOCUSED,
+    TEXTBOX_TEXT_COLOR_FOCUSED,
+    TEXTBOX_BORDER_COLOR_PRESSED,
+    TEXTBOX_BASE_COLOR_PRESSED,
+    TEXTBOX_TEXT_COLOR_PRESSED,
+    TEXTBOX_BORDER_COLOR_DISABLED,
+    TEXTBOX_BASE_COLOR_DISABLED,
+    TEXTBOX_TEXT_COLOR_DISABLED,
+    // ColorPicker
+    COLORPICKER_BARS_THICK,
+    COLORPICKER_BARS_PADDING,
+    COLORPICKER_BORDER_COLOR_NORMAL,
+    COLORPICKER_BASE_COLOR_NORMAL,
+    COLORPICKER_BORDER_COLOR_FOCUSED,
+    COLORPICKER_BASE_COLOR_FOCUSED,
+    COLORPICKER_BORDER_COLOR_PRESSED,
+    COLORPICKER_BASE_COLOR_PRESSED,
+    COLORPICKER_BORDER_COLOR_DISABLED,
+    COLORPICKER_BASE_COLOR_DISABLED,
+    // ListView
+    LISTVIEW_ELEMENTS_HEIGHT,
+    LISTVIEW_ELEMENTS_PADDING,
+    LISTVIEW_BAR_WIDTH,       
+    LISTVIEW_BORDER_COLOR_NORMAL,
+    LISTVIEW_BASE_COLOR_NORMAL,
+    LISTVIEW_TEXT_COLOR_NORMAL,
+    LISTVIEW_BORDER_COLOR_FOCUSED,
+    LISTVIEW_BASE_COLOR_FOCUSED,
+    LISTVIEW_TEXT_COLOR_FOCUSED,
+    LISTVIEW_BORDER_COLOR_PRESSED,
+    LISTVIEW_BASE_COLOR_PRESSED,
+    LISTVIEW_TEXT_COLOR_PRESSED,
+    LISTVIEW_BORDER_COLOR_DISABLED,
+    LISTVIEW_BASE_COLOR_DISABLED,
+    LISTVIEW_TEXT_COLOR_DISABLED
 } GuiProperty;
 
 //----------------------------------------------------------------------------------
@@ -253,26 +340,43 @@ typedef enum GuiProperty {
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-RAYGUIDEF Color GuiBackgroundColor(void);                                                                     // Get background color
-RAYGUIDEF Color GuiLinesColor(void);                                                                          // Get lines color
-RAYGUIDEF void GuiLabel(Rectangle bounds, const char *text);                                                  // Label element, show text
-RAYGUIDEF void GuiLabelEx(Rectangle bounds, const char *text, Color textColor, Color border, Color inner);    // Label element extended, configurable colors
-RAYGUIDEF bool GuiButton(Rectangle bounds, const char *text);                                                 // Button element, returns true when clicked
-RAYGUIDEF bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle);                              // Toggle Button element, returns true when active
-RAYGUIDEF int GuiToggleGroup(Rectangle bounds, int toggleNum, char **toggleText, int toggleActive);           // Toggle Group element, returns toggled button index
-RAYGUIDEF int GuiComboBox(Rectangle bounds, int comboNum, char **comboText, int comboActive);                 // Combo Box element, returns selected item index
-RAYGUIDEF bool GuiCheckBox(Rectangle bounds, const char *text, bool checked);                                 // Check Box element, returns true when active
-RAYGUIDEF float GuiSlider(Rectangle bounds, float value, float minValue, float maxValue);                     // Slider element, returns selected value
-RAYGUIDEF float GuiSliderBar(Rectangle bounds, float value, float minValue, float maxValue);                  // Slider Bar element, returns selected value
-RAYGUIDEF void GuiProgressBar(Rectangle bounds, float value);                                                 // Progress Bar element, shows current progress value
-RAYGUIDEF int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue);                            // Spinner element, returns selected value
-RAYGUIDEF char *GuiTextBox(Rectangle bounds, char *text);                                                     // Text Box element, returns input text
+RAYGUIDEF void GuiEnable(void);                                         // Enable gui controls (global state)
+RAYGUIDEF void GuiDisable(void);                                        // Disable gui controls (global state)
 
-#if !defined(RAYGUI_NO_STYLE_SAVE_LOAD)
-RAYGUIDEF void SaveGuiStyle(const char *fileName);                        // Save GUI style file
-RAYGUIDEF void LoadGuiStyle(const char *fileName);                        // Load GUI style file
-RAYGUIDEF void SetStyleProperty(int guiProperty, int value);              // Set one style property
-RAYGUIDEF int GetStyleProperty(int guiProperty);                          // Get one style property
+RAYGUIDEF Color GuiBackgroundColor(void);                               // Get background color
+RAYGUIDEF Color GuiLinesColor(void);                                    // Get lines color
+RAYGUIDEF Color GuiTextColor(void);                                     // Get text color for normal state
+
+RAYGUIDEF void GuiLabel(Rectangle bounds, const char *text);                                            // Label control, shows text
+RAYGUIDEF bool GuiButton(Rectangle bounds, const char *text);                                           // Button control, returns true when clicked
+RAYGUIDEF bool GuiLabelButton(Rectangle bounds, const char *text);                                      // Label button control, show true when clicked
+RAYGUIDEF bool GuiImageButton(Rectangle bounds, Texture2D texture);                                     // Image button control, returns true when clicked
+RAYGUIDEF bool GuiImageButtonEx(Rectangle bounds, Texture2D texture, Rectangle texSource, const char *text); // Image button extended control, returns true when clicked
+RAYGUIDEF bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle);                        // Toggle Button control, returns true when active
+RAYGUIDEF int GuiToggleGroup(Rectangle bounds, const char **text, int count, int active);               // Toggle Group control, returns toggled button index
+RAYGUIDEF bool GuiCheckBox(Rectangle bounds, bool checked);                                             // Check Box control, returns true when active
+RAYGUIDEF int GuiComboBox(Rectangle bounds, const char **text, int count, int active);                  // Combo Box control, returns selected item index
+RAYGUIDEF int GuiDropdownBox(Rectangle bounds, const char **text, int count, int active);               // Dropdown Box control, returns selected item
+RAYGUIDEF void GuiGroupBox(Rectangle bounds, const char *text);                                         // Group Box control with title name
+RAYGUIDEF void GuiTextBox(Rectangle bounds, char *text, int textSize);                                  // Text Box control, updates input text
+RAYGUIDEF float GuiSlider(Rectangle bounds, float value, float minValue, float maxValue);               // Slider control, returns selected value
+RAYGUIDEF float GuiSliderBar(Rectangle bounds, float value, float minValue, float maxValue);            // Slider Bar control, returns selected value
+RAYGUIDEF float GuiProgressBar(Rectangle bounds, float value, float minValue, float maxValue);          // Progress Bar control, shows current progress value
+RAYGUIDEF int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue);                      // Spinner control, returns selected value
+RAYGUIDEF bool GuiListElement(Rectangle bounds, const char *text, bool active);                         // List Element control, returns element state
+RAYGUIDEF int GuiListView(Rectangle bounds, const char **text, int count, int active);                  // List View control, returns selected list element index
+
+RAYGUIDEF Color GuiColorPicker(Rectangle bounds, Color color);          // Color Picker control
+
+#if defined(RAYGUI_STYLE_SAVE_LOAD)
+RAYGUIDEF void GuiSaveStyle(const char *fileName, bool binary);         // Save style file (.rgs), text or binary
+RAYGUIDEF void GuiLoadStyle(const char *fileName);                      // Load style file (.rgs), text or binary
+RAYGUIDEF void GuiLoadStyleImage(const char *fileName);                 // Load style from an image style file
+RAYGUIDEF void GuiLoadStylePalette(Color *palette);                     // Load style from a color palette array (14 values required)
+RAYGUIDEF void GuiUpdateStyleComplete(void);                            // Updates full style properties set with generic values
+
+RAYGUIDEF void GuiSetStyleProperty(int guiProperty, int value);         // Set one style property
+RAYGUIDEF int GuiGetStyleProperty(int guiProperty);                     // Get one style property
 #endif
 
 #endif // RAYGUI_H
@@ -286,32 +390,17 @@ RAYGUIDEF int GetStyleProperty(int guiProperty);                          // Get
 
 #if defined(RAYGUI_IMPLEMENTATION)
 
-#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf()
-                            // NOTE: Those functions are only used in SaveGuiStyle() and LoadGuiStyle()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf(), vsprintf()
+#include <math.h>           // Required for: NAN
+#include <string.h>         // Required for: strlen() on GuiTextBox()
 
-// Check if custom malloc/free functions defined, if not, using standard ones
-#if !defined(RAYGUI_MALLOC) && !defined(RAYGUI_NO_STYLE_SAVE_LOAD)
-    #include <stdlib.h>     // Required for: malloc(), free() [Used only on LoadGuiStyle()]
-
-    #define RAYGUI_MALLOC(size)  malloc(size)
-    #define RAYGUI_FREE(ptr)     free(ptr)
+#if defined(RAYGUI_STANDALONE)
+    #include <stdarg.h>     // Required for: va_list, va_start(), vfprintf(), va_end()
 #endif
-
-#if !defined(RAYGUI_NO_STYLE_SAVE_LOAD)
-    #include <string.h>     // Required for: strcmp() [Used only on LoadGuiStyle()]
-#endif
-
-#include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#if defined(RAYGUI_STANDALONE)
-    #define KEY_LEFT            263
-    #define KEY_RIGHT           262
-    #define MOUSE_LEFT_BUTTON     0
-#endif
-
 #if !defined(RAYGUI_STYLE_DEFAULT_LIGHT) && !defined(RAYGUI_STYLE_DEFAULT_DARK)
     #define RAYGUI_STYLE_DEFAULT_LIGHT
 #endif
@@ -320,1001 +409,1436 @@ RAYGUIDEF int GetStyleProperty(int guiProperty);                          // Get
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-// GUI elements states
-typedef enum { BUTTON_DEFAULT, BUTTON_HOVER, BUTTON_PRESSED, BUTTON_CLICKED } ButtonState;
-typedef enum { TOGGLE_UNACTIVE, TOGGLE_HOVER, TOGGLE_PRESSED, TOGGLE_ACTIVE } ToggleState;
-typedef enum { COMBOBOX_UNACTIVE, COMBOBOX_HOVER, COMBOBOX_PRESSED, COMBOBOX_ACTIVE } ComboBoxState;
-typedef enum { SPINNER_DEFAULT, SPINNER_HOVER, SPINNER_PRESSED } SpinnerState;
-typedef enum { CHECKBOX_STATUS, CHECKBOX_HOVER, CHECKBOX_PRESSED } CheckBoxState;
-typedef enum { SLIDER_DEFAULT, SLIDER_HOVER, SLIDER_ACTIVE } SliderState;
+// GUI controls state
+typedef enum GuiControlState { 
+    DISABLED = 0, 
+    NORMAL, 
+    FOCUSED, 
+    PRESSED 
+} GuiControlState;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+static int guiState = NORMAL;
 
+// Current GUI style (light or dark)
+static int style[NUM_PROPERTIES] = {
 #if defined(RAYGUI_STYLE_DEFAULT_LIGHT)
-// Current GUI style (default light)
-static int style[NUM_PROPERTIES] = {
-    0xf5f5f5ff,         // GLOBAL_BASE_COLOR
-    0xf5f5f5ff,         // GLOBAL_BORDER_COLOR
-    0xf5f5f5ff,         // GLOBAL_TEXT_COLOR
-    10,                 // GLOBAL_TEXT_FONTSIZE
-    1,                  // GLOBAL_BORDER_WIDTH
-    0xf5f5f5ff,         // BACKGROUND_COLOR
-    0x90abb5ff,         // LINES_COLOR
-    1,                  // LABEL_BORDER_WIDTH
-    0x4d4d4dff,         // LABEL_TEXT_COLOR
-    20,                 // LABEL_TEXT_PADDING
-    2,                  // BUTTON_BORDER_WIDTH
-    20,                 // BUTTON_TEXT_PADDING
-    0x828282ff,         // BUTTON_DEFAULT_BORDER_COLOR
-    0xc8c8c8ff,         // BUTTON_DEFAULT_INSIDE_COLOR
-    0x4d4d4dff,         // BUTTON_DEFAULT_TEXT_COLOR
-    0xc8c8c8ff,         // BUTTON_HOVER_BORDER_COLOR
-    0xffffffff,         // BUTTON_HOVER_INSIDE_COLOR
-    0x868686ff,         // BUTTON_HOVER_TEXT_COLOR
-    0x7bb0d6ff,         // BUTTON_PRESSED_BORDER_COLOR
-    0xbcecffff,         // BUTTON_PRESSED_INSIDE_COLOR
-    0x5f9aa7ff,         // BUTTON_PRESSED_TEXT_COLOR
-    20,                 // TOGGLE_TEXT_PADDING
-    1,                  // TOGGLE_BORDER_WIDTH
-    0x828282ff,         // TOGGLE_DEFAULT_BORDER_COLOR
-    0xc8c8c8ff,         // TOGGLE_DEFAULT_INSIDE_COLOR
-    0x828282ff,         // TOGGLE_DEFAULT_TEXT_COLOR
-    0xc8c8c8ff,         // TOGGLE_HOVER_BORDER_COLOR
-    0xffffffff,         // TOGGLE_HOVER_INSIDE_COLOR
-    0x828282ff,         // TOGGLE_HOVER_TEXT_COLOR
-    0xbdd7eaff,         // TOGGLE_PRESSED_BORDER_COLOR
-    0xddf5ffff,         // TOGGLE_PRESSED_INSIDE_COLOR
-    0xafccd3ff,         // TOGGLE_PRESSED_TEXT_COLOR
-    0x7bb0d6ff,         // TOGGLE_ACTIVE_BORDER_COLOR
-    0xbcecffff,         // TOGGLE_ACTIVE_INSIDE_COLOR
-    0x5f9aa7ff,         // TOGGLE_ACTIVE_TEXT_COLOR
-    3,                  // TOGGLEGROUP_PADDING
-    1,                  // SLIDER_BORDER_WIDTH
-    1,                  // SLIDER_BUTTON_BORDER_WIDTH
-    0x828282ff,         // SLIDER_BORDER_COLOR
-    0xc8c8c8ff,         // SLIDER_INSIDE_COLOR
-    0xbcecffff,         // SLIDER_DEFAULT_COLOR
-    0xffffffff,         // SLIDER_HOVER_COLOR
-    0xddf5ffff,         // SLIDER_ACTIVE_COLOR
-    0x828282ff,         // SLIDERBAR_BORDER_COLOR
-    0xc8c8c8ff,         // SLIDERBAR_INSIDE_COLOR
-    0xbcecffff,         // SLIDERBAR_DEFAULT_COLOR
-    0xffffffff,         // SLIDERBAR_HOVER_COLOR
-    0xddf5ffff,         // SLIDERBAR_ACTIVE_COLOR
-    0x828282ff,         // SLIDERBAR_ZERO_LINE_COLOR
-    0x828282ff,         // PROGRESSBAR_BORDER_COLOR
-    0xc8c8c8ff,         // PROGRESSBAR_INSIDE_COLOR
-    0xbcecffff,         // PROGRESSBAR_PROGRESS_COLOR
-    2,                  // PROGRESSBAR_BORDER_WIDTH
-    0x828282ff,         // SPINNER_LABEL_BORDER_COLOR
-    0xc8c8c8ff,         // SPINNER_LABEL_INSIDE_COLOR
-    0x828282ff,         // SPINNER_DEFAULT_BUTTON_BORDER_COLOR
-    0xc8c8c8ff,         // SPINNER_DEFAULT_BUTTON_INSIDE_COLOR
-    0x000000ff,         // SPINNER_DEFAULT_SYMBOL_COLOR
-    0x000000ff,         // SPINNER_DEFAULT_TEXT_COLOR
-    0xc8c8c8ff,         // SPINNER_HOVER_BUTTON_BORDER_COLOR
-    0xffffffff,         // SPINNER_HOVER_BUTTON_INSIDE_COLOR
-    0x000000ff,         // SPINNER_HOVER_SYMBOL_COLOR
-    0x000000ff,         // SPINNER_HOVER_TEXT_COLOR
-    0x7bb0d6ff,         // SPINNER_PRESSED_BUTTON_BORDER_COLOR
-    0xbcecffff,         // SPINNER_PRESSED_BUTTON_INSIDE_COLOR
-    0x5f9aa7ff,         // SPINNER_PRESSED_SYMBOL_COLOR
-    0x000000ff,         // SPINNER_PRESSED_TEXT_COLOR
-    1,                  // COMBOBOX_PADDING
-    30,                 // COMBOBOX_BUTTON_WIDTH
-    20,                 // COMBOBOX_BUTTON_HEIGHT
-    1,                  // COMBOBOX_BORDER_WIDTH
-    0x828282ff,         // COMBOBOX_DEFAULT_BORDER_COLOR
-    0xc8c8c8ff,         // COMBOBOX_DEFAULT_INSIDE_COLOR
-    0x828282ff,         // COMBOBOX_DEFAULT_TEXT_COLOR
-    0x828282ff,         // COMBOBOX_DEFAULT_LIST_TEXT_COLOR
-    0xc8c8c8ff,         // COMBOBOX_HOVER_BORDER_COLOR
-    0xffffffff,         // COMBOBOX_HOVER_INSIDE_COLOR
-    0x828282ff,         // COMBOBOX_HOVER_TEXT_COLOR
-    0x828282ff,         // COMBOBOX_HOVER_LIST_TEXT_COLOR
-    0x7bb0d6ff,         // COMBOBOX_PRESSED_BORDER_COLOR
-    0xbcecffff,         // COMBOBOX_PRESSED_INSIDE_COLOR
-    0x5f9aa7ff,         // COMBOBOX_PRESSED_TEXT_COLOR
-    0x0078acff,         // COMBOBOX_PRESSED_LIST_BORDER_COLOR
-    0x66e7ffff,         // COMBOBOX_PRESSED_LIST_INSIDE_COLOR
-    0x0078acff,         // COMBOBOX_PRESSED_LIST_TEXT_COLOR
-    0x828282ff,         // CHECKBOX_DEFAULT_BORDER_COLOR
-    0xffffffff,         // CHECKBOX_DEFAULT_INSIDE_COLOR
-    0xc8c8c8ff,         // CHECKBOX_HOVER_BORDER_COLOR
-    0xffffffff,         // CHECKBOX_HOVER_INSIDE_COLOR
-    0x66e7ffff,         // CHECKBOX_CLICK_BORDER_COLOR
-    0xddf5ffff,         // CHECKBOX_CLICK_INSIDE_COLOR
-    0xbcecffff,         // CHECKBOX_STATUS_ACTIVE_COLOR
-    1,                  // CHECKBOX_INSIDE_WIDTH
-    1,                  // TEXTBOX_BORDER_WIDTH
-    0x828282ff,         // TEXTBOX_BORDER_COLOR
-    0xf5f5f5ff,         // TEXTBOX_INSIDE_COLOR
-    0x000000ff,         // TEXTBOX_TEXT_COLOR
-    0x000000ff,         // TEXTBOX_LINE_COLOR
-    10                  // TEXTBOX_TEXT_FONTSIZE
-};
+    //----------------------------------------------
+    0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
+    0x90abb5ff,     // DEFAULT_LINES_COLOR
+    0,              // DEFAULT_TEXT_FONT
+    10,             // DEFAULT_TEXT_SIZE
+    1,              // DEFAULT_BORDER_WIDTH
+    0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
+    //----------------------------------------------
+    0x686868ff,     // LABEL_TEXT_COLOR_NORMAL -----> DEFAULT_TEXT_COLOR_NORMAL
+    0x6c9bbcff,     // LABEL_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x368bafff,     // LABEL_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xaeb7b8ff,     // LABEL_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x2,            // BUTTON_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x838383ff,     // BUTTON_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // BUTTON_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // BUTTON_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // BUTTON_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // BUTTON_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // BUTTON_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // BUTTON_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // BUTTON_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // BUTTON_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // BUTTON_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // BUTTON_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // BUTTON_TEXT_COLOR_DISABLED ----> DEFAULT_COLOR_COLOR_DISABLED
+    0x1,            // TOGGLE_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x838383ff,     // TOGGLE_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // TOGGLE_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // TOGGLE_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // TOGGLE_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // TOGGLE_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // TOGGLE_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // TOGGLE_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // TOGGLE_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // TOGGLE_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // TOGGLE_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // TOGGLE_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // TOGGLE_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x2,            // TOGGLEGROUP_PADDING
+    0x1,            // SLIDER_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x14,           // SLIDER_SLIDER_WIDTH 
+    0x838383ff,     // SLIDER_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // SLIDER_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x5bb2d9ff,     // SLIDER_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // SLIDER_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x0492c7ff,     // SLIDER_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // SLIDER_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0xb5c1c2ff,     // SLIDER_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // SLIDER_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1,            // SLIDERBAR_INNER_PADDING
+    0x1,            // SLIDERBAR_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x838383ff,     // SLIDERBAR_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // SLIDERBAR_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x5bb2d9ff,     // SLIDERBAR_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // SLIDERBAR_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x0492c7ff,     // SLIDERBAR_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // SLIDERBAR_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0xb5c1c2ff,     // SLIDERBAR_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // SLIDERBAR_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1,            // PROGRESSBAR_INNER_PADDING
+    0x1,            // PROGRESSBAR_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x838383ff,     // PROGRESSBAR_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x97e8ffff,     // PROGRESSBAR_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_PRESSED
+    0x5bb2d9ff,     // PROGRESSBAR_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // PROGRESSBAR_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x0492c7ff,     // PROGRESSBAR_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // PROGRESSBAR_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0xb5c1c2ff,     // PROGRESSBAR_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // PROGRESSBAR_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x2,            // SPINNER_BUTTON_PADDING
+    0x23,           // SPINNER_BUTTONS_WIDTH
+    0x838383ff,     // SPINNER_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // SPINNER_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // SPINNER_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // SPINNER_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // SPINNER_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // SPINNER_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // SPINNER_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // SPINNER_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // SPINNER_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // SPINNER_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // SPINNER_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // SPINNER_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x1,            // COMBOBOX_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x2,            // COMBOBOX_BUTTON_PADDING
+    0x23,           // COMBOBOX_SELECTOR_WIDTH
+    0x838383ff,     // COMBOBOX_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // COMBOBOX_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // COMBOBOX_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // COMBOBOX_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // COMBOBOX_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // COMBOBOX_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // COMBOBOX_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // COMBOBOX_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // COMBOBOX_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // COMBOBOX_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // COMBOBOX_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // COMBOBOX_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x1,            // CHECKBOX_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x1,            // CHECKBOX_INNER_PADDING
+    0x838383ff,     // CHECKBOX_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xf5f5f5ff,     // CHECKBOX_BASE_COLOR_NORMAL ----> DEFAULT_BACKGROUND_COLOR
+    0x5bb2d9ff,     // CHECKBOX_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x6c9bbcff,     // CHECKBOX_BASE_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // CHECKBOX_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x368bafff,     // CHECKBOX_BASE_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // CHECKBOX_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // CHECKBOX_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1,            // TEXTBOX_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x838383ff,     // TEXTBOX_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xf5f5f5ff,     // TEXTBOX_BASE_COLOR_NORMAL ----> DEFAULT_BACKGROUND_COLOR
+    0x686868ff,     // TEXTBOX_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // TEXTBOX_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // TEXTBOX_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // TEXTBOX_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // TEXTBOX_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // TEXTBOX_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // TEXTBOX_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // TEXTBOX_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // TEXTBOX_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // TEXTBOX_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x14,           // COLORPICKER_BARS_THICK
+    0xa,            // COLORPICKER_BARS_PADDING
+    0x838383ff,     // COLORPICKER_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xf5f5f5ff,     // COLORPICKER_BASE_COLOR_NORMAL ----> DEFAULT_BACKGROUND_COLOR
+    0x5bb2d9ff,     // COLORPICKER_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x6c9bbcff,     // COLORPICKER_BASE_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // COLORPICKER_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x368bafff,     // COLORPICKER_BASE_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // COLORPICKER_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // COLORPICKER_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1e,           // LISTVIEW_ELEMENTS_HEIGHT
+    0x2,            // LISTVIEW_ELEMENTS_PADDING
+    0xa,            // LISTVIEW_BAR_WIDTH
+    0x838383ff,     // LISTVIEW_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0xf5f5f5ff,     // LISTVIEW_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // LISTVIEW_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // LISTVIEW_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // LISTVIEW_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // LISTVIEW_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // LISTVIEW_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // LISTVIEW_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // LISTVIEW_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // LISTVIEW_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // LISTVIEW_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // LISTVIEW_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
 #elif defined(RAYGUI_STYLE_DEFAULT_DARK)
-// Current GUI style (default dark)
-static int style[NUM_PROPERTIES] = {
-    0xf5f5f5ff,         // GLOBAL_BASE_COLOR
-    0xf5f5f5ff,         // GLOBAL_BORDER_COLOR
-    0xf5f5f5ff,         // GLOBAL_TEXT_COLOR
-    0xa,                // GLOBAL_TEXT_FONTSIZE
-    0x1,                // GLOBAL_BORDER_WIDTH
-    0x293235ff,         // BACKGROUND_COLOR
-    0x90abb5ff,         // LINES_COLOR
-    0x0,                // LABEL_BORDER_WIDTH
-    0x90acb4ff,         // LABEL_TEXT_COLOR
-    0x0,                // LABEL_TEXT_PADDING
-    0x2,                // BUTTON_BORDER_WIDTH
-    0x0,                // BUTTON_TEXT_PADDING
-    0x3e4a4fff,         // BUTTON_DEFAULT_BORDER_COLOR
-    0x344041ff,         // BUTTON_DEFAULT_INSIDE_COLOR
-    0x90acb4ff,         // BUTTON_DEFAULT_TEXT_COLOR
-    0x47595fff,         // BUTTON_HOVER_BORDER_COLOR
-    0x334f59ff,         // BUTTON_HOVER_INSIDE_COLOR
-    0x90acb4ff,         // BUTTON_HOVER_TEXT_COLOR
-    0x5f9aa4ff,         // BUTTON_PRESSED_BORDER_COLOR
-    0x334f59ff,         // BUTTON_PRESSED_INSIDE_COLOR
-    0x5f9aa8ff,         // BUTTON_PRESSED_TEXT_COLOR
-    20,                 // TOGGLE_TEXT_PADDING
-    1,                  // TOGGLE_BORDER_WIDTH
-    0x3e4b4dff,         // TOGGLE_DEFAULT_BORDER_COLOR
-    0x344041ff,         // TOGGLE_DEFAULT_INSIDE_COLOR
-    0x828282ff,         // TOGGLE_DEFAULT_TEXT_COLOR
-    0x47595fff,         // TOGGLE_HOVER_BORDER_COLOR
-    0x334f59ff,         // TOGGLE_HOVER_INSIDE_COLOR
-    0x828282ff,         // TOGGLE_HOVER_TEXT_COLOR
-    0x5f9aa8ff,         // TOGGLE_PRESSED_BORDER_COLOR
-    0x334f59ff,         // TOGGLE_PRESSED_INSIDE_COLOR
-    0x5f9aa8ff,         // TOGGLE_PRESSED_TEXT_COLOR
-    0x92c763ff,         // TOGGLE_ACTIVE_BORDER_COLOR
-    0x334f59ff,         // TOGGLE_ACTIVE_INSIDE_COLOR
-    0x92c763ff,         // TOGGLE_ACTIVE_TEXT_COLOR
-    0x3,                // TOGGLEGROUP_PADDING
-    0x1,                // SLIDER_BORDER_WIDTH
-    0x0,                // SLIDER_BUTTON_BORDER_WIDTH
-    0x828282ff,         // SLIDER_BORDER_COLOR
-    0x3e4b4dff,         // SLIDER_INSIDE_COLOR
-    0x92c763ff,         // SLIDER_DEFAULT_COLOR
-    0xc3e0a9ff,         // SLIDER_HOVER_COLOR
-    0xffffffff,         // SLIDER_ACTIVE_COLOR
-    0x828282ff,         // SLIDERBAR_BORDER_COLOR
-    0x344041ff,         // SLIDERBAR_INSIDE_COLOR
-    0x92c763ff,         // SLIDERBAR_DEFAULT_COLOR
-    0xc3e0a9ff,         // SLIDERBAR_HOVER_COLOR
-    0xffffffff,         // SLIDERBAR_ACTIVE_COLOR
-    0x828282ff,         // SLIDERBAR_ZERO_LINE_COLOR
-    0x828282ff,         // PROGRESSBAR_BORDER_COLOR
-    0x3e4b4dff,         // PROGRESSBAR_INSIDE_COLOR
-    0x92c763ff,         // PROGRESSBAR_PROGRESS_COLOR
-    0x1,                // PROGRESSBAR_BORDER_WIDTH
-    0x3e4b4dff,         // SPINNER_LABEL_BORDER_COLOR
-    0x344041ff,         // SPINNER_LABEL_INSIDE_COLOR
-    0x3e4b4dff,         // SPINNER_DEFAULT_BUTTON_BORDER_COLOR
-    0x344041ff,         // SPINNER_DEFAULT_BUTTON_INSIDE_COLOR
-    0x5f9aa8ff,         // SPINNER_DEFAULT_SYMBOL_COLOR
-    0x5f9aa8ff,         // SPINNER_DEFAULT_TEXT_COLOR
-    0x47595fff,         // SPINNER_HOVER_BUTTON_BORDER_COLOR
-    0x334f59ff,         // SPINNER_HOVER_BUTTON_INSIDE_COLOR
-    0x5f9aa8ff,         // SPINNER_HOVER_SYMBOL_COLOR
-    0x5f9aa8ff,         // SPINNER_HOVER_TEXT_COLOR
-    0x92c763ff,         // SPINNER_PRESSED_BUTTON_BORDER_COLOR
-    0x334f59ff,         // SPINNER_PRESSED_BUTTON_INSIDE_COLOR
-    0x92c763ff,         // SPINNER_PRESSED_SYMBOL_COLOR
-    0x92c763ff,         // SPINNER_PRESSED_TEXT_COLOR
-    0x1,                // COMBOBOX_PADDING
-    30,                 // COMBOBOX_BUTTON_WIDTH
-    20,                 // COMBOBOX_BUTTON_HEIGHT
-    0x1,                // COMBOBOX_BORDER_WIDTH
-    0x3e4b4dff,         // COMBOBOX_DEFAULT_BORDER_COLOR
-    0x344041ff,         // COMBOBOX_DEFAULT_INSIDE_COLOR
-    0x5f9aa8ff,         // COMBOBOX_DEFAULT_TEXT_COLOR
-    0x5f9aa8ff,         // COMBOBOX_DEFAULT_LIST_TEXT_COLOR
-    0x47595fff,         // COMBOBOX_HOVER_BORDER_COLOR
-    0x334f59ff,         // COMBOBOX_HOVER_INSIDE_COLOR
-    0x5f9aa8ff,         // COMBOBOX_HOVER_TEXT_COLOR
-    0x5f9aa8ff,         // COMBOBOX_HOVER_LIST_TEXT_COLOR
-    0x5f9aa8ff,         // COMBOBOX_PRESSED_BORDER_COLOR
-    0x334f59ff,         // COMBOBOX_PRESSED_INSIDE_COLOR
-    0x5f9aa8ff,         // COMBOBOX_PRESSED_TEXT_COLOR
-    0x92c763ff,         // COMBOBOX_PRESSED_LIST_BORDER_COLOR
-    0x334f59ff,         // COMBOBOX_PRESSED_LIST_INSIDE_COLOR
-    0x92c763ff,         // COMBOBOX_PRESSED_LIST_TEXT_COLOR
-    0x47595fff,         // CHECKBOX_DEFAULT_BORDER_COLOR
-    0x344041ff,         // CHECKBOX_DEFAULT_INSIDE_COLOR
-    0x47595fff,         // CHECKBOX_HOVER_BORDER_COLOR
-    0x334f59ff,         // CHECKBOX_HOVER_INSIDE_COLOR
-    0x5f9aa8ff,         // CHECKBOX_CLICK_BORDER_COLOR
-    0x334f59ff,         // CHECKBOX_CLICK_INSIDE_COLOR
-    0x92c763ff,         // CHECKBOX_STATUS_ACTIVE_COLOR
-    0x2,                // CHECKBOX_INSIDE_WIDTH
-    0x1,                // TEXTBOX_BORDER_WIDTH
-    0x47595fff,         // TEXTBOX_BORDER_COLOR
-    0x828282ff,         // TEXTBOX_INSIDE_COLOR
-    0xff,               // TEXTBOX_TEXT_COLOR
-    0xff,               // TEXTBOX_LINE_COLOR
-    0xa,                // TEXTBOX_TEXT_FONTSIZE
-};
+    //----------------------------------------------
+    0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
+    0x638465ff,     // DEFAULT_LINES_COLOR
+    0,              // DEFAULT_TEXT_FONT
+    10,             // DEFAULT_TEXT_SIZE
+    1,              // DEFAULT_BORDER_WIDTH
+    0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
+    //----------------------------------------------
+    0x82a29fff,     // LABEL_TEXT_COLOR_NORMAL -----> DEFAULT_TEXT_COLOR_NORMAL
+    0x6aa9b8ff,     // LABEL_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0x97af81ff,     // LABEL_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x666b69ff,     // LABEL_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x2,            // BUTTON_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x60827dff,     // BUTTON_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // BUTTON_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // BUTTON_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // BUTTON_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // BUTTON_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // BUTTON_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // BUTTON_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // BUTTON_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // BUTTON_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // BUTTON_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // BUTTON_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // BUTTON_TEXT_COLOR_DISABLED ----> DEFAULT_COLOR_COLOR_DISABLED
+    0x1,            // TOGGLE_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x60827dff,     // TOGGLE_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // TOGGLE_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // TOGGLE_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // TOGGLE_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // TOGGLE_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // TOGGLE_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // TOGGLE_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // TOGGLE_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // TOGGLE_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // TOGGLE_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // TOGGLE_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // TOGGLE_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x2,            // TOGGLEGROUP_PADDING
+    0x1,            // SLIDER_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x14,           // SLIDER_SLIDER_WIDTH 
+    0x60827dff,     // SLIDER_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // SLIDER_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x5f9aa8ff,     // SLIDER_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // SLIDER_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0xa9cb8dff,     // SLIDER_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // SLIDER_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x5b6462ff,     // SLIDER_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // SLIDER_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1,            // SLIDERBAR_INNER_PADDING
+    0x1,            // SLIDERBAR_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x60827dff,     // SLIDERBAR_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // SLIDERBAR_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x5f9aa8ff,     // SLIDERBAR_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // SLIDERBAR_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0xa9cb8dff,     // SLIDERBAR_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // SLIDERBAR_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x5b6462ff,     // SLIDERBAR_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // SLIDERBAR_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1,            // PROGRESSBAR_INNER_PADDING
+    0x1,            // PROGRESSBAR_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x60827dff,     // PROGRESSBAR_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x3b6357ff,     // PROGRESSBAR_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_PRESSED
+    0x5f9aa8ff,     // PROGRESSBAR_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // PROGRESSBAR_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0xa9cb8dff,     // PROGRESSBAR_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // PROGRESSBAR_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x5b6462ff,     // PROGRESSBAR_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // PROGRESSBAR_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x2,            // SPINNER_BUTTON_PADDING
+    0x23,           // SPINNER_BUTTONS_WIDTH
+    0x60827dff,     // SPINNER_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // SPINNER_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // SPINNER_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // SPINNER_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // SPINNER_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // SPINNER_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // SPINNER_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // SPINNER_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // SPINNER_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // SPINNER_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // SPINNER_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // SPINNER_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x1,            // COMBOBOX_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x2,            // COMBOBOX_BUTTON_PADDING
+    0x23,           // COMBOBOX_SELECTOR_WIDTH
+    0x60827dff,     // COMBOBOX_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // COMBOBOX_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // COMBOBOX_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // COMBOBOX_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // COMBOBOX_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // COMBOBOX_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // COMBOBOX_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // COMBOBOX_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // COMBOBOX_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // COMBOBOX_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // COMBOBOX_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // COMBOBOX_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x1,            // CHECKBOX_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x1,            // CHECKBOX_INNER_PADDING
+    0x60827dff,     // CHECKBOX_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2b3a3aff,     // CHECKBOX_BASE_COLOR_NORMAL ----> DEFAULT_BACKGROUND_COLOR
+    0x5f9aa8ff,     // CHECKBOX_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x6aa9b8ff,     // CHECKBOX_BASE_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // CHECKBOX_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97af81ff,     // CHECKBOX_BASE_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // CHECKBOX_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // CHECKBOX_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1,            // TEXTBOX_BORDER_WIDTH ----> DEFAULT_BORDER_WIDTH
+    0x60827dff,     // TEXTBOX_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2b3a3aff,     // TEXTBOX_BASE_COLOR_NORMAL ----> DEFAULT_BACKGROUND_COLOR
+    0x82a29fff,     // TEXTBOX_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // TEXTBOX_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // TEXTBOX_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // TEXTBOX_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // TEXTBOX_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // TEXTBOX_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // TEXTBOX_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // TEXTBOX_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // TEXTBOX_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // TEXTBOX_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
+    0x14,           // COLORPICKER_BARS_THICK
+    0xa,            // COLORPICKER_BARS_PADDING
+    0x60827dff,     // COLORPICKER_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2b3a3aff,     // COLORPICKER_BASE_COLOR_NORMAL ----> DEFAULT_BACKGROUND_COLOR
+    0x5f9aa8ff,     // COLORPICKER_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x6aa9b8ff,     // COLORPICKER_BASE_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // COLORPICKER_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x97af81ff,     // COLORPICKER_BASE_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // COLORPICKER_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // COLORPICKER_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x1e,           // LISTVIEW_ELEMENTS_HEIGHT
+    0x2,            // LISTVIEW_ELEMENTS_PADDING
+    0xa,            // LISTVIEW_BAR_WIDTH
+    0x60827dff,     // LISTVIEW_BORDER_COLOR_NORMAL ----> DEFAULT_BORDER_COLOR_NORMAL
+    0x2b3a3aff,     // LISTVIEW_BASE_COLOR_NORMAL ----> DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // LISTVIEW_TEXT_COLOR_NORMAL ----> DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // LISTVIEW_BORDER_COLOR_FOCUSED ----> DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // LISTVIEW_BASE_COLOR_FOCUSED ----> DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // LISTVIEW_TEXT_COLOR_FOCUSED ----> DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // LISTVIEW_BORDER_COLOR_PRESSED ----> DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // LISTVIEW_BASE_COLOR_PRESSED ----> DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // LISTVIEW_TEXT_COLOR_PRESSED ----> DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // LISTVIEW_BORDER_COLOR_DISABLED ----> DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // LISTVIEW_BASE_COLOR_DISABLED ----> DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // LISTVIEW_TEXT_COLOR_DISABLED ----> DEFAULT_TEXT_COLOR_DISABLED
 #endif
-
-#if !defined(RAYGUI_NO_STYLE_SAVE_LOAD)
-// GUI property names (to read/write style text files)
-static const char *guiPropertyName[] = {
-    "GLOBAL_BASE_COLOR",
-    "GLOBAL_BORDER_COLOR",
-    "GLOBAL_TEXT_COLOR",
-    "GLOBAL_TEXT_FONTSIZE",
-    "GLOBAL_BORDER_WIDTH",
-    "BACKGROUND_COLOR",
-    "LINES_COLOR",
-    "LABEL_BORDER_WIDTH",
-    "LABEL_TEXT_COLOR",
-    "LABEL_TEXT_PADDING",
-    "BUTTON_BORDER_WIDTH",
-    "BUTTON_TEXT_PADDING",
-    "BUTTON_DEFAULT_BORDER_COLOR",
-    "BUTTON_DEFAULT_INSIDE_COLOR",
-    "BUTTON_DEFAULT_TEXT_COLOR",
-    "BUTTON_HOVER_BORDER_COLOR",
-    "BUTTON_HOVER_INSIDE_COLOR",
-    "BUTTON_HOVER_TEXT_COLOR",
-    "BUTTON_PRESSED_BORDER_COLOR",
-    "BUTTON_PRESSED_INSIDE_COLOR",
-    "BUTTON_PRESSED_TEXT_COLOR",
-    "TOGGLE_TEXT_PADDING",
-    "TOGGLE_BORDER_WIDTH",
-    "TOGGLE_DEFAULT_BORDER_COLOR",
-    "TOGGLE_DEFAULT_INSIDE_COLOR",
-    "TOGGLE_DEFAULT_TEXT_COLOR",
-    "TOGGLE_HOVER_BORDER_COLOR",
-    "TOGGLE_HOVER_INSIDE_COLOR",
-    "TOGGLE_HOVER_TEXT_COLOR",
-    "TOGGLE_PRESSED_BORDER_COLOR",
-    "TOGGLE_PRESSED_INSIDE_COLOR",
-    "TOGGLE_PRESSED_TEXT_COLOR",
-    "TOGGLE_ACTIVE_BORDER_COLOR",
-    "TOGGLE_ACTIVE_INSIDE_COLOR",
-    "TOGGLE_ACTIVE_TEXT_COLOR",
-    "TOGGLEGROUP_PADDING",
-    "SLIDER_BORDER_WIDTH",
-    "SLIDER_BUTTON_BORDER_WIDTH",
-    "SLIDER_BORDER_COLOR",
-    "SLIDER_INSIDE_COLOR",
-    "SLIDER_DEFAULT_COLOR",
-    "SLIDER_HOVER_COLOR",
-    "SLIDER_ACTIVE_COLOR",
-    "SLIDERBAR_BORDER_COLOR",
-    "SLIDERBAR_INSIDE_COLOR",
-    "SLIDERBAR_DEFAULT_COLOR",
-    "SLIDERBAR_HOVER_COLOR",
-    "SLIDERBAR_ACTIVE_COLOR",
-    "SLIDERBAR_ZERO_LINE_COLOR",
-    "PROGRESSBAR_BORDER_COLOR",
-    "PROGRESSBAR_INSIDE_COLOR",
-    "PROGRESSBAR_PROGRESS_COLOR",
-    "PROGRESSBAR_BORDER_WIDTH",
-    "SPINNER_LABEL_BORDER_COLOR",
-    "SPINNER_LABEL_INSIDE_COLOR",
-    "SPINNER_DEFAULT_BUTTON_BORDER_COLOR",
-    "SPINNER_DEFAULT_BUTTON_INSIDE_COLOR",
-    "SPINNER_DEFAULT_SYMBOL_COLOR",
-    "SPINNER_DEFAULT_TEXT_COLOR",
-    "SPINNER_HOVER_BUTTON_BORDER_COLOR",
-    "SPINNER_HOVER_BUTTON_INSIDE_COLOR",
-    "SPINNER_HOVER_SYMBOL_COLOR",
-    "SPINNER_HOVER_TEXT_COLOR",
-    "SPINNER_PRESSED_BUTTON_BORDER_COLOR",
-    "SPINNER_PRESSED_BUTTON_INSIDE_COLOR",
-    "SPINNER_PRESSED_SYMBOL_COLOR",
-    "SPINNER_PRESSED_TEXT_COLOR",
-    "COMBOBOX_PADDING",
-    "COMBOBOX_BUTTON_WIDTH",
-    "COMBOBOX_BUTTON_HEIGHT",
-    "COMBOBOX_BORDER_WIDTH",
-    "COMBOBOX_DEFAULT_BORDER_COLOR",
-    "COMBOBOX_DEFAULT_INSIDE_COLOR",
-    "COMBOBOX_DEFAULT_TEXT_COLOR",
-    "COMBOBOX_DEFAULT_LIST_TEXT_COLOR",
-    "COMBOBOX_HOVER_BORDER_COLOR",
-    "COMBOBOX_HOVER_INSIDE_COLOR",
-    "COMBOBOX_HOVER_TEXT_COLOR",
-    "COMBOBOX_HOVER_LIST_TEXT_COLOR",
-    "COMBOBOX_PRESSED_BORDER_COLOR",
-    "COMBOBOX_PRESSED_INSIDE_COLOR",
-    "COMBOBOX_PRESSED_TEXT_COLOR",
-    "COMBOBOX_PRESSED_LIST_BORDER_COLOR",
-    "COMBOBOX_PRESSED_LIST_INSIDE_COLOR",
-    "COMBOBOX_PRESSED_LIST_TEXT_COLOR",
-    "CHECKBOX_DEFAULT_BORDER_COLOR",
-    "CHECKBOX_DEFAULT_INSIDE_COLOR",
-    "CHECKBOX_HOVER_BORDER_COLOR",
-    "CHECKBOX_HOVER_INSIDE_COLOR",
-    "CHECKBOX_CLICK_BORDER_COLOR",
-    "CHECKBOX_CLICK_INSIDE_COLOR",
-    "CHECKBOX_STATUS_ACTIVE_COLOR",
-    "CHECKBOX_INSIDE_WIDTH",
-    "TEXTBOX_BORDER_WIDTH",
-    "TEXTBOX_BORDER_COLOR",
-    "TEXTBOX_INSIDE_COLOR",
-    "TEXTBOX_TEXT_COLOR",
-    "TEXTBOX_LINE_COLOR",
-    "TEXTBOX_TEXT_FONTSIZE"
 };
-#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Color ColorMultiply(Color baseColor, float value);
+#if defined(RAYGUI_STANDALONE)
 
-#if defined RAYGUI_STANDALONE
-static Color GetColor(int hexValue);   // Returns a Color struct from hexadecimal value
-static int GetHexValue(Color color);   // Returns hexadecimal value for a Color
+#define KEY_RIGHT           262
+#define KEY_LEFT            263
+#define KEY_DOWN            264
+#define KEY_UP              265
+#define MOUSE_LEFT_BUTTON     0
+
+#ifdef __cplusplus
+    #define CLITERAL
+#else
+    #define CLITERAL    (Color)
+#endif
+
+#define WHITE      CLITERAL{ 255, 255, 255, 255 }   // White
+#define BLACK      CLITERAL{ 0, 0, 0, 255 }         // Black
+#define LIGHTGRAY  CLITERAL{ 200, 200, 200, 255 }   // Light Gray
+#define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
+
+// This functions are directly implemented in raygui
+static Color GetColor(int hexValue);            // Returns a Color struct from hexadecimal value
+static int ColorToInt(Color color);            // Returns hexadecimal value for a Color
+static Color Fade(Color color, float alpha);    // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);  // Check if point is inside rectangle
 static const char *FormatText(const char *text, ...);   // Formatting of text with variables to 'embed'
 
-// NOTE: raygui depend on some raylib input and drawing functions
-// TODO: To use raygui as standalone library, those functions must be overwrite by custom ones
+// raygui depend on some raylib input and drawing functions
+// NOTE: To use raygui as standalone library, below functions must be defined by the user
 
-// Input management functions
-static Vector2 GetMousePosition() { /* TODO */ return (Vector2){ 0.0f, 0.0f }; }
-static int IsMouseButtonDown(int button) { /* TODO */ return 0; }
-static int IsMouseButtonPressed(int button) { /* TODO */ return 0; }
-static int IsMouseButtonReleased(int button) { /* TODO */ return 0; }
-static int IsMouseButtonUp(int button) { /* TODO */ return 0; }
-
-static int GetKeyPressed(void) { /* TODO */ return 0; }    // NOTE: Only used by GuiTextBox()
-static int IsKeyDown(int key) { /* TODO */ return 0; }     // NOTE: Only used by GuiSpinner()
-
-// Drawing related functions
 static int MeasureText(const char *text, int fontSize) { /* TODO */ return 0; }
 static void DrawText(const char *text, int posX, int posY, int fontSize, Color color) { /* TODO */ }
-static void DrawRectangleRec(Rectangle rec, Color color) { /* TODO */ }
-static void DrawRectangle(int posX, int posY, int width, int height, Color color) { DrawRectangleRec((Rectangle){ posX, posY, width, height }, color); }
+static void DrawRectangle(int x, int y, int width, int height, Color color) { /* TODO */ }
+static void DrawRectangleRec(Rectangle rec, Color color) { DrawRectangle(rec.x, rec.y, rec.width, rec.height, color); }
+
+// Input related functions
+static Vector2 GetMousePosition(void) { return (Vector2){ 0, 0 }; }
+static bool IsMouseButtonDown(int button);
+static bool IsMouseButtonReleased(int button);
+
+static bool IsMouseButtonUp(int button);                       // -- GuiSpinner(), GuiColorPicker()
+static int GetKeyPressed(void);                                // -- GuiTextBox()
+static bool IsKeyPressed(int key);                             // -- GuiTextBox()
+static bool IsKeyDown(int key);                                // -- GuiColorPicker()
+
+// Control specific functions
+static void DrawRectangleLines(int x, int y, int width, int height, Color color) { /* TODO */ }           // -- GuiColorPicker() *
+static void DrawRectangleGradientV(int posX, int posY, int width, int height, Color color1, Color color2);// -- GuiColorPicker() *
+static void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2);// -- GuiColorPicker() *
+static void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // -- GuiColorPicker()
+
+static void DrawTexture(Texture2D texture, int posX, int posY, Color tint);         // -- GuiTexture()
+
+#if defined(RAYGUI_STYLE_SAVE_LOAD)
+static Image LoadImage(const char *fileName);       // -- GuiLoadStyleImage()
+static Color *GetImageData(Image image);            // -- GuiLoadStyleImage()
+static void UnloadImage(Image image);               // -- GuiLoadStyleImage()
 #endif
+
+#endif      // RAYGUI_STANDALONE
+
+
+static Vector3 ConvertHSVtoRGB(Vector3 hsv);        // Convert color data from HSV to RGB
+static Vector3 ConvertRGBtoHSV(Vector3 rgb);        // Convert color data from RGB to HSV
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
+// Enable gui global state
+RAYGUIDEF void GuiEnable(void) { guiState = NORMAL; }
+
+// Disable gui global state
+RAYGUIDEF void GuiDisable(void) { guiState = DISABLED; }
+
 // Get background color
-RAYGUIDEF Color GuiBackgroundColor(void) { return GetColor(style[BACKGROUND_COLOR]); }
+RAYGUIDEF Color GuiBackgroundColor(void) { return GetColor(style[DEFAULT_BACKGROUND_COLOR]); }
 
 // Get lines color
-RAYGUIDEF Color GuiLinesColor(void) { return GetColor(style[LINES_COLOR]); }
+RAYGUIDEF Color GuiLinesColor(void) { return GetColor(style[DEFAULT_LINES_COLOR]); }
 
-// Label element, show text
+// Get text color for normal state
+RAYGUIDEF Color GuiTextColor(void) { return GetColor(style[DEFAULT_TEXT_COLOR_NORMAL]); }
+
+// Label control
 RAYGUIDEF void GuiLabel(Rectangle bounds, const char *text)
 {
-    GuiLabelEx(bounds, text, GetColor(style[LABEL_TEXT_COLOR]), (Color){ 0, 0, 0, 0 }, (Color){ 0, 0, 0, 0 });
-}
+    GuiControlState state = guiState;
 
-// Label element extended, configurable colors
-RAYGUIDEF void GuiLabelEx(Rectangle bounds, const char *text, Color textColor, Color border, Color inner)
-{
+    int textWidth = MeasureText(text, style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
+
+    if (bounds.width < textWidth) bounds.width = textWidth;
+    if (bounds.height < textHeight) bounds.height = textHeight;
+
     // Update control
     //--------------------------------------------------------------------
-    int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
-
-    if (bounds.width < textWidth) bounds.width = textWidth + style[LABEL_TEXT_PADDING];
-    if (bounds.height < textHeight) bounds.height = textHeight + style[LABEL_TEXT_PADDING]/2;
+    // ...
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    DrawRectangleRec(bounds, border);
-    DrawRectangle(bounds.x + style[LABEL_BORDER_WIDTH], bounds.y + style[LABEL_BORDER_WIDTH], bounds.width - (2*style[LABEL_BORDER_WIDTH]), bounds.height - (2*style[LABEL_BORDER_WIDTH]), inner);
-    DrawText(text, bounds.x + ((bounds.width/2) - (textWidth/2)), bounds.y + ((bounds.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], textColor);
+    switch (state)
+    {
+        case NORMAL: 
+        case FOCUSED:
+        case PRESSED: DrawText(text, bounds.x, bounds.y, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_NORMAL])); break;
+        case DISABLED: DrawText(text, bounds.x, bounds.y, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_DISABLED])); break;
+        default: break;
+    }
     //--------------------------------------------------------------------
 }
 
-// Button element, returns true when clicked
+// Button control, returns true when clicked
 RAYGUIDEF bool GuiButton(Rectangle bounds, const char *text)
 {
-    ButtonState buttonState = BUTTON_DEFAULT;
-    Vector2 mousePoint = GetMousePosition();
-
-    int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
+    GuiControlState state = guiState;
+    bool clicked = false;
+    
+    int textWidth = MeasureText(text, style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
+    
+    if (bounds.width < textWidth) bounds.width = textWidth;
+    if (bounds.height < textHeight) bounds.height = textHeight;
 
     // Update control
     //--------------------------------------------------------------------
-    if (bounds.width < textWidth) bounds.width = textWidth + style[BUTTON_TEXT_PADDING];
-    if (bounds.height < textHeight) bounds.height = textHeight + style[BUTTON_TEXT_PADDING]/2;
-
-    if (CheckCollisionPointRec(mousePoint, bounds))
+    if (state != DISABLED)
     {
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) buttonState = BUTTON_PRESSED;
-        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) buttonState = BUTTON_CLICKED;
-        else buttonState = BUTTON_HOVER;
+        Vector2 mousePoint = GetMousePosition();
+
+        // Check button state
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) clicked = true;
+            else state = FOCUSED;
+        }
     }
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    switch (buttonState)
+    switch (state)
     {
-        case BUTTON_DEFAULT:
+        case NORMAL:
         {
-            DrawRectangleRec(bounds, GetColor(style[BUTTON_DEFAULT_BORDER_COLOR]));
-            DrawRectangle((int)(bounds.x + style[BUTTON_BORDER_WIDTH]), (int)(bounds.y + style[BUTTON_BORDER_WIDTH]) , (int)(bounds.width - (2*style[BUTTON_BORDER_WIDTH])), (int)(bounds.height - (2*style[BUTTON_BORDER_WIDTH])), GetColor(style[BUTTON_DEFAULT_INSIDE_COLOR]));
-            DrawText(text, bounds.x + ((bounds.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), bounds.y + ((bounds.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[BUTTON_DEFAULT_TEXT_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_NORMAL]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_NORMAL]));
         } break;
-        case BUTTON_HOVER:
+        case FOCUSED:
         {
-            DrawRectangleRec(bounds, GetColor(style[BUTTON_HOVER_BORDER_COLOR]));
-            DrawRectangle((int)(bounds.x + style[BUTTON_BORDER_WIDTH]), (int)(bounds.y + style[BUTTON_BORDER_WIDTH]) , (int)(bounds.width - (2*style[BUTTON_BORDER_WIDTH])), (int)(bounds.height - (2*style[BUTTON_BORDER_WIDTH])), GetColor(style[BUTTON_HOVER_INSIDE_COLOR]));
-            DrawText(text, bounds.x + ((bounds.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), bounds.y + ((bounds.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[BUTTON_HOVER_TEXT_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_FOCUSED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_FOCUSED]));
         } break;
-        case BUTTON_PRESSED:
+        case PRESSED:
         {
-            DrawRectangleRec(bounds, GetColor(style[BUTTON_PRESSED_BORDER_COLOR]));
-            DrawRectangle((int)(bounds.x + style[BUTTON_BORDER_WIDTH]), (int)(bounds.y + style[BUTTON_BORDER_WIDTH]) , (int)(bounds.width - (2*style[BUTTON_BORDER_WIDTH])), (int)(bounds.height - (2*style[BUTTON_BORDER_WIDTH])), GetColor(style[BUTTON_PRESSED_INSIDE_COLOR]));
-            DrawText(text, bounds.x + ((bounds.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), bounds.y + ((bounds.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[BUTTON_PRESSED_TEXT_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_PRESSED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_PRESSED]));
         } break;
-        case BUTTON_CLICKED:
+        case DISABLED:
         {
-            DrawRectangleRec(bounds, GetColor(style[BUTTON_PRESSED_BORDER_COLOR]));
-            DrawRectangle((int)(bounds.x + style[BUTTON_BORDER_WIDTH]), (int)(bounds.y + style[BUTTON_BORDER_WIDTH]) , (int)(bounds.width - (2*style[BUTTON_BORDER_WIDTH])), (int)(bounds.height - (2*style[BUTTON_BORDER_WIDTH])), GetColor(style[BUTTON_PRESSED_INSIDE_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_DISABLED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_DISABLED]));
         } break;
         default: break;
     }
     //------------------------------------------------------------------
 
-    if (buttonState == BUTTON_CLICKED) return true;
-    else return false;
+    return clicked;
 }
 
-// Toggle Button element, returns true when active
-RAYGUIDEF bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle)
+// Label button control
+RAYGUIDEF bool GuiLabelButton(Rectangle bounds, const char *text)
 {
-    ToggleState toggleState = TOGGLE_UNACTIVE;
-    Rectangle toggleButton = bounds;
-    Vector2 mousePoint = GetMousePosition();
+    GuiControlState state = guiState;
+    bool clicked = false;
+    
+    int textWidth = MeasureText(text, style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
 
-    int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
+    //if (bounds.width < textWidth) bounds.width = textWidth;
+    //if (bounds.height < textHeight) bounds.height = textHeight;
+    bounds.width = textWidth;
+    bounds.height = textHeight;
 
     // Update control
     //--------------------------------------------------------------------
-    if (toggleButton.width < textWidth) toggleButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
-    if (toggleButton.height < textHeight) toggleButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
-
-    if (toggle) toggleState = TOGGLE_ACTIVE;
-    else toggleState = TOGGLE_UNACTIVE;
-
-    if (CheckCollisionPointRec(mousePoint, toggleButton))
+    if (state != DISABLED)
     {
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_PRESSED;
-        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        Vector2 mousePoint = GetMousePosition();
+
+        // Check label state
+        if (CheckCollisionPointRec(mousePoint, bounds))
         {
-            if (toggle)
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) clicked = true;
+            else state = FOCUSED;
+        }
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL: DrawText(text, bounds.x, bounds.y, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_NORMAL])); break;
+        case FOCUSED: DrawText(text, bounds.x, bounds.y, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_FOCUSED])); break;
+        case PRESSED: DrawText(text, bounds.x, bounds.y, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_PRESSED])); break;
+        case DISABLED: DrawText(text, bounds.x, bounds.y, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_DISABLED])); break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+
+    return clicked;
+}
+
+// Image button control, returns true when clicked
+// TODO: Just provide textureId instead of full Texture2D
+RAYGUIDEF bool GuiImageButton(Rectangle bounds, Texture2D texture)
+{
+    return GuiImageButtonEx(bounds, texture, (Rectangle){ 0, 0, texture.width, texture.height }, NULL);
+}
+
+// Image button control, returns true when clicked
+// TODO: Just provide textureId instead of full Texture2D
+RAYGUIDEF bool GuiImageButtonEx(Rectangle bounds, Texture2D texture, Rectangle texSource, const char *text)
+{
+    #define IMAGEBUTTON_PADDING 4
+    
+    GuiControlState state = guiState;
+    bool clicked = false;
+    int textWidth = 0;
+    int textHeight = 0;
+    
+    if (bounds.width < texSource.width) bounds.width = texSource.width;
+    if (bounds.height < texSource.height) bounds.height = texSource.height;
+    
+    if (text != NULL)
+    {
+        textWidth = MeasureText(text, style[DEFAULT_TEXT_SIZE]);
+        textHeight = style[DEFAULT_TEXT_SIZE];
+        
+        if (bounds.width < textWidth + texSource.width) bounds.width = textWidth + texSource.width + IMAGEBUTTON_PADDING;
+        if (bounds.height < textHeight) bounds.height = textHeight;
+    }
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+        
+        // Check button state
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) clicked = true;
+            else state = FOCUSED;
+        }
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL:
+        {
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_NORMAL]));
+            if (text != NULL) DrawText(text, (bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING + textWidth)/2) + texSource.width, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_NORMAL]));
+            if (texture.id > 0) DrawTextureRec(texture, texSource, (Vector2){ bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING/2 + textWidth)/2, bounds.y + bounds.height/2 - texSource.height/2 }, GetColor(style[BUTTON_TEXT_COLOR_NORMAL]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_FOCUSED]));
+            if (text != NULL) DrawText(text, (bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING + textWidth)/2) + texSource.width, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_FOCUSED]));
+            if (texture.id > 0) DrawTextureRec(texture, texSource, (Vector2){ bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING/2 + textWidth)/2, bounds.y + bounds.height/2 - texSource.height/2 }, GetColor(style[BUTTON_TEXT_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_PRESSED]));
+            if (text != NULL) DrawText(text, (bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING + textWidth)/2) + texSource.width, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_PRESSED]));
+            if (texture.id > 0) DrawTextureRec(texture, texSource, (Vector2){ bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING/2 + textWidth)/2, bounds.y + bounds.height/2 - texSource.height/2 }, GetColor(style[BUTTON_TEXT_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[BUTTON_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[BUTTON_BORDER_WIDTH], bounds.y + style[BUTTON_BORDER_WIDTH], bounds.width - 2*style[BUTTON_BORDER_WIDTH], bounds.height - 2*style[BUTTON_BORDER_WIDTH], GetColor(style[BUTTON_BASE_COLOR_DISABLED]));
+            if (text != NULL) DrawText(text, (bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING + textWidth)/2) + texSource.width, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[BUTTON_TEXT_COLOR_DISABLED]));
+            if (texture.id > 0) DrawTextureRec(texture, texSource, (Vector2){ bounds.x + bounds.width/2 - (texSource.width + IMAGEBUTTON_PADDING/2 + textWidth)/2, bounds.y + bounds.height/2 - texSource.height/2 }, GetColor(style[BUTTON_TEXT_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //------------------------------------------------------------------
+
+    return clicked;
+}
+
+// Toggle Button control, returns true when active
+RAYGUIDEF bool GuiToggleButton(Rectangle bounds, const char *text, bool active)
+{
+    GuiControlState state = guiState;
+    
+    int textWidth = MeasureText(text, style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
+    
+    if (bounds.width < textWidth) bounds.width = textWidth;
+    if (bounds.height < textHeight) bounds.height = textHeight;
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        // Check toggle button state
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
             {
-                toggle = false;
-                toggleState = TOGGLE_UNACTIVE;
+                state = NORMAL;
+                active = !active;
+            }
+            else state = FOCUSED;
+            
+            // TODO: DrawTextureV(texCursor, mousePoint, WHITE);
+        }
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL:
+        {
+            if (active)
+            {
+                DrawRectangleRec(bounds, GetColor(style[TOGGLE_BORDER_COLOR_PRESSED]));
+                DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[TOGGLE_BASE_COLOR_PRESSED]));
+                DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TOGGLE_TEXT_COLOR_PRESSED]));
             }
             else
             {
-                toggle = true;
-                toggleState = TOGGLE_ACTIVE;
+                DrawRectangleRec(bounds, GetColor(style[TOGGLE_BORDER_COLOR_NORMAL]));
+                DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[TOGGLE_BASE_COLOR_NORMAL]));
+                DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TOGGLE_TEXT_COLOR_NORMAL]));
             }
-        }
-        else toggleState = TOGGLE_HOVER;
-    }
-    //--------------------------------------------------------------------
-
-    // Draw control
-    //--------------------------------------------------------------------
-    switch (toggleState)
-    {
-        case TOGGLE_UNACTIVE:
-        {
-            DrawRectangleRec(toggleButton, GetColor(style[TOGGLE_DEFAULT_BORDER_COLOR]));
-            DrawRectangle((int)(toggleButton.x + style[TOGGLE_BORDER_WIDTH]), (int)(toggleButton.y + style[TOGGLE_BORDER_WIDTH]) , (int)(toggleButton.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(toggleButton.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[TOGGLE_DEFAULT_INSIDE_COLOR]));
-            DrawText(text, toggleButton.x + ((toggleButton.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), toggleButton.y + ((toggleButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[TOGGLE_DEFAULT_TEXT_COLOR]));
         } break;
-        case TOGGLE_HOVER:
+        case FOCUSED:
         {
-            DrawRectangleRec(toggleButton, GetColor(style[TOGGLE_HOVER_BORDER_COLOR]));
-            DrawRectangle((int)(toggleButton.x + style[TOGGLE_BORDER_WIDTH]), (int)(toggleButton.y + style[TOGGLE_BORDER_WIDTH]) , (int)(toggleButton.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(toggleButton.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[TOGGLE_HOVER_INSIDE_COLOR]));
-            DrawText(text, toggleButton.x + ((toggleButton.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), toggleButton.y + ((toggleButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[TOGGLE_HOVER_TEXT_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[TOGGLE_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[TOGGLE_BASE_COLOR_FOCUSED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TOGGLE_TEXT_COLOR_FOCUSED]));
         } break;
-        case TOGGLE_PRESSED:
+        case PRESSED:
         {
-            DrawRectangleRec(toggleButton, GetColor(style[TOGGLE_PRESSED_BORDER_COLOR]));
-            DrawRectangle((int)(toggleButton.x + style[TOGGLE_BORDER_WIDTH]), (int)(toggleButton.y + style[TOGGLE_BORDER_WIDTH]) , (int)(toggleButton.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(toggleButton.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[TOGGLE_PRESSED_INSIDE_COLOR]));
-            DrawText(text, toggleButton.x + ((toggleButton.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), toggleButton.y + ((toggleButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[TOGGLE_PRESSED_TEXT_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[TOGGLE_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[TOGGLE_BASE_COLOR_PRESSED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TOGGLE_TEXT_COLOR_PRESSED]));
         } break;
-        case TOGGLE_ACTIVE:
+        case DISABLED:
         {
-            DrawRectangleRec(toggleButton, GetColor(style[TOGGLE_ACTIVE_BORDER_COLOR]));
-            DrawRectangle((int)(toggleButton.x + style[TOGGLE_BORDER_WIDTH]), (int)(toggleButton.y + style[TOGGLE_BORDER_WIDTH]) , (int)(toggleButton.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(toggleButton.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[TOGGLE_ACTIVE_INSIDE_COLOR]));
-            DrawText(text, toggleButton.x + ((toggleButton.width/2) - (MeasureText(text, style[GLOBAL_TEXT_FONTSIZE])/2)), toggleButton.y + ((toggleButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[TOGGLE_ACTIVE_TEXT_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[TOGGLE_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[TOGGLE_BASE_COLOR_DISABLED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TOGGLE_TEXT_COLOR_DISABLED]));
         } break;
         default: break;
     }
     //--------------------------------------------------------------------
 
-    return toggle;
+    return active;
 }
 
-// Toggle Group element, returns toggled button index
-RAYGUIDEF int GuiToggleGroup(Rectangle bounds, int toggleNum, char **toggleText, int toggleActive)
+// Toggle Group control, returns toggled button index
+RAYGUIDEF int GuiToggleGroup(Rectangle bounds, const char **text, int count, int active)
 {
-    for (int i = 0; i < toggleNum; i++)
+    for (int i = 0; i < count; i++)
     {
-        if (i == toggleActive) GuiToggleButton((Rectangle){bounds.x + i*(bounds.width + style[TOGGLEGROUP_PADDING]),bounds.y,bounds.width,bounds.height}, toggleText[i], true);
-        else if (GuiToggleButton((Rectangle){bounds.x + i*(bounds.width + style[TOGGLEGROUP_PADDING]),bounds.y,bounds.width,bounds.height}, toggleText[i], false) == true) toggleActive = i;
+        if (i == active) GuiToggleButton((Rectangle){ bounds.x + i*(bounds.width/count + style[TOGGLEGROUP_PADDING]), bounds.y, bounds.width/count - style[TOGGLEGROUP_PADDING]*(count - 1), bounds.height }, text[i], true);
+        else if (GuiToggleButton((Rectangle){ bounds.x + i*(bounds.width/count + style[TOGGLEGROUP_PADDING]), bounds.y, bounds.width/count - style[TOGGLEGROUP_PADDING]*(count - 1), bounds.height }, text[i], false) == true) active = i;
     }
 
-    return toggleActive;
+    return active;
 }
 
-// Combo Box element, returns selected item index
-RAYGUIDEF int GuiComboBox(Rectangle bounds, int comboNum, char **comboText, int comboActive)
+// Check Box control, returns true when active
+RAYGUIDEF bool GuiCheckBox(Rectangle bounds, bool checked)
 {
-    ComboBoxState comboBoxState = COMBOBOX_UNACTIVE;
-    Rectangle comboBoxButton = bounds;
-    Rectangle click = { bounds.x + bounds.width + style[COMBOBOX_PADDING], bounds.y, style[COMBOBOX_BUTTON_WIDTH], style[COMBOBOX_BUTTON_HEIGHT] };
-    Vector2 mousePoint = GetMousePosition();
-
-    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
-
-    for (int i = 0; i < comboNum; i++)
-    {
-        if (i == comboActive)
-        {
-		    // Update control
-    		//--------------------------------------------------------------------
-            int textWidth = MeasureText(comboText[i], style[GLOBAL_TEXT_FONTSIZE]);
-
-            if (comboBoxButton.width < textWidth) comboBoxButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
-            if (comboBoxButton.height < textHeight) comboBoxButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
-
-            if (CheckCollisionPointRec(mousePoint, comboBoxButton) || CheckCollisionPointRec(mousePoint, click))
-            {
-                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) comboBoxState = COMBOBOX_PRESSED;
-                else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) comboBoxState = COMBOBOX_ACTIVE;
-                else comboBoxState = COMBOBOX_HOVER;
-            }
-    		//--------------------------------------------------------------------
-
-            // Draw control
-            //--------------------------------------------------------------------
-            switch (comboBoxState)
-            {
-                case COMBOBOX_UNACTIVE:
-                {
-                    DrawRectangleRec(comboBoxButton, GetColor(style[COMBOBOX_DEFAULT_BORDER_COLOR]));
-                    DrawRectangle((int)(comboBoxButton.x + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.y + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(comboBoxButton.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_DEFAULT_INSIDE_COLOR]));
-
-                    DrawRectangleRec(click, GetColor(style[COMBOBOX_DEFAULT_BORDER_COLOR]));
-                    DrawRectangle((int)(click.x + style[COMBOBOX_BORDER_WIDTH]), (int)(click.y + style[COMBOBOX_BORDER_WIDTH]) , (int)(click.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(click.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_DEFAULT_INSIDE_COLOR]));
-                    DrawText(FormatText("%i/%i", comboActive + 1, comboNum), click.x + ((click.width/2) - (MeasureText(FormatText("%i/%i", comboActive + 1, comboNum), style[GLOBAL_TEXT_FONTSIZE])/2)), click.y + ((click.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_DEFAULT_LIST_TEXT_COLOR]));
-                    DrawText(comboText[i], comboBoxButton.x + ((comboBoxButton.width/2) - (MeasureText(comboText[i], style[GLOBAL_TEXT_FONTSIZE])/2)), comboBoxButton.y + ((comboBoxButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_DEFAULT_TEXT_COLOR]));
-                } break;
-                case COMBOBOX_HOVER:
-                {
-                    DrawRectangleRec(comboBoxButton, GetColor(style[COMBOBOX_HOVER_BORDER_COLOR]));
-                    DrawRectangle((int)(comboBoxButton.x + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.y + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(comboBoxButton.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_HOVER_INSIDE_COLOR]));
-
-                    DrawRectangleRec(click, GetColor(style[COMBOBOX_HOVER_BORDER_COLOR]));
-                    DrawRectangle((int)(click.x + style[COMBOBOX_BORDER_WIDTH]), (int)(click.y + style[COMBOBOX_BORDER_WIDTH]) , (int)(click.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(click.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_HOVER_INSIDE_COLOR]));
-                    DrawText(FormatText("%i/%i", comboActive + 1, comboNum), click.x + ((click.width/2) - (MeasureText(FormatText("%i/%i", comboActive + 1, comboNum), style[GLOBAL_TEXT_FONTSIZE])/2)), click.y + ((click.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_HOVER_LIST_TEXT_COLOR]));
-                    DrawText(comboText[i], comboBoxButton.x + ((comboBoxButton.width/2) - (MeasureText(comboText[i], style[GLOBAL_TEXT_FONTSIZE])/2)), comboBoxButton.y + ((comboBoxButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_HOVER_TEXT_COLOR]));
-                } break;
-                case COMBOBOX_PRESSED:
-                {
-                    DrawRectangleRec(comboBoxButton, GetColor(style[COMBOBOX_PRESSED_BORDER_COLOR]));
-                    DrawRectangle((int)(comboBoxButton.x + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.y + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(comboBoxButton.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_PRESSED_INSIDE_COLOR]));
-
-                    DrawRectangleRec(click, GetColor(style[COMBOBOX_PRESSED_LIST_BORDER_COLOR]));
-                    DrawRectangle((int)(click.x + style[COMBOBOX_BORDER_WIDTH]), (int)(click.y + style[COMBOBOX_BORDER_WIDTH]) , (int)(click.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(click.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_PRESSED_LIST_INSIDE_COLOR]));
-                    DrawText(FormatText("%i/%i", comboActive + 1, comboNum), click.x + ((click.width/2) - (MeasureText(FormatText("%i/%i", comboActive + 1, comboNum), style[GLOBAL_TEXT_FONTSIZE])/2)), click.y + ((click.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_PRESSED_LIST_TEXT_COLOR]));
-                    DrawText(comboText[i], comboBoxButton.x + ((comboBoxButton.width/2) - (MeasureText(comboText[i], style[GLOBAL_TEXT_FONTSIZE])/2)), comboBoxButton.y + ((comboBoxButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_PRESSED_TEXT_COLOR]));
-                } break;
-                case COMBOBOX_ACTIVE:
-                {
-                    DrawRectangleRec(comboBoxButton, GetColor(style[COMBOBOX_PRESSED_BORDER_COLOR]));
-                    DrawRectangle((int)(comboBoxButton.x + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.y + style[COMBOBOX_BORDER_WIDTH]), (int)(comboBoxButton.width - (2 * style[COMBOBOX_BORDER_WIDTH])), (int)(comboBoxButton.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_PRESSED_INSIDE_COLOR]));
-
-                    DrawRectangleRec(click, GetColor(style[COMBOBOX_PRESSED_LIST_BORDER_COLOR]));
-                    DrawRectangle((int)(click.x + style[COMBOBOX_BORDER_WIDTH]), (int)(click.y + style[COMBOBOX_BORDER_WIDTH]) , (int)(click.width - (2*style[COMBOBOX_BORDER_WIDTH])), (int)(click.height - (2*style[COMBOBOX_BORDER_WIDTH])), GetColor(style[COMBOBOX_PRESSED_LIST_INSIDE_COLOR]));
-                    DrawText(FormatText("%i/%i", comboActive + 1, comboNum), click.x + ((click.width/2) - (MeasureText(FormatText("%i/%i", comboActive + 1, comboNum), style[GLOBAL_TEXT_FONTSIZE])/2)), click.y + ((click.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_PRESSED_LIST_TEXT_COLOR]));
-                    DrawText(comboText[i], comboBoxButton.x + ((comboBoxButton.width/2) - (MeasureText(comboText[i], style[GLOBAL_TEXT_FONTSIZE])/2)), comboBoxButton.y + ((comboBoxButton.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[COMBOBOX_PRESSED_TEXT_COLOR]));
-                } break;
-                default: break;
-            }
-
-            //DrawText(comboText[i], comboBoxButton.x + ((comboBoxButton.width/2) - (MeasureText(comboText[i], style[]globalTextFontSize)/2)), comboBoxButton.y + ((comboBoxButton.height/2) - (style[]globalTextFontSize/2)), style[]globalTextFontSize, COMBOBOX_PRESSED_TEXT_COLOR);
-            //--------------------------------------------------------------------
-        }
-    }
-
-    if (CheckCollisionPointRec(GetMousePosition(), bounds) || CheckCollisionPointRec(GetMousePosition(), click))
-    {
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        {
-           comboActive += 1;
-           if (comboActive >= comboNum) comboActive = 0;
-        }
-    }
-
-    return comboActive;
-}
-
-// Check Box element, returns true when active
-RAYGUIDEF bool GuiCheckBox(Rectangle checkBoxBounds, const char *text, bool checked)
-{
-    CheckBoxState checkBoxState = CHECKBOX_STATUS;
-    Vector2 mousePoint = GetMousePosition();
+    GuiControlState state = guiState;
 
     // Update control
     //--------------------------------------------------------------------
-    if (CheckCollisionPointRec(mousePoint, checkBoxBounds))
+    if (state != DISABLED)
     {
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) checkBoxState = CHECKBOX_PRESSED;
-        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        Vector2 mousePoint = GetMousePosition();
+
+        // Check checkbox state
+        if (CheckCollisionPointRec(mousePoint, bounds))
         {
-            checkBoxState = CHECKBOX_STATUS;
-            checked = !checked;
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) checked = !checked;
+            else state = FOCUSED;
         }
-        else checkBoxState = CHECKBOX_HOVER;
     }
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    switch (checkBoxState)
+    switch (state)
     {
-        case CHECKBOX_HOVER:
+        case NORMAL:
         {
-            DrawRectangleRec(checkBoxBounds, GetColor(style[CHECKBOX_HOVER_BORDER_COLOR]));
-            DrawRectangle((int)(checkBoxBounds.x + style[TOGGLE_BORDER_WIDTH]), (int)(checkBoxBounds.y + style[TOGGLE_BORDER_WIDTH]), (int)(checkBoxBounds.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(checkBoxBounds.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[CHECKBOX_HOVER_INSIDE_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[CHECKBOX_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[CHECKBOX_BASE_COLOR_NORMAL]));
+            if (checked) DrawRectangle(bounds.x + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING],
+                                       bounds.y + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING], 
+                                       bounds.width - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), 
+                                       bounds.height - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), GetColor(style[CHECKBOX_BASE_COLOR_PRESSED]));        
         } break;
-        case CHECKBOX_STATUS:
+        case FOCUSED:
         {
-            DrawRectangleRec(checkBoxBounds, GetColor(style[CHECKBOX_DEFAULT_BORDER_COLOR]));
-            DrawRectangle((int)(checkBoxBounds.x + style[TOGGLE_BORDER_WIDTH]), (int)(checkBoxBounds.y + style[TOGGLE_BORDER_WIDTH]), (int)(checkBoxBounds.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(checkBoxBounds.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[CHECKBOX_DEFAULT_INSIDE_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[CHECKBOX_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[CHECKBOX_BASE_COLOR_NORMAL]));
+            if (checked) DrawRectangle(bounds.x + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING],
+                                       bounds.y + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING], 
+                                       bounds.width - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), 
+                                       bounds.height - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), GetColor(style[CHECKBOX_BASE_COLOR_FOCUSED]));           
         } break;
-        case CHECKBOX_PRESSED:
+        case PRESSED:
         {
-            DrawRectangleRec(checkBoxBounds, GetColor(style[CHECKBOX_CLICK_BORDER_COLOR]));
-            DrawRectangle((int)(checkBoxBounds.x + style[TOGGLE_BORDER_WIDTH]), (int)(checkBoxBounds.y + style[TOGGLE_BORDER_WIDTH]), (int)(checkBoxBounds.width - (2*style[TOGGLE_BORDER_WIDTH])), (int)(checkBoxBounds.height - (2*style[TOGGLE_BORDER_WIDTH])), GetColor(style[CHECKBOX_CLICK_INSIDE_COLOR]));
+            DrawRectangleRec(bounds, GetColor(style[CHECKBOX_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[CHECKBOX_BASE_COLOR_NORMAL]));
+            if (checked) DrawRectangle(bounds.x + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING],
+                                       bounds.y + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING], 
+                                       bounds.width - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), 
+                                       bounds.height - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), GetColor(style[CHECKBOX_BASE_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[DEFAULT_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[TOGGLE_BORDER_WIDTH], bounds.y + style[TOGGLE_BORDER_WIDTH], bounds.width - 2*style[TOGGLE_BORDER_WIDTH], bounds.height - 2*style[TOGGLE_BORDER_WIDTH], GetColor(style[CHECKBOX_BASE_COLOR_DISABLED]));
+            if (checked) DrawRectangle(bounds.x + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING],
+                                       bounds.y + style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING], 
+                                       bounds.width - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), 
+                                       bounds.height - 2*(style[CHECKBOX_BORDER_WIDTH] + style[CHECKBOX_INNER_PADDING]), GetColor(style[DEFAULT_TEXT_COLOR_DISABLED]));
         } break;
         default: break;
-    }
-
-    if (text != NULL) DrawText(text, checkBoxBounds.x + checkBoxBounds.width + 2, checkBoxBounds.y + ((checkBoxBounds.height/2) - (style[GLOBAL_TEXT_FONTSIZE]/2) + 1), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[LABEL_TEXT_COLOR]));
-
-    if (checked)
-    {
-        DrawRectangle((int)(checkBoxBounds.x + style[CHECKBOX_INSIDE_WIDTH]), (int)(checkBoxBounds.y + style[CHECKBOX_INSIDE_WIDTH]), (int)(checkBoxBounds.width - (2*style[CHECKBOX_INSIDE_WIDTH])), (int)(checkBoxBounds.height - (2*style[CHECKBOX_INSIDE_WIDTH])), GetColor(style[CHECKBOX_STATUS_ACTIVE_COLOR]));
     }
     //--------------------------------------------------------------------
 
     return checked;
 }
 
-// Slider element, returns selected value
-RAYGUIDEF float GuiSlider(Rectangle bounds, float value, float minValue, float maxValue)
+// Combo Box control, returns selected item index
+RAYGUIDEF int GuiComboBox(Rectangle bounds, const char **text, int count, int active)
 {
-    SliderState sliderState = SLIDER_DEFAULT;
-    float buttonTravelDistance = 0;
-    float sliderPos = 0;
-    Vector2 mousePoint = GetMousePosition();
+    GuiControlState state = guiState;
+    
+    bounds.width -= (style[COMBOBOX_SELECTOR_WIDTH] + style[COMBOBOX_BUTTON_PADDING]);
+        
+    Rectangle selector = { bounds.x + bounds.width + style[COMBOBOX_BUTTON_PADDING], 
+                               bounds.y, style[COMBOBOX_SELECTOR_WIDTH], bounds.height };
+    
+    if (active < 0) active = 0;
+    else if (active > count - 1) active = count - 1;
+
+    int textWidth = MeasureText(text[active], style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
+
+    if (bounds.width < textWidth) bounds.width = textWidth;
+    if (bounds.height < textHeight) bounds.height = textHeight;
 
     // Update control
     //--------------------------------------------------------------------
-    if (value < minValue) value = minValue;
-    else if (value >= maxValue) value = maxValue;
-
-    sliderPos = (value - minValue)/(maxValue - minValue);
-
-    Rectangle sliderButton;
-    sliderButton.width = ((int)(bounds.width - (2*style[SLIDER_BUTTON_BORDER_WIDTH]))/10 - 8);
-    sliderButton.height =((int)(bounds.height - (2*style[SLIDER_BORDER_WIDTH] + 2*style[SLIDER_BUTTON_BORDER_WIDTH])));
-
-    float sliderButtonMinPos = bounds.x + style[SLIDER_BORDER_WIDTH] + style[SLIDER_BUTTON_BORDER_WIDTH];
-    float sliderButtonMaxPos = bounds.x + bounds.width - (style[SLIDER_BORDER_WIDTH] + style[SLIDER_BUTTON_BORDER_WIDTH] + sliderButton.width);
-
-    buttonTravelDistance = sliderButtonMaxPos - sliderButtonMinPos;
-
-    sliderButton.x = ((int)(bounds.x + style[SLIDER_BORDER_WIDTH] + style[SLIDER_BUTTON_BORDER_WIDTH]) + (sliderPos * buttonTravelDistance));
-    sliderButton.y = ((int)(bounds.y + style[SLIDER_BORDER_WIDTH] + style[SLIDER_BUTTON_BORDER_WIDTH]));
-
-    if (CheckCollisionPointRec(mousePoint, bounds))
+    if (state != DISABLED)
     {
-        sliderState = SLIDER_HOVER;
+        Vector2 mousePoint = GetMousePosition();
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) sliderState = SLIDER_ACTIVE;
-
-        if ((sliderState == SLIDER_ACTIVE) && (IsMouseButtonDown(MOUSE_LEFT_BUTTON)))
+        if (CheckCollisionPointRec(mousePoint, bounds) || 
+            CheckCollisionPointRec(mousePoint, selector))
         {
-            sliderButton.x = mousePoint.x - sliderButton.width/2;
-
-            if (sliderButton.x <= sliderButtonMinPos) sliderButton.x = sliderButtonMinPos;
-            else if (sliderButton.x >= sliderButtonMaxPos) sliderButton.x = sliderButtonMaxPos;
-
-            sliderPos = (sliderButton.x - sliderButtonMinPos)/buttonTravelDistance;
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) 
+            {
+                active += 1;
+                if (active >= count) active = 0;
+            }
+            else state = FOCUSED;
         }
     }
-    else sliderState = SLIDER_DEFAULT;
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    DrawRectangleRec(bounds, GetColor(style[SLIDER_BORDER_COLOR]));
-    DrawRectangle((int)(bounds.x + style[SLIDER_BORDER_WIDTH]), (int)(bounds.y + style[SLIDER_BORDER_WIDTH]), (int)(bounds.width - (2*style[SLIDER_BORDER_WIDTH])), (int)(bounds.height - (2*style[SLIDER_BORDER_WIDTH])), GetColor(style[SLIDER_INSIDE_COLOR]));
-
-    switch (sliderState)
+    switch (state)
     {
-        case SLIDER_DEFAULT: DrawRectangleRec(sliderButton, GetColor(style[SLIDER_DEFAULT_COLOR])); break;
-        case SLIDER_HOVER: DrawRectangleRec(sliderButton, GetColor(style[SLIDER_HOVER_COLOR])); break;
-        case SLIDER_ACTIVE: DrawRectangleRec(sliderButton, GetColor(style[SLIDER_ACTIVE_COLOR])); break;
+        case NORMAL:
+        {
+            DrawRectangleRec(bounds, GetColor(style[COMBOBOX_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[COMBOBOX_BORDER_WIDTH], bounds.y + style[COMBOBOX_BORDER_WIDTH], bounds.width - 2*style[COMBOBOX_BORDER_WIDTH], bounds.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_NORMAL]));
+
+            DrawRectangleRec(selector, GetColor(style[COMBOBOX_BORDER_COLOR_NORMAL]));
+            DrawRectangle(selector.x + style[COMBOBOX_BORDER_WIDTH], selector.y + style[COMBOBOX_BORDER_WIDTH], selector.width - 2*style[COMBOBOX_BORDER_WIDTH], selector.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_NORMAL]));
+            
+            DrawText(text[active], bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_NORMAL]));   
+            DrawText(FormatText("%i/%i", active + 1, count), 
+                     selector.x + selector.width/2 - (MeasureText(FormatText("%i/%i", active + 1, count), 
+                     style[DEFAULT_TEXT_SIZE])/2), selector.y + selector.height/2 - style[DEFAULT_TEXT_SIZE]/2, 
+                     style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_NORMAL]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[COMBOBOX_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[COMBOBOX_BORDER_WIDTH], bounds.y + style[COMBOBOX_BORDER_WIDTH], bounds.width - 2*style[COMBOBOX_BORDER_WIDTH], bounds.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_FOCUSED]));
+
+            DrawRectangleRec(selector, GetColor(style[COMBOBOX_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(selector.x + style[COMBOBOX_BORDER_WIDTH], selector.y + style[COMBOBOX_BORDER_WIDTH], selector.width - 2*style[COMBOBOX_BORDER_WIDTH], selector.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_FOCUSED]));
+            
+            DrawText(text[active], bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_FOCUSED]));   
+            DrawText(FormatText("%i/%i", active + 1, count), 
+                     selector.x + selector.width/2 - (MeasureText(FormatText("%i/%i", active + 1, count), 
+                     style[DEFAULT_TEXT_SIZE])/2), selector.y + selector.height/2 - style[DEFAULT_TEXT_SIZE]/2, 
+                     style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[COMBOBOX_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[COMBOBOX_BORDER_WIDTH], bounds.y + style[COMBOBOX_BORDER_WIDTH], bounds.width - 2*style[COMBOBOX_BORDER_WIDTH], bounds.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_PRESSED]));
+
+            DrawRectangleRec(selector, GetColor(style[COMBOBOX_BORDER_COLOR_PRESSED]));
+            DrawRectangle(selector.x + style[COMBOBOX_BORDER_WIDTH], selector.y + style[COMBOBOX_BORDER_WIDTH], selector.width - 2*style[COMBOBOX_BORDER_WIDTH], selector.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_PRESSED]));
+            
+            DrawText(text[active], bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_PRESSED]));   
+            DrawText(FormatText("%i/%i", active + 1, count), 
+                     selector.x + selector.width/2 - (MeasureText(FormatText("%i/%i", active + 1, count), 
+                     style[DEFAULT_TEXT_SIZE])/2), selector.y + selector.height/2 - style[DEFAULT_TEXT_SIZE]/2, 
+                     style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[COMBOBOX_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[COMBOBOX_BORDER_WIDTH], bounds.y + style[COMBOBOX_BORDER_WIDTH], bounds.width - 2*style[COMBOBOX_BORDER_WIDTH], bounds.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_DISABLED]));
+
+            DrawRectangleRec(selector, GetColor(style[COMBOBOX_BORDER_COLOR_DISABLED]));
+            DrawRectangle(selector.x + style[COMBOBOX_BORDER_WIDTH], selector.y + style[COMBOBOX_BORDER_WIDTH], selector.width - 2*style[COMBOBOX_BORDER_WIDTH], selector.height - 2*style[COMBOBOX_BORDER_WIDTH], GetColor(style[COMBOBOX_BASE_COLOR_DISABLED]));
+            
+            DrawText(text[active], bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_DISABLED]));
+            DrawText(FormatText("%i/%i", active + 1, count), 
+                     selector.x + selector.width/2 - (MeasureText(FormatText("%i/%i", active + 1, count), 
+                     style[DEFAULT_TEXT_SIZE])/2), selector.y + selector.height/2 - style[DEFAULT_TEXT_SIZE]/2, 
+                     style[DEFAULT_TEXT_SIZE], GetColor(style[COMBOBOX_TEXT_COLOR_DISABLED]));
+        } break;
         default: break;
     }
     //--------------------------------------------------------------------
 
-    return minValue + (maxValue - minValue)*sliderPos;
+    return active;
 }
 
-// Slider Bar element, returns selected value
-RAYGUIDEF float GuiSliderBar(Rectangle bounds, float value, float minValue, float maxValue)
+// Dropdown Box control, returns selected item
+RAYGUIDEF int GuiDropdownBox(Rectangle bounds, const char **text, int count, int active)
 {
-    SliderState sliderState = SLIDER_DEFAULT;
-    Vector2 mousePoint = GetMousePosition();
-    float fixedValue;
-    float fixedMinValue;
+    #define DROPDOWNBOX_PADDING 1
+    
+    GuiControlState state = guiState;
+    bool dropActive = false;
+   
+    int textWidth = MeasureText(text[active], style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
 
-    fixedValue = value - minValue;
-    maxValue = maxValue - minValue;
-    fixedMinValue = 0;
-
+    if (bounds.width < textWidth) bounds.width = textWidth;
+    if (bounds.height < textHeight) bounds.height = textHeight;
+    
     // Update control
     //--------------------------------------------------------------------
-    if (fixedValue <= fixedMinValue) fixedValue = fixedMinValue;
-    else if (fixedValue >= maxValue) fixedValue = maxValue;
-
-    Rectangle sliderBar;
-
-    sliderBar.x = bounds.x + style[SLIDER_BORDER_WIDTH];
-    sliderBar.y = bounds.y + style[SLIDER_BORDER_WIDTH];
-    sliderBar.width = ((fixedValue*((float)bounds.width - 2*style[SLIDER_BORDER_WIDTH]))/(maxValue - fixedMinValue));
-    sliderBar.height = bounds.height - 2*style[SLIDER_BORDER_WIDTH];
-
-    if (CheckCollisionPointRec(mousePoint, bounds))
+    if (state != DISABLED)
     {
-        sliderState = SLIDER_HOVER;
-
+        Vector2 mousePoint = GetMousePosition();
+        
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
         {
-            sliderState = SLIDER_ACTIVE;
+            bounds.height *= (count + 1);
+            dropActive = true;
+        }
 
-            sliderBar.width = (mousePoint.x - bounds.x - style[SLIDER_BORDER_WIDTH]);
-
-            if (mousePoint.x <= (bounds.x + style[SLIDER_BORDER_WIDTH])) sliderBar.width = 0;
-            else if (mousePoint.x >= (bounds.x + bounds.width - style[SLIDER_BORDER_WIDTH])) sliderBar.width = bounds.width - 2*style[SLIDER_BORDER_WIDTH];
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else state = FOCUSED;
+        }
+        else state = NORMAL;
+        
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
+            for (int i = 1; i < (count + 1); i++)
+            {
+                if (CheckCollisionPointRec(mousePoint, (Rectangle){ bounds.x, bounds.y + i*bounds.height, bounds.width, bounds.height })) active = i - 1;
+            }
         }
     }
-    else sliderState = SLIDER_DEFAULT;
-
-    fixedValue = ((float)sliderBar.width*(maxValue - fixedMinValue))/((float)bounds.width - 2*style[SLIDER_BORDER_WIDTH]);
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    DrawRectangleRec(bounds, GetColor(style[SLIDERBAR_BORDER_COLOR]));
-    DrawRectangle((int)(bounds.x + style[SLIDER_BORDER_WIDTH]), (int)(bounds.y + style[SLIDER_BORDER_WIDTH]) , (int)(bounds.width - (2*style[SLIDER_BORDER_WIDTH])), (int)(bounds.height - (2*style[SLIDER_BORDER_WIDTH])), GetColor(style[SLIDERBAR_INSIDE_COLOR]));
-
-    switch (sliderState)
+    switch (state)
     {
-        case SLIDER_DEFAULT: DrawRectangleRec(sliderBar, GetColor(style[SLIDERBAR_DEFAULT_COLOR])); break;
-        case SLIDER_HOVER: DrawRectangleRec(sliderBar, GetColor(style[SLIDERBAR_HOVER_COLOR])); break;
-        case SLIDER_ACTIVE: DrawRectangleRec(sliderBar, GetColor(style[SLIDERBAR_ACTIVE_COLOR])); break;
+        case NORMAL:
+        case FOCUSED:
+        {
+            if (dropActive) GuiListElement((Rectangle){ bounds.x, bounds.y, bounds.width, bounds.height/(count + 1) }, text[active], true);
+            else GuiListElement((Rectangle){ bounds.x, bounds.y, bounds.width, bounds.height }, text[active], true);
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleLinesEx(bounds, 1, GetColor(style[LISTVIEW_BORDER_COLOR_PRESSED]));
+            if (dropActive) GuiListElement((Rectangle){ bounds.x, bounds.y, bounds.width, bounds.height/(count + 1) }, text[active], true);
+            else GuiListElement((Rectangle){ bounds.x, bounds.y, bounds.width, bounds.height }, text[active], true);
+
+            for(int i = 0; i < count; i++)
+            {
+                GuiListElement((Rectangle){ bounds.x, bounds.y + bounds.height/(count + 1)*(i+1) + DROPDOWNBOX_PADDING, bounds.width, bounds.height/(count + 1) - DROPDOWNBOX_PADDING }, text[i], false);
+            }
+            
+        } break;
+        case DISABLED:
+        {
+            GuiListElement((Rectangle){ bounds.x, bounds.y, bounds.width, bounds.height }, text[active], false);
+        } break;
         default: break;
     }
-
-    if (minValue < 0 && maxValue > 0) DrawRectangle((bounds.x + style[SLIDER_BORDER_WIDTH]) - (minValue*((bounds.width - (style[SLIDER_BORDER_WIDTH]*2))/maxValue)), sliderBar.y, 1, sliderBar.height, GetColor(style[SLIDERBAR_ZERO_LINE_COLOR]));
     //--------------------------------------------------------------------
+    
+    return active;
+}
+// Group Box control with title name
+RAYGUIDEF void GuiGroupBox(Rectangle bounds, const char *text)
+{
+    #define GROUPBOX_LINE_THICK    1
+    #define GROUPBOX_TEXT_PADDING 10
+    #define GROUPBOX_PADDING 2
+    
+    GuiControlState state = guiState;
+    
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL:
+        {
+        DrawRectangle(bounds.x, bounds.y, GROUPBOX_LINE_THICK, bounds.height, GuiLinesColor());
+        DrawRectangle(bounds.x, bounds.y + bounds.height, bounds.width + GROUPBOX_LINE_THICK, GROUPBOX_LINE_THICK, GuiLinesColor());
+        DrawRectangle(bounds.x + bounds.width, bounds.y, GROUPBOX_LINE_THICK, bounds.height, GuiLinesColor());
+        DrawRectangle(bounds.x, bounds.y, GROUPBOX_TEXT_PADDING, GROUPBOX_LINE_THICK, GuiLinesColor());
+        DrawRectangle(bounds.x + 2*GROUPBOX_TEXT_PADDING + MeasureText(text, style[DEFAULT_TEXT_SIZE]), bounds.y, bounds.width - 2*GROUPBOX_TEXT_PADDING - MeasureText(text, style[DEFAULT_TEXT_SIZE]), GROUPBOX_LINE_THICK, GuiLinesColor());
 
-    return fixedValue + minValue;
+        DrawText(text, bounds.x + GROUPBOX_TEXT_PADDING + 2*GROUPBOX_PADDING, bounds.y - 2*GROUPBOX_PADDING - GROUPBOX_LINE_THICK, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_NORMAL]));
+        } break;
+        case FOCUSED: break; // NOTE: State not used on this control
+        case PRESSED: break; // NOTE: State not used on this control
+        case DISABLED:
+        {
+            DrawRectangle(bounds.x, bounds.y, GROUPBOX_LINE_THICK, bounds.height, GetColor(style[DEFAULT_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x, bounds.y + bounds.height, bounds.width + GROUPBOX_LINE_THICK, GROUPBOX_LINE_THICK, GetColor(style[DEFAULT_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + bounds.width, bounds.y, GROUPBOX_LINE_THICK, bounds.height, GetColor(style[DEFAULT_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x, bounds.y, GROUPBOX_TEXT_PADDING, GROUPBOX_LINE_THICK, GetColor(style[DEFAULT_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + 2*GROUPBOX_TEXT_PADDING + MeasureText(text, style[DEFAULT_TEXT_SIZE]), bounds.y, bounds.width - 2*GROUPBOX_TEXT_PADDING - MeasureText(text, style[DEFAULT_TEXT_SIZE]), GROUPBOX_LINE_THICK, GetColor(style[DEFAULT_BORDER_COLOR_DISABLED]));
+
+            DrawText(text, bounds.x + GROUPBOX_TEXT_PADDING + 2*GROUPBOX_PADDING, bounds.y - 2*GROUPBOX_PADDING - GROUPBOX_LINE_THICK, style[DEFAULT_TEXT_SIZE], GetColor(style[LABEL_TEXT_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+    
+    
 }
 
-// Progress Bar element, shows current progress value
-RAYGUIDEF void GuiProgressBar(Rectangle bounds, float value)
+// Text Box control, updates input text
+// NOTE: Requires static variables: framesCounter
+RAYGUIDEF void GuiTextBox(Rectangle bounds, char *text, int textSize)
 {
-    if (value > 1.0f) value = 1.0f;
-    else if (value < 0.0f) value = 0.0f;
+    #define GUITEXTBOX_PADDING 4
+    #define GUITEXTBOX_LINE_PADDING 4
 
-    Rectangle progressBar = { bounds.x + style[PROGRESSBAR_BORDER_WIDTH], bounds.y + style[PROGRESSBAR_BORDER_WIDTH], bounds.width - (style[PROGRESSBAR_BORDER_WIDTH]*2), bounds.height - (style[PROGRESSBAR_BORDER_WIDTH] * 2)};
-    Rectangle progressValue = { bounds.x + style[PROGRESSBAR_BORDER_WIDTH], bounds.y + style[PROGRESSBAR_BORDER_WIDTH], value * (bounds.width - (style[PROGRESSBAR_BORDER_WIDTH]*2)), bounds.height - (style[PROGRESSBAR_BORDER_WIDTH] * 2)};
+    GuiControlState state = guiState;
+    static int framesCounter = 0;         // Required for blinking cursor
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        #define KEY_BACKSPACE_TEXT    259     // GLFW BACKSPACE: 3 + 256
+
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            state = FOCUSED;        // NOTE: PRESSED state is not used on this control
+
+            framesCounter++;
+            
+            int key = GetKeyPressed();
+            int keyCount = strlen(text);
+            
+            // NOTE: Only allow keys in range [32..125]
+            if ((key >= 32) && (key <= 125) && (keyCount < textSize))
+            {
+                text[keyCount] = (char)key;
+                keyCount++;
+            }
+            
+            if (IsKeyPressed(KEY_BACKSPACE_TEXT))
+            {
+                keyCount--;
+                text[keyCount] = '\0';
+                
+                if (keyCount < 0) keyCount = 0;
+            }
+        }
+    }
+    //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    DrawRectangleRec(bounds, GetColor(style[PROGRESSBAR_BORDER_COLOR]));
-    DrawRectangleRec(progressBar, GetColor(style[PROGRESSBAR_INSIDE_COLOR]));
-    DrawRectangleRec(progressValue, GetColor(style[PROGRESSBAR_PROGRESS_COLOR]));
+    switch (state)
+    {
+        case NORMAL:
+        {
+            DrawRectangleRec(bounds, GetColor(style[TEXTBOX_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[TEXTBOX_BORDER_WIDTH], bounds.y + style[TEXTBOX_BORDER_WIDTH], bounds.width - 2*style[TEXTBOX_BORDER_WIDTH], bounds.height - 2*style[TEXTBOX_BORDER_WIDTH], GetColor(style[TEXTBOX_BASE_COLOR_NORMAL]));
+            DrawText(text, bounds.x + GUITEXTBOX_PADDING, bounds.y + style[TEXTBOX_BORDER_WIDTH] + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TEXTBOX_TEXT_COLOR_NORMAL]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[TEXTBOX_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[TEXTBOX_BORDER_WIDTH], bounds.y + style[TEXTBOX_BORDER_WIDTH], bounds.width - 2*style[TEXTBOX_BORDER_WIDTH], bounds.height - 2*style[TEXTBOX_BORDER_WIDTH], GetColor(style[TEXTBOX_BASE_COLOR_FOCUSED]));
+            DrawText(text, bounds.x + GUITEXTBOX_PADDING, bounds.y + style[TEXTBOX_BORDER_WIDTH] + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TEXTBOX_TEXT_COLOR_PRESSED]));
+            
+            if ((framesCounter/20)%2 == 0) DrawRectangle(bounds.x + GUITEXTBOX_LINE_PADDING + MeasureText(text, style[DEFAULT_TEXT_SIZE]), bounds.y + GUITEXTBOX_LINE_PADDING/2, 1, bounds.height - GUITEXTBOX_LINE_PADDING, GetColor(style[TEXTBOX_BORDER_COLOR_FOCUSED]));
+        } break;
+        case PRESSED: break; // NOTE: State not used on this control
+        case DISABLED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[TEXTBOX_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[TEXTBOX_BORDER_WIDTH], bounds.y + style[TEXTBOX_BORDER_WIDTH], bounds.width - 2*style[TEXTBOX_BORDER_WIDTH], bounds.height - 2*style[TEXTBOX_BORDER_WIDTH], GetColor(style[TEXTBOX_BASE_COLOR_DISABLED]));
+            DrawText(text, bounds.x + GUITEXTBOX_PADDING, bounds.y + style[TEXTBOX_BORDER_WIDTH] + bounds.height/2 - style[DEFAULT_TEXT_SIZE]/2, style[DEFAULT_TEXT_SIZE], GetColor(style[TEXTBOX_TEXT_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
     //--------------------------------------------------------------------
 }
 
-// Spinner element, returns selected value
+// Slider control, returns selected value
+RAYGUIDEF float GuiSlider(Rectangle bounds, float value, float minValue, float maxValue)
+{
+    #define GUISLIDER_SLIDER_LINE_THICK  1
+    
+    GuiControlState state = guiState;
+    
+    Rectangle slider = { bounds.x + (int)((value/(maxValue - minValue))*(bounds.width - 2*style[SLIDER_BORDER_WIDTH])) - style[SLIDER_SLIDER_WIDTH]/2,
+                         bounds.y + style[SLIDER_BORDER_WIDTH], style[SLIDER_SLIDER_WIDTH], bounds.height - 2*style[SLIDER_BORDER_WIDTH] };
+                         
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                state = PRESSED;
+                
+                // Get equivalent value and slider position from mousePoint.x
+                value = (((maxValue - minValue)*(mousePoint.x - (float)bounds.x))/(float)bounds.width) + minValue;
+                slider.x = bounds.x + (int)(((value - minValue)/(maxValue - minValue))*(bounds.width - 2*style[SLIDER_BORDER_WIDTH])) - slider.width/2;
+                
+                // Snap to limits if mouse down moved outside limits
+                //if (slider.x < (bounds.x + style[SLIDER_BORDER_WIDTH])) slider.x = bounds.x + style[SLIDER_BORDER_WIDTH];
+                //else if ((slider.x + slider.width) > (bounds.x + bounds.width - 2*style[SLIDER_BORDER_WIDTH])) slider.x = (bounds.x + bounds.width - 2*style[SLIDER_BORDER_WIDTH]) - slider.width;
+            }
+            else state = FOCUSED;
+        }
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL: 
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDER_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[SLIDER_BORDER_WIDTH], bounds.y + style[SLIDER_BORDER_WIDTH], bounds.width - 2*style[SLIDER_BORDER_WIDTH], bounds.height - 2*style[SLIDER_BORDER_WIDTH], GetColor(style[SLIDER_BASE_COLOR_NORMAL]));
+            
+            DrawRectangleRec(slider, GetColor(style[SLIDER_BASE_COLOR_PRESSED]));
+            DrawRectangle(slider.x + slider.width/2, slider.y, GUISLIDER_SLIDER_LINE_THICK, slider.height, GetColor(style[SLIDER_BORDER_COLOR_PRESSED]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDER_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[SLIDER_BORDER_WIDTH], bounds.y + style[SLIDER_BORDER_WIDTH], bounds.width - 2*style[SLIDER_BORDER_WIDTH], bounds.height - 2*style[SLIDER_BORDER_WIDTH], GetColor(style[SLIDER_BASE_COLOR_NORMAL]));
+            
+            DrawRectangleRec(slider, GetColor(style[SLIDER_BASE_COLOR_FOCUSED]));
+            DrawRectangle(slider.x + slider.width/2, slider.y, GUISLIDER_SLIDER_LINE_THICK, slider.height, GetColor(style[SLIDER_BORDER_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDER_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[SLIDER_BORDER_WIDTH], bounds.y + style[SLIDER_BORDER_WIDTH], bounds.width - 2*style[SLIDER_BORDER_WIDTH], bounds.height - 2*style[SLIDER_BORDER_WIDTH], GetColor(style[SLIDER_BASE_COLOR_NORMAL]));
+            
+            DrawRectangleRec(slider, GetColor(style[SLIDER_BASE_COLOR_PRESSED]));
+            DrawRectangle(slider.x + slider.width/2, slider.y, GUISLIDER_SLIDER_LINE_THICK, slider.height, GetColor(style[SLIDER_BORDER_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDER_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[SLIDER_BORDER_WIDTH], bounds.y + style[SLIDER_BORDER_WIDTH], bounds.width - 2*style[SLIDER_BORDER_WIDTH], bounds.height - 2*style[SLIDER_BORDER_WIDTH], GetColor(style[SLIDER_BASE_COLOR_DISABLED]));
+            DrawRectangleRec(slider, GetColor(style[DEFAULT_TEXT_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+
+    return value;
+}
+
+// Slider Bar control, returns selected value
+RAYGUIDEF float GuiSliderBar(Rectangle bounds, float value, float minValue, float maxValue)
+{
+    GuiControlState state = guiState;
+    
+    Rectangle slider = { bounds.x + style[SLIDERBAR_BORDER_WIDTH], bounds.y + style[SLIDERBAR_BORDER_WIDTH] + style[SLIDERBAR_INNER_PADDING], 
+                         (int)(((value - minValue)/(maxValue - minValue))*(bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH])),
+                         bounds.height - 2*style[SLIDERBAR_BORDER_WIDTH] - 2*style[SLIDERBAR_INNER_PADDING] };
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                state = PRESSED;
+                
+                // Get equivalent value and slider width from mousePoint.x
+                value = (maxValue - minValue)*((mousePoint.x - (float)bounds.x)/(float)bounds.width) + minValue;
+                slider.width = (int)(((value - minValue)/(maxValue - minValue))*(bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH]));
+            }
+            else state = FOCUSED;
+        }
+        
+        if (slider.width > bounds.width) slider.width = bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH];
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDERBAR_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[SLIDERBAR_BORDER_WIDTH], bounds.y + style[SLIDERBAR_BORDER_WIDTH], bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH], bounds.height - 2*style[SLIDERBAR_BORDER_WIDTH], GetColor(style[SLIDERBAR_BASE_COLOR_NORMAL]));
+            DrawRectangleRec(slider, GetColor(style[SLIDERBAR_BASE_COLOR_PRESSED]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDERBAR_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(bounds.x + style[SLIDERBAR_BORDER_WIDTH], bounds.y + style[SLIDERBAR_BORDER_WIDTH], bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH], bounds.height - 2*style[SLIDERBAR_BORDER_WIDTH], GetColor(style[SLIDERBAR_BASE_COLOR_NORMAL]));
+            DrawRectangleRec(slider, GetColor(style[SLIDERBAR_BASE_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDERBAR_BORDER_COLOR_PRESSED]));
+            DrawRectangle(bounds.x + style[SLIDERBAR_BORDER_WIDTH], bounds.y + style[SLIDERBAR_BORDER_WIDTH], bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH], bounds.height - 2*style[SLIDERBAR_BORDER_WIDTH], GetColor(style[SLIDERBAR_BASE_COLOR_NORMAL]));
+            DrawRectangleRec(slider, GetColor(style[SLIDERBAR_BASE_COLOR_PRESSED])); 
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleRec(bounds, GetColor(style[SLIDERBAR_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[SLIDERBAR_BORDER_WIDTH], bounds.y + style[SLIDERBAR_BORDER_WIDTH], bounds.width - 2*style[SLIDERBAR_BORDER_WIDTH], bounds.height - 2*style[SLIDERBAR_BORDER_WIDTH], GetColor(style[SLIDER_BASE_COLOR_DISABLED]));
+            DrawRectangleRec(slider, GetColor(style[DEFAULT_TEXT_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }    
+    //--------------------------------------------------------------------
+
+    return value;
+}
+
+// Progress Bar control, shows current progress value
+RAYGUIDEF float GuiProgressBar(Rectangle bounds, float value, float minValue, float maxValue)
+{
+    GuiControlState state = guiState;
+    
+    Rectangle progress = { bounds.x + style[PROGRESSBAR_BORDER_WIDTH], 
+                           bounds.y + style[PROGRESSBAR_BORDER_WIDTH] + style[PROGRESSBAR_INNER_PADDING], 
+                           0, // TODO
+                           bounds.height - 2*style[PROGRESSBAR_BORDER_WIDTH] - 2*style[PROGRESSBAR_INNER_PADDING] };
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        progress.width = (int)(value/(maxValue - minValue)*(float)(bounds.width - 2*style[PROGRESSBAR_BORDER_WIDTH]));
+
+        //if (CheckCollisionPointRec(mousePoint, bounds)) state = FOCUSED;      // State not required on ProgressBar
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL:
+        {
+            DrawRectangleRec(bounds, GetColor(style[PROGRESSBAR_BORDER_COLOR_NORMAL]));
+            DrawRectangle(bounds.x + style[PROGRESSBAR_BORDER_WIDTH], bounds.y + style[PROGRESSBAR_BORDER_WIDTH], bounds.width - 2*style[PROGRESSBAR_BORDER_WIDTH], bounds.height - 2*style[PROGRESSBAR_BORDER_WIDTH], GetColor(style[DEFAULT_BACKGROUND_COLOR]));
+            DrawRectangleRec(progress, GetColor(style[PROGRESSBAR_BASE_COLOR_NORMAL]));
+        } break;
+        case FOCUSED: break;    // NOTE: State not used on this control
+        case PRESSED: break;    // NOTE: State not used on this control
+        case DISABLED: 
+        {
+            DrawRectangleRec(bounds, GetColor(style[PROGRESSBAR_BORDER_COLOR_DISABLED]));
+            DrawRectangle(bounds.x + style[PROGRESSBAR_BORDER_WIDTH], bounds.y + style[PROGRESSBAR_BORDER_WIDTH], bounds.width - 2*style[PROGRESSBAR_BORDER_WIDTH], bounds.height - 2*style[PROGRESSBAR_BORDER_WIDTH], GetColor(style[DEFAULT_BACKGROUND_COLOR]));
+            DrawRectangleRec(progress, GetColor(style[PROGRESSBAR_BASE_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }    
+    //--------------------------------------------------------------------
+
+    return value;
+}
+
+// Spinner control, returns selected value
 // NOTE: Requires static variables: framesCounter, valueSpeed - ERROR!
 RAYGUIDEF int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
 {
-    SpinnerState spinnerState = SPINNER_DEFAULT;
-    Rectangle labelBoxBound = { bounds.x + bounds.width/4 + 1, bounds.y, bounds.width/2, bounds.height };
-    Rectangle leftButtonBound = { bounds.x, bounds.y, bounds.width/4, bounds.height };
-    Rectangle rightButtonBound = { bounds.x + bounds.width - bounds.width/4 + 1, bounds.y, bounds.width/4, bounds.height };
-    Vector2 mousePoint = GetMousePosition();
-
-    int textWidth = MeasureText(FormatText("%i", value), style[GLOBAL_TEXT_FONTSIZE]);
-    //int textHeight = style[GLOBAL_TEXT_FONTSIZE];     // Unused variable
-
-    int buttonSide = 0;
-
+    GuiControlState state = guiState;
+    
     static int framesCounter = 0;
     static bool valueSpeed = false;;
+    
+    Rectangle spinner = { bounds.x + style[SPINNER_BUTTONS_WIDTH] + style[SPINNER_BUTTON_PADDING], bounds.y, bounds.width - 2*(style[SPINNER_BUTTONS_WIDTH] + style[SPINNER_BUTTON_PADDING]), bounds.height };
+    Rectangle leftButtonBound = { bounds.x, bounds.y, style[SPINNER_BUTTONS_WIDTH], bounds.height };
+    Rectangle rightButtonBound = { bounds.x + bounds.width - style[SPINNER_BUTTONS_WIDTH], bounds.y, style[SPINNER_BUTTONS_WIDTH], bounds.height };
 
-    //if (comboBoxButton.width < textWidth) comboBoxButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
-    //if (comboBoxButton.height < textHeight) comboBoxButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
+    int textWidth = MeasureText(FormatText("%i", value), style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
+
+    if (bounds.width < textWidth) bounds.width = textWidth;
+    if (bounds.height < textHeight) bounds.height = textHeight;
 
     // Update control
     //--------------------------------------------------------------------
-    if (CheckCollisionPointRec(mousePoint, leftButtonBound) || CheckCollisionPointRec(mousePoint, rightButtonBound) || CheckCollisionPointRec(mousePoint, labelBoxBound))
+    if (state != DISABLED)
     {
-        if (IsKeyDown(KEY_LEFT))
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, leftButtonBound))
         {
-            spinnerState = SPINNER_PRESSED;
-            buttonSide = 1;
+            state = FOCUSED;
 
-            if (value > minValue) value -= 1;
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                state = PRESSED;
+                 
+                if (!valueSpeed)
+                {
+                    if (value > minValue) value--;
+                    valueSpeed = true;
+                }
+                else framesCounter++;
+
+                if (value > minValue)
+                {
+                    if (framesCounter >= 30) value -= 1;
+                }
+            }
         }
-        else if (IsKeyDown(KEY_RIGHT))
+        else if (CheckCollisionPointRec(mousePoint, rightButtonBound))
         {
-            spinnerState = SPINNER_PRESSED;
-            buttonSide = 2;
+            state = FOCUSED;
 
-            if (value < maxValue) value += 1;
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                state = PRESSED;
+                
+                if (!valueSpeed)
+                {
+                    if (value < maxValue) value++;
+                    valueSpeed = true;
+                }
+                else framesCounter++;
+
+                if (value < maxValue)
+                {
+                    if (framesCounter >= 30) value += 1;
+                }
+           }
         }
-    }
 
-    if (CheckCollisionPointRec(mousePoint, leftButtonBound))
-    {
-       buttonSide = 1;
-       spinnerState = SPINNER_HOVER;
-
-       if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-       {
-            if (!valueSpeed)
+        if (IsMouseButtonUp(MOUSE_LEFT_BUTTON))
+        {
+            valueSpeed = false;
+            framesCounter = 0;
+        }
+        
+        /*
+        if (CheckCollisionPointRec(mousePoint, leftButtonBound) || 
+            CheckCollisionPointRec(mousePoint, rightButtonBound) || 
+            CheckCollisionPointRec(mousePoint, spinner))
+        {
+            if (IsKeyDown(KEY_LEFT))
             {
-                if (value > minValue) value--;
-                valueSpeed = true;
+                state = PRESSED;
+                buttonSide = 1;
+
+                if (value > minValue) value -= 1;
             }
-            else framesCounter++;
-
-            spinnerState = SPINNER_PRESSED;
-
-            if (value > minValue)
+            else if (IsKeyDown(KEY_RIGHT))
             {
-                if (framesCounter >= 30) value -= 1;
+                state = PRESSED;
+                buttonSide = 2;
+
+                if (value < maxValue) value += 1;
             }
-       }
-    }
-    else if (CheckCollisionPointRec(mousePoint, rightButtonBound))
-    {
-        buttonSide = 2;
-        spinnerState = SPINNER_HOVER;
-
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-       {
-            if (!valueSpeed)
-            {
-                if (value < maxValue) value++;
-                valueSpeed = true;
-            }
-            else framesCounter++;
-
-            spinnerState = SPINNER_PRESSED;
-
-            if (value < maxValue)
-            {
-                if (framesCounter >= 30) value += 1;
-            }
-       }
-    }
-    else if (!CheckCollisionPointRec(mousePoint, labelBoxBound)) buttonSide = 0;
-
-    if (IsMouseButtonUp(MOUSE_LEFT_BUTTON))
-    {
-        valueSpeed = false;
-        framesCounter = 0;
+        }
+        */
     }
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    switch (spinnerState)
+    if (GuiButton(leftButtonBound, "-")) 
     {
-        case SPINNER_DEFAULT:
+        /*
+        if (!valueSpeed)
         {
-            DrawRectangleRec(leftButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
-            DrawRectangle(leftButtonBound.x + 2, leftButtonBound.y + 2, leftButtonBound.width - 4, leftButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
+            if (value > minValue) value--;
+            valueSpeed = true;
+        }
+        else framesCounter++;
 
-            DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
-            DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
+        if (value > minValue)
+        {
+            if (framesCounter >= 30) value -= 1;
+        }
+        */
+    }
+    else if (GuiButton(rightButtonBound, "+")) { }
 
-            DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR]));
-            DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR]));
-
-            DrawRectangleRec(labelBoxBound, GetColor(style[SPINNER_LABEL_BORDER_COLOR]));
-            DrawRectangle(labelBoxBound.x + 1, labelBoxBound.y + 1, labelBoxBound.width - 2, labelBoxBound.height - 2, GetColor(style[SPINNER_LABEL_INSIDE_COLOR]));
-
-            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_TEXT_COLOR]));
+    switch (state)
+    {
+        case NORMAL:
+        {
+            DrawRectangleRec(spinner, GetColor(style[SPINNER_BORDER_COLOR_NORMAL]));
+            DrawRectangle(spinner.x + style[SPINNER_BUTTON_PADDING], spinner.y + style[SPINNER_BUTTON_PADDING], spinner.width - style[SPINNER_BUTTON_PADDING]*2, spinner.height - style[SPINNER_BUTTON_PADDING]*2, GetColor(style[SPINNER_BASE_COLOR_NORMAL]));
+            DrawText(FormatText("%i", value), spinner.x + (spinner.width/2 - textWidth/2), spinner.y + (spinner.height/2 - (style[DEFAULT_TEXT_SIZE]/2)), style[DEFAULT_TEXT_SIZE], GetColor(style[SPINNER_TEXT_COLOR_NORMAL]));
         } break;
-        case SPINNER_HOVER:
+        case FOCUSED:
         {
-            if (buttonSide == 1)
-            {
-                DrawRectangleRec(leftButtonBound, GetColor(style[SPINNER_HOVER_BUTTON_BORDER_COLOR]));
-                DrawRectangle(leftButtonBound.x + 2, leftButtonBound.y + 2, leftButtonBound.width - 4, leftButtonBound.height - 4, GetColor(style[SPINNER_HOVER_BUTTON_INSIDE_COLOR]));
-
-                DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
-                DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
-
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_SYMBOL_COLOR]));
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR]));
-            }
-            else if (buttonSide == 2)
-            {
-                DrawRectangleRec(leftButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
-                DrawRectangle(leftButtonBound.x + 2, leftButtonBound.y + 2, leftButtonBound.width - 4, leftButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
-
-                DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_HOVER_BUTTON_BORDER_COLOR]));
-                DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_HOVER_BUTTON_INSIDE_COLOR]));
-
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR]));
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_SYMBOL_COLOR]));
-            }
-
-            DrawRectangleRec(labelBoxBound, GetColor(style[SPINNER_LABEL_BORDER_COLOR]));
-            DrawRectangle(labelBoxBound.x + 1, labelBoxBound.y + 1, labelBoxBound.width - 2, labelBoxBound.height - 2, GetColor(style[SPINNER_LABEL_INSIDE_COLOR]));
-
-            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_TEXT_COLOR]));
+            DrawRectangleRec(spinner, GetColor(style[SPINNER_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(spinner.x + style[SPINNER_BUTTON_PADDING], spinner.y + style[SPINNER_BUTTON_PADDING], spinner.width - style[SPINNER_BUTTON_PADDING]*2, spinner.height - style[SPINNER_BUTTON_PADDING]*2, GetColor(style[SPINNER_BASE_COLOR_FOCUSED]));
+            DrawText(FormatText("%i", value), spinner.x + (spinner.width/2 - textWidth/2), spinner.y + (spinner.height/2 - (style[DEFAULT_TEXT_SIZE]/2)), style[DEFAULT_TEXT_SIZE], GetColor(style[SPINNER_TEXT_COLOR_FOCUSED]));
         } break;
-        case SPINNER_PRESSED:
+        case PRESSED:
         {
-            if (buttonSide == 1)
-            {
-                DrawRectangleRec(leftButtonBound, GetColor(style[SPINNER_PRESSED_BUTTON_BORDER_COLOR]));
-                DrawRectangle(leftButtonBound.x + 2, leftButtonBound.y + 2, leftButtonBound.width - 4, leftButtonBound.height - 4, GetColor(style[SPINNER_PRESSED_BUTTON_INSIDE_COLOR]));
-
-                DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
-                DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
-
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_SYMBOL_COLOR]));
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR]));
-            }
-            else if (buttonSide == 2)
-            {
-                DrawRectangleRec(leftButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
-                DrawRectangle(leftButtonBound.x + 2, leftButtonBound.y + 2, leftButtonBound.width - 4, leftButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
-
-                DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_PRESSED_BUTTON_BORDER_COLOR]));
-                DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_PRESSED_BUTTON_INSIDE_COLOR]));
-
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR]));
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_SYMBOL_COLOR]));
-            }
-
-            DrawRectangleRec(labelBoxBound, GetColor(style[SPINNER_LABEL_BORDER_COLOR]));
-            DrawRectangle(labelBoxBound.x + 1, labelBoxBound.y + 1, labelBoxBound.width - 2, labelBoxBound.height - 2, GetColor(style[SPINNER_LABEL_INSIDE_COLOR]));
-
-            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_TEXT_COLOR]));
+            DrawRectangleRec(spinner, GetColor(style[SPINNER_BORDER_COLOR_PRESSED]));
+            DrawRectangle(spinner.x + style[SPINNER_BUTTON_PADDING], spinner.y + style[SPINNER_BUTTON_PADDING], spinner.width - style[SPINNER_BUTTON_PADDING]*2, spinner.height - style[SPINNER_BUTTON_PADDING]*2, GetColor(style[SPINNER_BASE_COLOR_PRESSED]));
+            DrawText(FormatText("%i", value), spinner.x + (spinner.width/2 - textWidth/2), spinner.y + (spinner.height/2 - (style[DEFAULT_TEXT_SIZE]/2)), style[DEFAULT_TEXT_SIZE], GetColor(style[SPINNER_TEXT_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleRec(spinner, GetColor(style[SPINNER_BORDER_COLOR_DISABLED]));
+            DrawRectangle(spinner.x + style[SPINNER_BUTTON_PADDING], spinner.y + style[SPINNER_BUTTON_PADDING], spinner.width - style[SPINNER_BUTTON_PADDING]*2, spinner.height - style[SPINNER_BUTTON_PADDING]*2, GetColor(style[SPINNER_BASE_COLOR_DISABLED]));
+            DrawText(FormatText("%i", value), spinner.x + (spinner.width/2 - textWidth/2), spinner.y + (spinner.height/2 - (style[DEFAULT_TEXT_SIZE]/2)), style[DEFAULT_TEXT_SIZE], GetColor(style[SPINNER_TEXT_COLOR_DISABLED]));
         } break;
         default: break;
     }
@@ -1322,266 +1846,1004 @@ RAYGUIDEF int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue
     return value;
 }
 
-// Text Box element, returns input text
-// NOTE: Requires static variables: framesCounter - ERROR!
-RAYGUIDEF char *GuiTextBox(Rectangle bounds, char *text)
+// List Element control, returns element state
+RAYGUIDEF bool GuiListElement(Rectangle bounds, const char *text, bool active)
 {
-    #define MAX_CHARS_LENGTH  	 20
-    #define KEY_BACKSPACE_TEXT  259     // GLFW BACKSPACE: 3 + 256
-
-    int initPos = bounds.x + 4;
-    int letter = -1;
-    static int framesCounter = 0;
-    Vector2 mousePoint = GetMousePosition();
-
+    #define GUILISTELEMENT_PADDING  2
+    
+    GuiControlState state = guiState;
+    
+    int textWidth = MeasureText(text, style[DEFAULT_TEXT_SIZE]);
+    int textHeight = style[DEFAULT_TEXT_SIZE];
+    
+    if (bounds.width < textWidth) bounds.width = textWidth + GUILISTELEMENT_PADDING*2;
+    if (bounds.height < textHeight) bounds.height = textHeight;
+    
+    
     // Update control
     //--------------------------------------------------------------------
-    framesCounter++;
-
-    letter = GetKeyPressed();
-
-    if (CheckCollisionPointRec(mousePoint, bounds))
+    if (state != DISABLED)
     {
-        if (letter != -1)
-        {
-            if (letter == KEY_BACKSPACE_TEXT)
-            {
-                for (int i = 0; i < MAX_CHARS_LENGTH; i++)
-                {
-                    if ((text[i] == '\0') && (i > 0))
-                    {
-                        text[i - 1] = '\0';
-                        break;
-                    }
-                }
+        Vector2 mousePoint = GetMousePosition();
 
-                text[MAX_CHARS_LENGTH - 1] = '\0';
+        // Check toggle button state
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+            {
+                state = NORMAL;
+                active = !active;
+            }
+            else state = FOCUSED;
+        }
+    }
+    //--------------------------------------------------------------------
+    
+    // Draw control
+    //--------------------------------------------------------------------
+    switch (state)
+    {
+        case NORMAL:
+        {
+            if (active)
+            {
+                DrawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BASE_COLOR_PRESSED]));
+                DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_PRESSED]));
+                DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[LISTVIEW_TEXT_COLOR_PRESSED]));
             }
             else
             {
-                if ((letter >= 32) && (letter < 127))
-                {
-                    for (int i = 0; i < MAX_CHARS_LENGTH; i++)
-                    {
-                        if (text[i] == '\0')
-                        {
-                            text[i] = (char)letter;
-                            break;
-                        }
-                    }
-                }
+                //DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[TOGGLE_BORDER_COLOR_NORMAL]));
+                DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[LISTVIEW_TEXT_COLOR_NORMAL]));
             }
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BASE_COLOR_FOCUSED]));
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_FOCUSED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[LISTVIEW_TEXT_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BASE_COLOR_PRESSED]));
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_PRESSED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[LISTVIEW_TEXT_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            //DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[DEFAULT_BASE_COLOR_DISABLED]));
+            DrawText(text, bounds.x + bounds.width/2 - textWidth/2, bounds.y + bounds.height/2 - textHeight/2, style[DEFAULT_TEXT_SIZE], GetColor(style[LISTVIEW_TEXT_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+    
+    return active;
+}
+
+// List View control, returns selected list element index
+RAYGUIDEF int GuiListView(Rectangle bounds, const char **text, int count, int active) // int *startIndex)
+{
+    #define LISTVIEW_LINE_THICK       1
+    
+    // TODO: Implement list view with scrolling bars and selectable elements (hover/press)
+
+    GuiControlState state = guiState;
+    
+    static int startIndex = 0;
+    int endIndex = count;
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        for(int i = 0; i < count; i++)
+        {
+            int textWidth = MeasureText(text[i], style[DEFAULT_TEXT_SIZE]);
+            if (bounds.width - style[LISTVIEW_BAR_WIDTH] - 2*style[LISTVIEW_ELEMENTS_PADDING] - LISTVIEW_LINE_THICK < textWidth)
+            {
+                 bounds.width = textWidth + style[LISTVIEW_BAR_WIDTH] + 2*style[LISTVIEW_ELEMENTS_PADDING] + LISTVIEW_LINE_THICK;
+            }               
+       }
+      
+        Vector2 mousePoint = GetMousePosition();
+        
+        endIndex = bounds.height/(style[LISTVIEW_ELEMENTS_HEIGHT] + style[LISTVIEW_ELEMENTS_PADDING]);
+        
+        if (endIndex < count)
+        {
+            startIndex -= GetMouseWheelMove();
+            if (startIndex < 0) startIndex = 0;
+
+            endIndex += startIndex;
+            
+            if (startIndex > (count - (endIndex - startIndex)))
+            {
+                startIndex = count - (endIndex - startIndex);
+            }
+        }
+        
+        if (endIndex > count) endIndex = count;
+        
+        if (count*style[LISTVIEW_ELEMENTS_HEIGHT] <= bounds.height) startIndex = 0;
+        
+        
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) state = PRESSED;
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) 
+            {
+                
+                //active += 1;
+                //if (active >= count) active = 0;
+            }
+            else state = FOCUSED;
+        }
+        
+        
+        //(maxIndexCount + indexOffset) > count) ? count : (maxIndexCount + indexOffset)
+        
+        //if (maxIndexCount + indexOffset) > count) return count;
+        //else return (maxIndexCount + indexOffset);
+        
+
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    for (int i = startIndex; i < endIndex; i++)
+    {
+        if (i == active) 
+        {
+            if (GuiListElement((Rectangle){ bounds.x + style[LISTVIEW_BAR_WIDTH]  + style[LISTVIEW_ELEMENTS_PADDING], bounds.y + style[LISTVIEW_ELEMENTS_PADDING] + LISTVIEW_LINE_THICK + (i - startIndex)*(style[LISTVIEW_ELEMENTS_HEIGHT] + style[LISTVIEW_ELEMENTS_PADDING]), bounds.width - style[LISTVIEW_BAR_WIDTH] - 2*style[LISTVIEW_ELEMENTS_PADDING] - LISTVIEW_LINE_THICK, style[LISTVIEW_ELEMENTS_HEIGHT] }, text[i], true) == false) active = -1;
+        }
+        else
+        {
+            if (GuiListElement((Rectangle){ bounds.x + style[LISTVIEW_BAR_WIDTH]  + style[LISTVIEW_ELEMENTS_PADDING], bounds.y  + style[LISTVIEW_ELEMENTS_PADDING] + LISTVIEW_LINE_THICK + (i - startIndex)*(style[LISTVIEW_ELEMENTS_HEIGHT] + style[LISTVIEW_ELEMENTS_PADDING]), bounds.width - style[LISTVIEW_BAR_WIDTH] - 2*style[LISTVIEW_ELEMENTS_PADDING] - LISTVIEW_LINE_THICK, style[LISTVIEW_ELEMENTS_HEIGHT] }, text[i], false) == true) active = i;
+        }
+    }
+    
+    DrawRectangle(bounds.x, bounds.y, style[LISTVIEW_BAR_WIDTH], bounds.height, LIGHTGRAY);
+    
+    int barHeight = bounds.height - (count - (endIndex - startIndex))*style[LISTVIEW_ELEMENTS_HEIGHT];
+    
+    // TODO: Review bar logic when bar size should be shorter than LISTVIEW_ELEMENT_HEIGHT
+    if (bounds.height < ((count - (endIndex - startIndex))*style[LISTVIEW_ELEMENTS_HEIGHT]))
+    {
+        float newHeight = (float)(endIndex - startIndex)*(float)(style[LISTVIEW_ELEMENTS_HEIGHT]/2)/(float)(endIndex - startIndex);
+        barHeight = (float)bounds.height - (float)((count - (endIndex - startIndex))*newHeight);
+    }
+       
+    //DrawText(FormatText("MAX INDEX: %i", endIndex), 200, 60, 20, RED);
+    //DrawText(FormatText("INDEX OFFSET: %i", startIndex), 200, 120, 20, RED);
+    
+    switch (state)
+    {
+        case NORMAL:
+        {
+            if(barHeight >= bounds.height) DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[LISTVIEW_BASE_COLOR_DISABLED]));
+            else DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[SLIDERBAR_BASE_COLOR_NORMAL]));
+            
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_NORMAL]));
+            
+        } break;
+        case FOCUSED:
+        {
+            if(barHeight >= bounds.height) DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[LISTVIEW_BASE_COLOR_DISABLED]));
+            else DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[SLIDERBAR_BASE_COLOR_FOCUSED]));
+            
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_FOCUSED]));
+            
+        } break;
+        case PRESSED:
+        {
+            if(barHeight >= bounds.height) DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[LISTVIEW_BASE_COLOR_DISABLED]));
+            else DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[SLIDERBAR_BASE_COLOR_PRESSED]));
+            
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_PRESSED]));
+            
+        } break;
+        case DISABLED:
+        {
+            DrawRectangle(bounds.x, startIndex*style[LISTVIEW_ELEMENTS_HEIGHT] + bounds.y, style[LISTVIEW_BAR_WIDTH], barHeight, GetColor(style[LISTVIEW_BASE_COLOR_DISABLED]));
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[LISTVIEW_BORDER_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+    
+    return active;
+}
+
+// Color Panel control
+RAYGUIDEF Color GuiColorPanel(Rectangle bounds, Color color)
+{
+    #define GUICOLORPANEL_SELECTOR_THICK    6
+    
+    GuiControlState state = guiState;
+    Vector2 pickerSelector = { 0 };
+    
+    Vector3 vcolor = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+    Vector3 hsv = ConvertRGBtoHSV(vcolor);
+
+    pickerSelector.x = bounds.x + (float)hsv.y*bounds.width;            // HSV: Saturation
+    pickerSelector.y = bounds.y + (1.0f - (float)hsv.z)*bounds.height;  // HSV: Value
+    
+    Vector3 maxHue = { hsv.x, 1.0f, 1.0f };
+    Vector3 rgbHue = ConvertHSVtoRGB(maxHue);
+    Color maxHueCol = { (unsigned char)(255.0f*rgbHue.x), 
+                      (unsigned char)(255.0f*rgbHue.y), 
+                      (unsigned char)(255.0f*rgbHue.z), 255 };
+                      
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) 
+            {
+                state = PRESSED;
+                pickerSelector = mousePoint;
+            
+                // Calculate color from picker
+                Vector2 colorPick = { pickerSelector.x - bounds.x, pickerSelector.y - bounds.y }; 
+                
+                colorPick.x /= (float)bounds.width;     // Get normalized value on x
+                colorPick.y /= (float)bounds.height;    // Get normalized value on y
+                
+                hsv.y = colorPick.x;
+                hsv.z = 1.0f - colorPick.y;
+                
+                Vector3 rgb = ConvertHSVtoRGB(hsv);
+
+                // NOTE: Vector3ToColor() only available on raylib 1.8.1
+                color = (Color){ (unsigned char)(255.0f*rgb.x), 
+                                 (unsigned char)(255.0f*rgb.y), 
+                                 (unsigned char)(255.0f*rgb.z), 
+                                 (unsigned char)(255.0f*(float)color.a/255.0f) };
+                
+            }
+            else state = FOCUSED;
         }
     }
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    if (CheckCollisionPointRec(mousePoint, bounds)) DrawRectangleRec(bounds, GetColor(style[TOGGLE_ACTIVE_BORDER_COLOR]));
-    else DrawRectangleRec(bounds, GetColor(style[TEXTBOX_BORDER_COLOR]));
-
-    DrawRectangle(bounds.x + style[TEXTBOX_BORDER_WIDTH], bounds.y + style[TEXTBOX_BORDER_WIDTH], bounds.width - (style[TEXTBOX_BORDER_WIDTH]*2), bounds.height - (style[TEXTBOX_BORDER_WIDTH]*2), GetColor(style[TEXTBOX_INSIDE_COLOR]));
-
-    for (int i = 0; i < MAX_CHARS_LENGTH; i++)
+    if (state != DISABLED)
     {
-        if (text[i] == '\0') break;
-
-        DrawText(FormatText("%c", text[i]), initPos, bounds.y + style[TEXTBOX_TEXT_FONTSIZE], style[TEXTBOX_TEXT_FONTSIZE], GetColor(style[TEXTBOX_TEXT_COLOR]));
-
-        initPos += (MeasureText(FormatText("%c", text[i]), style[GLOBAL_TEXT_FONTSIZE]) + 2);
-        //initPos += ((GetDefaultFont().charRecs[(int)text[i] - 32].width + 2));
+        DrawRectangleGradientEx(bounds, WHITE, WHITE, maxHueCol, maxHueCol);
+        DrawRectangleGradientEx(bounds, Fade(BLACK, 0), BLACK, BLACK, Fade(BLACK, 0));
+        
+        // Draw color picker: selector
+        DrawRectangle(pickerSelector.x - GUICOLORPANEL_SELECTOR_THICK/2, pickerSelector.y - GUICOLORPANEL_SELECTOR_THICK/2, GUICOLORPANEL_SELECTOR_THICK, GUICOLORPANEL_SELECTOR_THICK, WHITE);
+        
     }
+    else 
+    {
+        DrawRectangleGradientEx(bounds, Fade(GetColor(style[COLORPICKER_BASE_COLOR_DISABLED]), 0.1f), Fade(BLACK, 0.6f), Fade(BLACK, 0.6f), Fade(GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]), 0.6f));
+        //DrawRectangleGradientEx(bounds, Fade(BLACK, 0), BLACK, BLACK, Fade(BLACK, 0));
+    }
+ 
+    switch (state)
+    {
+        case NORMAL: DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_NORMAL])); break;
+        case FOCUSED: DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_FOCUSED])); break;
+        case PRESSED: DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED])); break;
+        case DISABLED: DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED])); break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+    
+    return color;
+}
 
-    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawRectangle(initPos + 2, bounds.y + 5, 1, 20, GetColor(style[TEXTBOX_LINE_COLOR]));
+// Color Bar Alpha control
+// NOTE: Returns alpha value normalized [0..1]
+RAYGUIDEF float GuiColorBarAlpha(Rectangle bounds, float alpha)
+{
+    #define GUICOLORBARALPHA_SELECTOR_WIDTH     6
+    #define GUICOLORBARALPHA_SELECTOR_PADDING   2
+    #define CHECKER_SIZE                       10
+    
+    //#define GUICOLORBAR_SELECTOR_THICK          6
+    
+    GuiControlState state = guiState;
+    Rectangle selector = { bounds.x + alpha*bounds.width - GUICOLORBARALPHA_SELECTOR_PADDING, bounds.y - GUICOLORBARALPHA_SELECTOR_PADDING, GUICOLORBARALPHA_SELECTOR_WIDTH, bounds.height + GUICOLORBARALPHA_SELECTOR_PADDING*2 };
+
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, bounds) || 
+            CheckCollisionPointRec(mousePoint, selector))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                state = PRESSED;
+                selector.x = mousePoint.x - selector.width/2;
+                
+                alpha = (mousePoint.x - bounds.x)/bounds.width;
+                if (alpha <= 0.0f) alpha = 0.0f;
+                if (alpha >= 1.0f) alpha = 1.0f;
+                //selector.x = bounds.x + (int)(((alpha - 0)/(100 - 0))*(bounds.width - 2*style[SLIDER_BORDER_WIDTH])) - selector.width/2;
+            }
+            else state = FOCUSED; //state = FOCUSED;
+        }
+    }
     //--------------------------------------------------------------------
 
-    return text;
-}
-
-#if !defined(RAYGUI_NO_STYLE_SAVE_LOAD)
-// Save current GUI style into a text file
-RAYGUIDEF void SaveGuiStyle(const char *fileName)
-{
-    FILE *styleFile = fopen(fileName, "wt");
-
-    for (int i = 0; i < NUM_PROPERTIES; i++) fprintf(styleFile, "%-40s0x%x\n", guiPropertyName[i], GetStyleProperty(i));
-
-    fclose(styleFile);
-}
-
-// Load GUI style from a text file
-RAYGUIDEF void LoadGuiStyle(const char *fileName)
-{
-    #define MAX_STYLE_PROPERTIES    128
-
-    typedef struct {
-        char id[64];
-        int value;
-    } StyleProperty;
-
-    StyleProperty *styleProp = (StyleProperty *)RAYGUI_MALLOC(MAX_STYLE_PROPERTIES*sizeof(StyleProperty));;
-    int counter = 0;
-
-    FILE *styleFile = fopen(fileName, "rt");
-
-    while (!feof(styleFile))
+    // Draw control
+    //--------------------------------------------------------------------
+    // Draw alpha bar: checked background
+    if (state != DISABLED)
     {
-        fscanf(styleFile, "%s %i\n", styleProp[counter].id, &styleProp[counter].value);
-        counter++;
+        for (int i = 0; i < bounds.width/CHECKER_SIZE; i++) DrawRectangle(bounds.x + CHECKER_SIZE*(i%(bounds.width/CHECKER_SIZE)), bounds.y, bounds.width/(bounds.width/CHECKER_SIZE), CHECKER_SIZE, (i%2) ? Fade(GRAY, 0.4f) : Fade(RAYWHITE, 0.4f));
+        for (int i = 0; i < bounds.width/CHECKER_SIZE; i++) DrawRectangle(bounds.x + CHECKER_SIZE*(i%(bounds.width/CHECKER_SIZE)), bounds.y + CHECKER_SIZE, bounds.width/(bounds.width/CHECKER_SIZE), CHECKER_SIZE, (i%2) ? Fade(RAYWHITE, 0.4f) : Fade(GRAY, 0.4f));
+        DrawRectangleGradientH(bounds.x, bounds.y, bounds.width, bounds.height, (Color){ 255,255,255,0 }, (Color){ 0,0,0,255 });
     }
-
-    fclose(styleFile);
-
-    for (int i = 0; i < counter; i++)
+    else DrawRectangleGradientH(bounds.x, bounds.y, bounds.width, bounds.height, Fade(GetColor(style[COLORPICKER_BASE_COLOR_DISABLED]), 0.1f), GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED])); 
+    
+    
+    switch (state)
     {
-        for (int j = 0; j < NUM_PROPERTIES; j++)
+        case NORMAL: 
         {
-            if (strcmp(styleProp[i].id, guiPropertyName[j]) == 0)
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_NORMAL]));
+            DrawRectangle(selector.x , selector.y, selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(selector.x, selector.y, selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED]));
+            DrawRectangle(selector.x, selector.y, selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]));
+            DrawRectangleRec(selector, GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+    
+    return alpha;
+}
+
+// Color Bar Hue control
+// NOTE: Returns hue value normalized [0..1]
+RAYGUIDEF float GuiColorBarHue(Rectangle bounds, float hue)
+{
+    #define GUICOLORBARHUE_SELECTOR_HEIGHT   6
+    #define GUICOLORBARHUE_SELECTOR_PADDING  2
+    
+    GuiControlState state = guiState;
+    Rectangle selector = { bounds.x - GUICOLORBARHUE_SELECTOR_PADDING, bounds.y + hue/360.0f*bounds.height - GUICOLORBARHUE_SELECTOR_PADDING, bounds.width + GUICOLORBARHUE_SELECTOR_PADDING*2, GUICOLORBARHUE_SELECTOR_HEIGHT };
+    
+    // Update control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, bounds) || 
+            CheckCollisionPointRec(mousePoint, selector))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) 
             {
-                // Assign correct property to style
-                style[j] = styleProp[i].value;
+                state = PRESSED;
+                selector.y = mousePoint.y - selector.height/2;
+                
+                hue = (mousePoint.y - bounds.y)*360/bounds.height;  
+                if (hue <= 0.0f) hue = 0.0f;
+                if (hue >= 359.0f) hue = 359.0f;
+                
             }
+            else state = FOCUSED;
+            
+            /*if (IsKeyDown(KEY_UP))
+            {
+                hue -= 2.0f;
+                if (hue <= 0.0f) hue = 0.0f;
+            }
+            else if (IsKeyDown(KEY_DOWN))
+            {
+                hue += 2.0f;
+                if (hue >= 360.0f) hue = 360.0f;
+            }*/
+        }
+    }
+    //--------------------------------------------------------------------
+    // Draw control
+    //--------------------------------------------------------------------
+    if (state != DISABLED)
+    {
+        //Draw hue bar:color bars
+        DrawRectangleGradientV(bounds.x + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.y + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.width - GUICOLORBARHUE_SELECTOR_PADDING, bounds.height/6, (Color){ 255,0,0,255 }, (Color){ 255,255,0,255 });
+        DrawRectangleGradientV(bounds.x + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.y + bounds.height/6 + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.width - GUICOLORBARHUE_SELECTOR_PADDING, bounds.height/6, (Color){ 255,255,0,255 }, (Color){ 0,255,0,255 });
+        DrawRectangleGradientV(bounds.x + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.y + 2*(bounds.height/6) + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.width - GUICOLORBARHUE_SELECTOR_PADDING, bounds.height/6, (Color){ 0,255,0,255 }, (Color){ 0,255,255,255 });
+        DrawRectangleGradientV(bounds.x + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.y + 3*(bounds.height/6) + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.width - GUICOLORBARHUE_SELECTOR_PADDING, bounds.height/6, (Color){ 0,255,255,255 }, (Color){ 0,0,255,255 });
+        DrawRectangleGradientV(bounds.x + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.y + 4*(bounds.height/6) + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.width - GUICOLORBARHUE_SELECTOR_PADDING, bounds.height/6, (Color){ 0,0,255,255 }, (Color){ 255,0,255,255 });
+        DrawRectangleGradientV(bounds.x + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.y + 5*(bounds.height/6) + GUICOLORBARHUE_SELECTOR_PADDING/2, bounds.width - GUICOLORBARHUE_SELECTOR_PADDING, bounds.height/6 - GUICOLORBARHUE_SELECTOR_PADDING, (Color){ 255,0,255,255 }, (Color){ 255,0,0,255 });
+    }
+    else
+    {
+        DrawRectangleGradientV(bounds.x, bounds.y, bounds.width, bounds.height, Fade(GetColor(style[COLORPICKER_BASE_COLOR_DISABLED]), 0.1f), GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]));
+    }
+    
+    switch (state)
+    {
+        case NORMAL:
+        {
+            // Draw hue bar: selector
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_NORMAL]));
+            DrawRectangle(selector.x, selector.y, selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED]));
+        } break;
+        case FOCUSED:
+        {
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_FOCUSED]));
+            DrawRectangle(selector.x, selector.y , selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_FOCUSED]));
+        } break;
+        case PRESSED:
+        {
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED]));
+            DrawRectangle(selector.x, selector.y, selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_PRESSED]));
+        } break;
+        case DISABLED:
+        {
+            DrawRectangleLines(bounds.x, bounds.y, bounds.width, bounds.height, GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]));
+            DrawRectangle(selector.x, selector.y, selector.width, selector.height, GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]));
+        } break;
+        default: break;
+    }
+    //--------------------------------------------------------------------
+    
+    return hue;
+}
+
+// TODO: Color GuiColorBarSat() [WHITE->color]
+// TODO: Color GuiColorBarValue() [BLACK->color]), HSV / HSL
+// TODO: float GuiColorBarLuminance() [BLACK->WHITE]
+
+
+// Color Picker control
+// NOTE: It's divided in multiple controls:
+//      Color GuiColorPanel() - Color select panel
+//      float GuiColorBarAlpha(Rectangle bounds, float alpha)
+//      float GuiColorBarHue(Rectangle bounds, float value)
+// NOTE: bounds define GuiColorPanel() size
+RAYGUIDEF Color GuiColorPicker(Rectangle bounds, Color color)
+{    
+    GuiControlState state = guiState;
+    
+    color = GuiColorPanel(bounds, color);
+    
+    Rectangle boundsAlpha = { bounds.x, bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], bounds.width, style[COLORPICKER_BARS_THICK] };
+    Rectangle boundsHue = { bounds.x + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y, style[COLORPICKER_BARS_THICK], bounds.height };
+    
+    Vector3 hsv = ConvertRGBtoHSV((Vector3){ color.r/255.0f, color.g/255.0f, color.b/255.0f });
+    
+    hsv.x = GuiColorBarHue(boundsHue, hsv.x);
+    
+    color.a = (unsigned char)(GuiColorBarAlpha(boundsAlpha, (float)color.a/255.0f)*255.0f);
+    
+    Vector3 rgb = ConvertHSVtoRGB(hsv);
+
+    color = (Color){ (unsigned char)(rgb.x*255.0f), (unsigned char)(rgb.y*255.0f), (unsigned char)(rgb.z*255.0f), color.a };
+    
+    
+    // Draw control
+    //--------------------------------------------------------------------
+    // Draw color selected panel
+    if (state != DISABLED)
+    {
+        for (int i = 0; i < 2; i++) DrawRectangle(bounds.x + style[COLORPICKER_BARS_PADDING]*(i%(bounds.width/(style[COLORPICKER_BARS_THICK]/2))) + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], bounds.width/(bounds.width/(style[COLORPICKER_BARS_THICK]/2)), style[COLORPICKER_BARS_THICK]/2, (i%2) ? Fade(GRAY, 0.4f) : Fade(RAYWHITE, 0.4f));
+        for (int i = 0; i < 2; i++) DrawRectangle(bounds.x + style[COLORPICKER_BARS_PADDING]*(i%(bounds.width/(style[COLORPICKER_BARS_THICK]/2))) + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + style[COLORPICKER_BARS_PADDING] + bounds.height + style[COLORPICKER_BARS_PADDING], bounds.width/(bounds.width/(style[COLORPICKER_BARS_THICK]/2)), style[COLORPICKER_BARS_THICK]/2, (i%2) ? Fade(RAYWHITE, 0.4f) : Fade(GRAY, 0.4f));
+        DrawRectangle(bounds.x + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], style[COLORPICKER_BARS_THICK], style[COLORPICKER_BARS_THICK], color);
+        DrawRectangleLines(bounds.x + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], style[COLORPICKER_BARS_THICK], style[COLORPICKER_BARS_THICK], GetColor(style[COLORPICKER_BORDER_COLOR_NORMAL]));
+    }
+    else 
+    {
+        //DrawRectangleGradientEx((Rectangle){ bounds.x + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], style[COLORPICKER_BARS_THICK], style[COLORPICKER_BARS_THICK] }, WHITE, GRAY, BLACK, GRAY);
+        DrawRectangle(bounds.x + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], style[COLORPICKER_BARS_THICK], style[COLORPICKER_BARS_THICK], GetColor(style[COLORPICKER_BASE_COLOR_DISABLED]));
+        DrawRectangleLines(bounds.x + bounds.width + style[COLORPICKER_BARS_PADDING], bounds.y + bounds.height + style[COLORPICKER_BARS_PADDING], style[COLORPICKER_BARS_THICK], style[COLORPICKER_BARS_THICK], GetColor(style[COLORPICKER_BORDER_COLOR_DISABLED]));
+    }
+    //--------------------------------------------------------------------
+
+    return color;
+}
+
+#if defined(RAYGUI_STYLE_SAVE_LOAD)
+// Save raygui style file (.rgs), text or binary
+RAYGUIDEF void GuiSaveStyle(const char *fileName, bool binary)
+{
+    if (binary)
+    {
+        #define RGS_FILE_VERSION_BINARY   200
+        
+        FILE *rgsFile = fopen(fileName, "wb");
+        
+        if (rgsFile != NULL)
+        {
+            // Write some header info (12 bytes)
+            // id: "RGS "       - 4 bytes
+            // version: 200     - 2 bytes
+            // NUM_PROPERTIES   - 2 bytes
+            // reserved         - 4 bytes
+            
+            char signature[5] = "RGS ";
+            short version = RGS_FILE_VERSION_BINARY;
+            short numProperties = NUM_PROPERTIES;
+            int reserved = 0;
+
+            fwrite(signature, 1, 4, rgsFile);
+            fwrite(&version, 1, sizeof(short), rgsFile);
+            fwrite(&numProperties, 1, sizeof(short), rgsFile);
+            fwrite(&reserved, 1, sizeof(int), rgsFile);
+            
+            short id = 0;
+            
+            for (int i = 0; i < NUM_PROPERTIES; i++)
+            {
+                id = (short)i;
+
+                fwrite(&id, 1, 2, rgsFile);
+                fwrite(&style[i], 1, sizeof(int), rgsFile);
+            }
+            
+            fclose(rgsFile);
+        }
+    }
+    else
+    {
+        #define RGS_FILE_VERSION_TEXT   "2.0"
+        
+        int counter = 0;
+        FILE *rgsFile = fopen(fileName, "wt");
+        
+        if (rgsFile != NULL)
+        {
+            // Write some description comments
+            fprintf(rgsFile, "#\n# rgst file (v%s) - raygui style text file saved from raygui\n#\n", RGS_FILE_VERSION_TEXT);
+            fprintf(rgsFile, "# Total number of properties:     %i\n", NUM_PROPERTIES);
+
+            for (int i = 0; i < NUM_PROPERTIES; i++)
+            {
+                fprintf(rgsFile, "%03i 0x%08x\n", i, style[i]);      
+            }
+
+            fclose(rgsFile);
+        }
+    }
+}
+
+// Load raygui style file (.rgs), text or binary
+// NOTE: File is tried to be loaded as text first
+RAYGUIDEF void GuiLoadStyle(const char *fileName)
+{
+    short id = 0;
+    int value = 0;
+    int counter = 0;
+    char buffer[256];
+    bool tryBinary = false;
+    
+    FILE *rgsFile = fopen(fileName, "rt");
+    
+    if (rgsFile != NULL)
+    {
+        fgets(buffer, 256, rgsFile);
+
+        if (buffer[0] != 'R')   // Text file!
+        {
+            while (!feof(rgsFile))
+            {
+                if ((buffer[0] != '\n') && (buffer[0] != '#'))
+                {
+                    sscanf(buffer, "%d 0x%x", &id, &value);
+                    if (id < NUM_PROPERTIES) style[id] = value;     // Update style property
+                    counter++;
+                }
+                
+                fgets(buffer, 256, rgsFile);
+            }
+        }
+        else tryBinary = true;
+        
+        fclose(rgsFile);
+    }
+    
+    if (tryBinary)
+    {
+        FILE *rgsFile = fopen(fileName, "rb");
+    
+        if (rgsFile != NULL)
+        {
+            char signature[5] = "";
+            short version = 0;
+            short numProperties = 0;
+            int reserved = 0;
+
+            fread(signature, 1, 4, rgsFile);
+            fread(&version, 1, sizeof(short), rgsFile);
+            fread(&numProperties, 1, sizeof(short), rgsFile);
+            fread(&reserved, 1, sizeof(int), rgsFile);
+           
+            if ((signature[0] == 'R') &&
+                (signature[1] == 'G') &&
+                (signature[2] == 'S') &&
+                (signature[3] == ' '))
+            {
+                while (!feof(rgsFile))
+                {
+                    fread(&id, 1, sizeof(short), rgsFile);
+                    fread(&value, 1, sizeof(int), rgsFile);
+                    if (id < NUM_PROPERTIES) style[id] = value;
+                    counter++;
+                }   
+            }
+            else TraceLog(LOG_WARNING, "[raygui] Invalid style properties file");
+            
+            fclose(rgsFile);
         }
     }
 
-    RAYGUI_FREE(styleProp);
+    TraceLog(LOG_INFO, "[raygui] Style properties loaded: %i", counter);
+}
+
+// Load GUI style from an image style file
+RAYGUIDEF void GuiLoadStyleImage(const char *fileName)
+{
+    // NOTE: Image data only defines color properties
+    Image imStyle = LoadImage(fileName);
+    Color *pixels = GetImageData(imStyle);
+
+    // Load generic style color palette
+    style[DEFAULT_BACKGROUND_COLOR] = ColorToInt(pixels[1 + imStyle.width*1]);
+    style[DEFAULT_LINES_COLOR] = ColorToInt(pixels[0 + imStyle.width*0]);
+    style[DEFAULT_BORDER_COLOR_NORMAL] = ColorToInt(pixels[2 + imStyle.width*2]);
+    style[DEFAULT_BASE_COLOR_NORMAL] = ColorToInt(pixels[3 + imStyle.width*3]);
+    style[DEFAULT_TEXT_COLOR_NORMAL] = ColorToInt(pixels[9 + imStyle.width*4]);
+    style[DEFAULT_BORDER_COLOR_FOCUSED] = ColorToInt(pixels[17 + imStyle.width*2]);
+    style[DEFAULT_BASE_COLOR_FOCUSED] = ColorToInt(pixels[18 + imStyle.width*3]);
+    style[DEFAULT_TEXT_COLOR_FOCUSED] = ColorToInt(pixels[24 + imStyle.width*4]);
+    style[DEFAULT_BORDER_COLOR_PRESSED] = ColorToInt(pixels[32 + imStyle.width*2]);
+    style[DEFAULT_BASE_COLOR_PRESSED] = ColorToInt(pixels[33 + imStyle.width*3]);
+    style[DEFAULT_TEXT_COLOR_PRESSED] = ColorToInt(pixels[39 + imStyle.width*4]);
+    style[DEFAULT_BORDER_COLOR_DISABLED] = ColorToInt(pixels[47 + imStyle.width*2]);
+    style[DEFAULT_BASE_COLOR_DISABLED] = ColorToInt(pixels[48 + imStyle.width*3]);
+    style[DEFAULT_TEXT_COLOR_DISABLED] = ColorToInt(pixels[54 + imStyle.width*4]);
+    
+    // Update full style with generic values
+    GuiUpdateStyleComplete();
+
+    UnloadImage(imStyle);
+}
+
+// Load style from a color palette array (14 values required)
+RAYGUIDEF void GuiLoadStylePalette(Color *palette)
+{
+    // Load generic style color palette
+    style[DEFAULT_BACKGROUND_COLOR] = ColorToInt(palette[0]);
+    style[DEFAULT_LINES_COLOR] = ColorToInt(palette[1]);
+    style[DEFAULT_BORDER_COLOR_NORMAL] = ColorToInt(palette[2]);
+    style[DEFAULT_BASE_COLOR_NORMAL] = ColorToInt(palette[3]);
+    style[DEFAULT_TEXT_COLOR_NORMAL] = ColorToInt(palette[4]);
+    style[DEFAULT_BORDER_COLOR_FOCUSED] = ColorToInt(palette[5]);
+    style[DEFAULT_BASE_COLOR_FOCUSED] = ColorToInt(palette[6]);
+    style[DEFAULT_TEXT_COLOR_FOCUSED] = ColorToInt(palette[7]);
+    style[DEFAULT_BORDER_COLOR_PRESSED] = ColorToInt(palette[8]);
+    style[DEFAULT_BASE_COLOR_PRESSED] = ColorToInt(palette[9]);
+    style[DEFAULT_TEXT_COLOR_PRESSED] = ColorToInt(palette[10]);
+    style[DEFAULT_BORDER_COLOR_DISABLED] = ColorToInt(palette[11]);
+    style[DEFAULT_BASE_COLOR_DISABLED] = ColorToInt(palette[12]);
+    style[DEFAULT_TEXT_COLOR_DISABLED] = ColorToInt(palette[13]);
+    
+    // Update full style with generic values
+    GuiUpdateStyleComplete();
+}
+
+// Updates full style property set with generic values
+// NOTE: Requires globals style[] and style[]
+RAYGUIDEF void GuiUpdateStyleComplete(void)
+{
+    // Label
+    style[LABEL_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[LABEL_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[LABEL_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[LABEL_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
+    // Button
+    style[BUTTON_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH]*2;
+    style[BUTTON_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[BUTTON_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_NORMAL];
+    style[BUTTON_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[BUTTON_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[BUTTON_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[BUTTON_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[BUTTON_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[BUTTON_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[BUTTON_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[BUTTON_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[BUTTON_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    style[BUTTON_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
+    // ToggleButton / ToggleGroup
+    style[TOGGLE_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[TOGGLE_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[TOGGLE_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_NORMAL];
+    style[TOGGLE_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[TOGGLE_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[TOGGLE_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[TOGGLE_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[TOGGLE_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[TOGGLE_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[TOGGLE_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[TOGGLE_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[TOGGLE_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    style[TOGGLE_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
+    style[TOGGLEGROUP_PADDING] = 2;
+    // Slider
+    style[SLIDER_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[SLIDER_SLIDER_WIDTH] = 20;
+    style[SLIDER_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[SLIDER_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_NORMAL];
+    style[SLIDER_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[SLIDER_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[SLIDER_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[SLIDER_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[SLIDER_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[SLIDER_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    // SliderBar
+    style[SLIDERBAR_INNER_PADDING] = 1;
+    style[SLIDERBAR_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[SLIDERBAR_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[SLIDERBAR_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_NORMAL];
+    style[SLIDERBAR_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[SLIDERBAR_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[SLIDERBAR_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[SLIDERBAR_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[SLIDERBAR_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[SLIDERBAR_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    // ProgressBar
+    style[PROGRESSBAR_INNER_PADDING] = 1;
+    style[PROGRESSBAR_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[PROGRESSBAR_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[PROGRESSBAR_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[PROGRESSBAR_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[PROGRESSBAR_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[PROGRESSBAR_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[PROGRESSBAR_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[PROGRESSBAR_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[PROGRESSBAR_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    // Spinner
+    style[SPINNER_BUTTON_PADDING] = 2;
+    style[SPINNER_BUTTONS_WIDTH] = 35;
+    style[SPINNER_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[SPINNER_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_NORMAL];
+    style[SPINNER_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[SPINNER_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[SPINNER_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[SPINNER_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[SPINNER_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[SPINNER_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[SPINNER_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[SPINNER_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[SPINNER_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    style[SPINNER_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
+    // ComboBox
+    style[COMBOBOX_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[COMBOBOX_BUTTON_PADDING] = 2;              
+    style[COMBOBOX_SELECTOR_WIDTH] = 35;              
+    style[COMBOBOX_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[COMBOBOX_BASE_COLOR_NORMAL] = style[DEFAULT_BASE_COLOR_NORMAL];
+    style[COMBOBOX_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[COMBOBOX_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[COMBOBOX_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[COMBOBOX_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[COMBOBOX_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[COMBOBOX_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[COMBOBOX_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[COMBOBOX_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[COMBOBOX_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    style[COMBOBOX_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
+    // CheckBox
+    style[CHECKBOX_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[CHECKBOX_INNER_PADDING] = 1;
+    style[CHECKBOX_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[CHECKBOX_BASE_COLOR_NORMAL] = style[DEFAULT_BACKGROUND_COLOR];
+    style[CHECKBOX_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[CHECKBOX_BASE_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[CHECKBOX_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[CHECKBOX_BASE_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[CHECKBOX_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[CHECKBOX_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    // TextBox
+    style[TEXTBOX_BORDER_WIDTH] = style[DEFAULT_BORDER_WIDTH];
+    style[TEXTBOX_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[TEXTBOX_BASE_COLOR_NORMAL] = style[DEFAULT_BACKGROUND_COLOR];
+    style[TEXTBOX_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[TEXTBOX_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[TEXTBOX_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[TEXTBOX_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[TEXTBOX_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[TEXTBOX_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[TEXTBOX_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[TEXTBOX_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[TEXTBOX_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    style[TEXTBOX_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
+    // ColorPicker
+    style[COLORPICKER_BARS_THICK] = 20;
+    style[COLORPICKER_BARS_PADDING] = 10;
+    style[COLORPICKER_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[COLORPICKER_BASE_COLOR_NORMAL] = style[DEFAULT_BACKGROUND_COLOR];
+    style[COLORPICKER_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[COLORPICKER_BASE_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[COLORPICKER_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[COLORPICKER_BASE_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[COLORPICKER_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[COLORPICKER_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    // ListView
+    style[LISTVIEW_ELEMENTS_HEIGHT] = 30;
+    style[LISTVIEW_ELEMENTS_PADDING] = 2;
+    style[LISTVIEW_BAR_WIDTH] = 10;
+    style[LISTVIEW_BORDER_COLOR_NORMAL] = style[DEFAULT_BORDER_COLOR_NORMAL];
+    style[LISTVIEW_BASE_COLOR_NORMAL] = style[DEFAULT_BACKGROUND_COLOR];
+    style[LISTVIEW_TEXT_COLOR_NORMAL] = style[DEFAULT_TEXT_COLOR_NORMAL];
+    style[LISTVIEW_BORDER_COLOR_FOCUSED] = style[DEFAULT_BORDER_COLOR_FOCUSED];
+    style[LISTVIEW_BASE_COLOR_FOCUSED] = style[DEFAULT_BASE_COLOR_FOCUSED];
+    style[LISTVIEW_TEXT_COLOR_FOCUSED] = style[DEFAULT_TEXT_COLOR_FOCUSED];
+    style[LISTVIEW_BORDER_COLOR_PRESSED] = style[DEFAULT_BORDER_COLOR_PRESSED];
+    style[LISTVIEW_BASE_COLOR_PRESSED] = style[DEFAULT_BASE_COLOR_PRESSED];
+    style[LISTVIEW_TEXT_COLOR_PRESSED] = style[DEFAULT_TEXT_COLOR_PRESSED];
+    style[LISTVIEW_BORDER_COLOR_DISABLED] = style[DEFAULT_BORDER_COLOR_DISABLED];
+    style[LISTVIEW_BASE_COLOR_DISABLED] = style[DEFAULT_BASE_COLOR_DISABLED];
+    style[LISTVIEW_TEXT_COLOR_DISABLED] = style[DEFAULT_TEXT_COLOR_DISABLED];
 }
 
 // Set one style property value
-RAYGUIDEF void SetStyleProperty(int guiProperty, int value)
-{
-    #define NUM_COLOR_SAMPLES   10
-
-    if (guiProperty == GLOBAL_BASE_COLOR)
-    {
-        Color baseColor = GetColor(value);
-        Color fadeColor[NUM_COLOR_SAMPLES];
-
-        for (int i = 0; i < NUM_COLOR_SAMPLES; i++) fadeColor[i] = ColorMultiply(baseColor, 1.0f - (float)i/(NUM_COLOR_SAMPLES - 1));
-
-        style[GLOBAL_BASE_COLOR] = value;
-        style[BACKGROUND_COLOR] = GetHexValue(fadeColor[3]);
-        style[BUTTON_DEFAULT_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[BUTTON_HOVER_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[BUTTON_PRESSED_INSIDE_COLOR] = GetHexValue(fadeColor[5]);
-        style[TOGGLE_DEFAULT_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[TOGGLE_HOVER_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[TOGGLE_PRESSED_INSIDE_COLOR] = GetHexValue(fadeColor[5]);
-        style[TOGGLE_ACTIVE_INSIDE_COLOR] = GetHexValue(fadeColor[8]);
-        style[SLIDER_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[SLIDER_DEFAULT_COLOR] = GetHexValue(fadeColor[6]);
-        style[SLIDER_HOVER_COLOR] = GetHexValue(fadeColor[7]);
-        style[SLIDER_ACTIVE_COLOR] = GetHexValue(fadeColor[9]);
-        style[SLIDERBAR_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[SLIDERBAR_DEFAULT_COLOR] = GetHexValue(fadeColor[6]);
-        style[SLIDERBAR_HOVER_COLOR] = GetHexValue(fadeColor[7]);
-        style[SLIDERBAR_ACTIVE_COLOR] = GetHexValue(fadeColor[9]);
-        style[SLIDERBAR_ZERO_LINE_COLOR] = GetHexValue(fadeColor[8]);
-        style[PROGRESSBAR_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[PROGRESSBAR_PROGRESS_COLOR] = GetHexValue(fadeColor[6]);
-        style[SPINNER_LABEL_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[SPINNER_HOVER_BUTTON_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[SPINNER_PRESSED_BUTTON_INSIDE_COLOR] = GetHexValue(fadeColor[5]);
-        style[COMBOBOX_DEFAULT_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[COMBOBOX_HOVER_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[COMBOBOX_PRESSED_INSIDE_COLOR] = GetHexValue(fadeColor[8]);
-        style[COMBOBOX_PRESSED_LIST_INSIDE_COLOR] = GetHexValue(fadeColor[8]);
-        style[CHECKBOX_DEFAULT_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-        style[CHECKBOX_CLICK_INSIDE_COLOR] = GetHexValue(fadeColor[6]);
-        style[CHECKBOX_STATUS_ACTIVE_COLOR] = GetHexValue(fadeColor[8]);
-        style[TEXTBOX_INSIDE_COLOR] = GetHexValue(fadeColor[4]);
-    }
-    else if (guiProperty == GLOBAL_BORDER_COLOR)
-    {
-        Color baseColor = GetColor(value);
-        Color fadeColor[NUM_COLOR_SAMPLES];
-
-        for (int i = 0; i < NUM_COLOR_SAMPLES; i++) fadeColor[i] = ColorMultiply(baseColor, 1.0f - (float)i/(NUM_COLOR_SAMPLES - 1));
-
-        style[GLOBAL_BORDER_COLOR] = value;
-        style[BUTTON_DEFAULT_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[BUTTON_HOVER_BORDER_COLOR] = GetHexValue(fadeColor[8]);
-        style[BUTTON_PRESSED_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[TOGGLE_DEFAULT_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[TOGGLE_HOVER_BORDER_COLOR] = GetHexValue(fadeColor[8]);
-        style[TOGGLE_PRESSED_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[TOGGLE_ACTIVE_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[SLIDER_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[SLIDERBAR_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[PROGRESSBAR_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[SPINNER_LABEL_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[SPINNER_HOVER_BUTTON_BORDER_COLOR] = GetHexValue(fadeColor[8]);
-        style[SPINNER_PRESSED_BUTTON_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[COMBOBOX_DEFAULT_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[COMBOBOX_HOVER_BORDER_COLOR] = GetHexValue(fadeColor[8]);
-        style[COMBOBOX_PRESSED_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[COMBOBOX_PRESSED_LIST_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[CHECKBOX_DEFAULT_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-        style[CHECKBOX_HOVER_BORDER_COLOR] = GetHexValue(fadeColor[8]);
-        style[CHECKBOX_CLICK_BORDER_COLOR] = GetHexValue(fadeColor[9]);
-        style[TEXTBOX_BORDER_COLOR] = GetHexValue(fadeColor[7]);
-    }
-    else if (guiProperty == GLOBAL_TEXT_COLOR)
-    {
-        Color baseColor = GetColor(value);
-        Color fadeColor[NUM_COLOR_SAMPLES];
-
-        for (int i = 0; i < NUM_COLOR_SAMPLES; i++) fadeColor[i] = ColorMultiply(baseColor, 1.0f - (float)i/(NUM_COLOR_SAMPLES - 1));
-
-        style[GLOBAL_TEXT_COLOR] = value;
-        style[LABEL_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[BUTTON_DEFAULT_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[BUTTON_HOVER_TEXT_COLOR] = GetHexValue(fadeColor[8]);
-        style[BUTTON_PRESSED_TEXT_COLOR] = GetHexValue(fadeColor[5]);
-        style[TOGGLE_DEFAULT_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[TOGGLE_HOVER_TEXT_COLOR] = GetHexValue(fadeColor[8]);
-        style[TOGGLE_PRESSED_TEXT_COLOR] = GetHexValue(fadeColor[5]);
-        style[TOGGLE_ACTIVE_TEXT_COLOR] = GetHexValue(fadeColor[5]);
-        style[SPINNER_DEFAULT_SYMBOL_COLOR] = GetHexValue(fadeColor[9]);
-        style[SPINNER_DEFAULT_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[SPINNER_HOVER_SYMBOL_COLOR] = GetHexValue(fadeColor[8]);
-        style[SPINNER_HOVER_TEXT_COLOR] = GetHexValue(fadeColor[8]);
-        style[SPINNER_PRESSED_SYMBOL_COLOR] = GetHexValue(fadeColor[5]);
-        style[SPINNER_PRESSED_TEXT_COLOR] = GetHexValue(fadeColor[5]);
-        style[COMBOBOX_DEFAULT_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[COMBOBOX_DEFAULT_LIST_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[COMBOBOX_HOVER_TEXT_COLOR] = GetHexValue(fadeColor[8]);
-        style[COMBOBOX_HOVER_LIST_TEXT_COLOR] = GetHexValue(fadeColor[8]);
-        style[COMBOBOX_PRESSED_TEXT_COLOR] = GetHexValue(fadeColor[4]);
-        style[COMBOBOX_PRESSED_LIST_TEXT_COLOR] = GetHexValue(fadeColor[4]);
-        style[TEXTBOX_TEXT_COLOR] = GetHexValue(fadeColor[9]);
-        style[TEXTBOX_LINE_COLOR] = GetHexValue(fadeColor[6]);
-    }
-    else style[guiProperty] = value;
-
-}
+RAYGUIDEF void GuiSetStyleProperty(int guiProperty, int value) { style[guiProperty] = value; }
 
 // Get one style property value
-RAYGUIDEF int GetStyleProperty(int guiProperty) { return style[guiProperty]; }
+RAYGUIDEF int GuiGetStyleProperty(int guiProperty) { return style[guiProperty]; }
 
-#endif  // !defined(RAYGUI_NO_STYLE_SAVE_LOAD)
+#endif  // defined(RAYGUI_STYLE_SAVE_LOAD)
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-static Color ColorMultiply(Color baseColor, float value)
+// Convert color data from RGB to HSV
+// NOTE: Color data should be passed normalized
+static Vector3 ConvertRGBtoHSV(Vector3 rgb)
 {
-    Color multColor = baseColor;
+    Vector3 hsv;
+    float min, max, delta;
 
-    if (value > 1.0f) value = 1.0f;
-    else if (value < 0.0f) value = 0.0f;
+    min = rgb.x < rgb.y ? rgb.x : rgb.y;
+    min = min  < rgb.z ? min  : rgb.z;
 
-    multColor.r += (255 - multColor.r)*value;
-    multColor.g += (255 - multColor.g)*value;
-    multColor.b += (255 - multColor.b)*value;
+    max = rgb.x > rgb.y ? rgb.x : rgb.y;
+    max = max  > rgb.z ? max  : rgb.z;
 
-    return multColor;
+    hsv.z = max;            // Value
+    delta = max - min;
+    
+    if (delta < 0.00001f)
+    {
+        hsv.y = 0.0f;
+        hsv.x = 0.0f;       // Undefined, maybe NAN?
+        return hsv;
+    }
+    
+    if (max > 0.0f) 
+    {
+        // NOTE: If max is 0, this divide would cause a crash
+        hsv.y = (delta/max);    // Saturation
+    } 
+    else 
+    {
+        // NOTE: If max is 0, then r = g = b = 0, s = 0, h is undefined
+        hsv.y = 0.0f;
+        hsv.x = NAN;        // Undefined
+        return hsv;
+    }
+    
+    // NOTE: Comparing float values could not work properly
+    if (rgb.x >= max) hsv.x = (rgb.y - rgb.z)/delta;    // Between yellow & magenta
+    else
+    {
+        if (rgb.y >= max) hsv.x = 2.0f + (rgb.z - rgb.x)/delta;  // Between cyan & yellow
+        else hsv.x = 4.0f + (rgb.x - rgb.y)/delta;      // Between magenta & cyan
+    }
+    
+    hsv.x *= 60.0f;     // Convert to degrees
+
+    if (hsv.x < 0.0f) hsv.x += 360.0f;
+
+    return hsv;
 }
 
-#if defined (RAYGUI_STANDALONE)
+// Convert color data from HSV to RGB
+// NOTE: Color data should be passed normalized
+static Vector3 ConvertHSVtoRGB(Vector3 hsv)
+{
+    Vector3 rgb;
+    float hh, p, q, t, ff;
+    long i;
+
+    // NOTE: Comparing float values could not work properly
+    if (hsv.y <= 0.0f) 
+    {
+        rgb.x = hsv.z;
+        rgb.y = hsv.z;
+        rgb.z = hsv.z;
+        return rgb;
+    }
+    
+    hh = hsv.x;
+    if (hh >= 360.0f) hh = 0.0f;
+    hh /= 60.0f;
+    
+    i = (long)hh;
+    ff = hh - i;
+    p = hsv.z*(1.0f - hsv.y);
+    q = hsv.z*(1.0f - (hsv.y*ff));
+    t = hsv.z*(1.0f - (hsv.y*(1.0f - ff)));
+
+    switch (i) 
+    {
+        case 0:
+        {
+            rgb.x = hsv.z;
+            rgb.y = t;
+            rgb.z = p;
+        } break;
+        case 1:
+        {
+            rgb.x = q;
+            rgb.y = hsv.z;
+            rgb.z = p;
+        } break;
+        case 2:
+        {
+            rgb.x = p;
+            rgb.y = hsv.z;
+            rgb.z = t;
+        } break;
+        case 3:
+        {
+            rgb.x = p;
+            rgb.y = q;
+            rgb.z = hsv.z;
+        } break;
+        case 4:
+        {
+            rgb.x = t;
+            rgb.y = p;
+            rgb.z = hsv.z;
+        } break;
+        case 5:
+        default:
+        {
+            rgb.x = hsv.z;
+            rgb.y = p;
+            rgb.z = q;
+        } break;
+    }
+    
+    return rgb;     
+}
+
+#if defined(RAYGUI_STANDALONE)
 // Returns a Color struct from hexadecimal value
 static Color GetColor(int hexValue)
 {
@@ -1596,7 +2858,7 @@ static Color GetColor(int hexValue)
 }
 
 // Returns hexadecimal value for a Color
-static int GetHexValue(Color color)
+static int ColorToInt(Color color)
 {
     return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
 }
@@ -1606,9 +2868,19 @@ static bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
 {
     bool collision = false;
 
-    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
+    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && 
+        (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
 
     return collision;
+}
+
+// Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
+Color Fade(Color color, float alpha)
+{
+    if (alpha < 0.0f) alpha = 0.0f;
+    else if (alpha > 1.0f) alpha = 1.0f;
+
+    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
 // Formatting of text with variables to 'embed'
@@ -1628,4 +2900,3 @@ static const char *FormatText(const char *text, ...)
 #endif
 
 #endif // RAYGUI_IMPLEMENTATION
-
