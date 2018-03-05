@@ -493,7 +493,8 @@ int main(int argc, char *argv[])
 
             // Labels
             //--------------------------------------------------------------------------------
-            DrawText("rFXGen", 28, 19, 20, DARKGRAY);
+            DrawText("rFXGen", 15, 15, 20, DARKGRAY);
+            DrawText("v1.2", 95, 25, 10, GRAY);
 
             GuiLabel((Rectangle){ paramsRec.x + 33, paramsRec.y + 5, 100, 10 }, "ATTACK TIME");
             GuiLabel((Rectangle){ paramsRec.x + 31, paramsRec.y + 20, 100, 10 }, "SUSTAIN TIME");
@@ -632,7 +633,7 @@ int main(int argc, char *argv[])
             // ToggleGroup - channels
             //--------------------------------------------------------------------------------
             int previousWaveTypeValue = params.waveTypeValue;
-            params.waveTypeValue = GuiToggleGroup((Rectangle){ 117, 15, 265, 20 }, tgroupWaveTypeText, 4, params.waveTypeValue);
+            params.waveTypeValue = GuiToggleGroup((Rectangle){ 117, 15, 262, 20 }, tgroupWaveTypeText, 4, params.waveTypeValue);
             if (params.waveTypeValue != previousWaveTypeValue) regenerate = true;
             //--------------------------------------------------------------------------------
 
@@ -654,10 +655,10 @@ int main(int argc, char *argv[])
             // Draw status bar
             DrawRectangle(0, screenHeight - 20, screenWidth, 20, Fade(LIGHTGRAY, 0.5f));
             DrawLine(0, screenHeight - 20, screenWidth, screenHeight - 20, LIGHTGRAY);
-            DrawText("SOUND INFO:", 28, 486, 10, DARKGRAY);
-            DrawText(FormatText("num samples: %i", wave.sampleCount), 117, 486, 10, DARKGRAY);
-            DrawText(FormatText("|    duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 234, 486, 10, DARKGRAY);
-            DrawText(FormatText("|   Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 355, 486, 10, DARKGRAY);
+            DrawText("SOUND INFO:", 14, 486, 10, DARKGRAY);
+            DrawText(FormatText("num samples: %i", wave.sampleCount), 89, 486, 10, DARKGRAY);
+            DrawText(FormatText("|    duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 206, 486, 10, DARKGRAY);
+            DrawText(FormatText("|   Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 328, 486, 10, DARKGRAY);
 
             // Adverts
             DrawText("based on sfxr by", 16, 235, 10, GRAY);
@@ -667,12 +668,11 @@ int main(int argc, char *argv[])
 
             DrawText("www/github.com/\nraysan5/raygui", 18, 280, 10, GRAY);
             DrawText("www/github.com/\nraysan5/raylib", 18, 318, 10, GRAY);
-            DrawText("powered by", 394, 149, 10, DARKGRAY);
-            DrawRectangle(394, 162, 92, 92, BLACK);
-            DrawRectangle(400, 168, 80, 80, RAYWHITE);
-            DrawText("raylib", 419, 223, 20, BLACK);
-
-            DrawText("@raysan5", 421, 21, 10, GRAY);
+            DrawText("powered by", 394, 134, 10, DARKGRAY);
+            DrawRectangle(394, 147, 92, 92, BLACK);
+            DrawRectangle(400, 153, 80, 80, RAYWHITE);
+            DrawText("raylib", 419, 208, 20, BLACK);
+            DrawText("www.raylib.com", 405, 250, 10, GRAY);
 
         EndDrawing();
         //------------------------------------------------------------------------------------
@@ -1721,6 +1721,14 @@ static void BtnExportWav(Wave wave)
     // Save file dialog
     const char *filters[] = { "*.wav" };
     const char *fileName = tinyfd_saveFileDialog("Save wave file", currrentPathFile, 1, filters, "Wave File (*.wav)");
+    
+    /*
+    if (GetExtension(fileName) == NULL)     // No extension provided
+    {
+        strcat(fileName, ".wav\0");
+    }
+    */
+    //if (strcmp(GetExtension(fileName), "wav") != 0)
 
     Wave cwave = WaveCopy(wave);
 
