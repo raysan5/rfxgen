@@ -363,9 +363,11 @@ int main(int argc, char *argv[])
     int screenHeight = 500;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "rFXGen - raylib FX Sound Generator");
+    InitWindow(screenWidth, screenHeight, "rFXGen - raylib fx sound generator");
 
     InitAudioDevice();
+    
+    RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
 
     Rectangle paramsRec = { 117, 43, 265, 373 };    // Parameters rectangle box
 
@@ -414,6 +416,10 @@ int main(int argc, char *argv[])
     int comboxSampleSizeValue = 1;
     //----------------------------------------------------------------------------------------
 
+    // Toggle data
+    //----------------------------------------------------------------------------------------
+    bool screenSizeToggle = false;
+    //----------------------------------------------------------------------------------------
     // ToggleGroup data
     //----------------------------------------------------------------------------------------
     const char *tgroupWaveTypeText[4] = { "Square", "Sawtooth", "Sinewave", "Noise" };
@@ -426,7 +432,7 @@ int main(int argc, char *argv[])
     wave.sampleSize = 32;       // 32 bit -> float
     wave.channels = 1;
     wave.sampleCount = 10*wave.sampleRate*wave.channels;    // Max sampleCount for 10 seconds
-    wave.data = (float *)malloc(wave.sampleCount*sizeof(float));
+    wave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
 
     Sound sound;
     sound = LoadSoundFromWave(wave);
@@ -463,18 +469,47 @@ int main(int argc, char *argv[])
         // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
         if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), (Rectangle){ 243, 48, 102, 362 })) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
         {
-            // Generate new wave and update sound
-            free(wave.data);
-            wave = GenerateWave(params);                        // Generate wave from parameters
-            UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data
+            UnloadWave(wave);
+            wave = GenerateWave(params);        // Generate new wave from parameters
+            
+            UnloadSound(sound);
+            sound = LoadSoundFromWave(wave);    // Reload sound from new wave
+            
+            //UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
 
             if (regenerate || playOnChangeValue) PlaySound(sound);
+            
             regenerate = false;
+        }
+        
+        // if (params.startFrequencyValue < params.minFrequencyValue) params.startFrequencyValue = params.minFrequencyValue; // This may fix a bug
+        if (screenSizeToggle)
+        {   
+            if (GetScreenWidth() <= 500)
+            {
+                SetWindowSize(1000, 1000);
+                SetMouseScale(0.5f);
+            }
+        }
+        else 
+        {
+            if (GetScreenWidth() > 500)
+            {
+                SetWindowSize(500, 500);
+                SetMouseScale(1.0f);
+            }
         }
 
         BeginDrawing();
 
             ClearBackground(GuiBackgroundColor());
+            
+#if defined(RENDER_WAVE_TO_TEXTURE)
+            BeginTextureMode(waveTarget);
+                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
+            EndTextureMode();
+#endif
+            BeginTextureMode(screenTarget);
 
             DrawRectangleLines(paramsRec.x, paramsRec.y - 1, paramsRec.width, paramsRec.height + 1, GuiLinesColor());
 
@@ -493,37 +528,37 @@ int main(int argc, char *argv[])
 
             // Labels
             //--------------------------------------------------------------------------------
-            DrawText("rFXGen", 15, 15, 20, DARKGRAY);
-            DrawText("v1.2", 95, 25, 10, GRAY);
+            DrawText("rFXGen", 28, 19, 20, DARKGRAY);
+            DrawText("v1.2", 88, 14, 10, GRAY);
 
-            GuiLabel((Rectangle){ paramsRec.x + 33, paramsRec.y + 5, 100, 10 }, "ATTACK TIME");
-            GuiLabel((Rectangle){ paramsRec.x + 31, paramsRec.y + 20, 100, 10 }, "SUSTAIN TIME");
-            GuiLabel((Rectangle){ paramsRec.x + 27, paramsRec.y + 35, 100, 10 }, "SUSTAIN PUNCH");
-            GuiLabel((Rectangle){ paramsRec.x + 37, paramsRec.y + 50, 100, 10 }, "DECAY TIME");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("ATTACK TIME", 10), paramsRec.y + 5, 100, 10 }, "ATTACK TIME");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("SUSTAIN TIME", 10), paramsRec.y + 20, 100, 10 }, "SUSTAIN TIME");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("SUSTAIN PUNCH", 10), paramsRec.y + 35, 100, 10 }, "SUSTAIN PUNCH");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("DECAY TIME", 10), paramsRec.y + 50, 100, 10 }, "DECAY TIME");
 
-            GuiLabel((Rectangle){ paramsRec.x + 7, paramsRec.y + 66 + 5, 100, 10 }, "START FREQUENCY");
-            GuiLabel((Rectangle){ paramsRec.x + 27, paramsRec.y + 66 + 20, 100, 10 }, "MIN FREQUENCY");
-            GuiLabel((Rectangle){ paramsRec.x + 55, paramsRec.y + 66 + 35, 100, 10 }, "SLIDE");
-            GuiLabel((Rectangle){ paramsRec.x + 35, paramsRec.y + 66 + 50, 100, 10 }, "DELTA SLIDE");
-            GuiLabel((Rectangle){ paramsRec.x + 26, paramsRec.y + 66 + 65, 100, 10 }, "VIBRATO DEPTH");
-            GuiLabel((Rectangle){ paramsRec.x + 27, paramsRec.y + 66 + 80, 100, 10 }, "VIBRATO SPEED");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("START FREQUENCY", 10), paramsRec.y + 66 + 5, 100, 10 }, "START FREQUENCY");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("MIN FREQUENCY", 10), paramsRec.y + 66 + 20, 100, 10 }, "MIN FREQUENCY");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("SLIDE", 10), paramsRec.y + 66 + 35, 100, 10 }, "SLIDE");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("DELTA SLIDE", 10), paramsRec.y + 66 + 50, 100, 10 }, "DELTA SLIDE");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("VIBRATO DEPTH", 10), paramsRec.y + 66 + 65, 100, 10 }, "VIBRATO DEPTH");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("VIBRATO SPEED", 10), paramsRec.y + 66 + 80, 100, 10 }, "VIBRATO SPEED");
 
-            GuiLabel((Rectangle){ paramsRec.x + 25, paramsRec.y + 162 + 5, 100, 10 }, "CHANGE AMOUNT");
-            GuiLabel((Rectangle){ paramsRec.x + 30, paramsRec.y + 162 + 20, 100, 10 }, "CHANGE SPEED");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("CHANGE AMOUNT", 10), paramsRec.y + 162 + 5, 100, 10 }, "CHANGE AMOUNT");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("CHANGE SPEED", 10), paramsRec.y + 162 + 20, 100, 10 }, "CHANGE SPEED");
 
-            GuiLabel((Rectangle){ paramsRec.x + 33, paramsRec.y + 198 + 5, 100, 10 }, "SQUARE DUTY");
-            GuiLabel((Rectangle){ paramsRec.x + 36, paramsRec.y + 198 + 20, 100, 10 }, "DUTY SWEEP");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("SQUARE DUTY", 10), paramsRec.y + 198 + 5, 100, 10 }, "SQUARE DUTY");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("DUTY SWEEP", 10), paramsRec.y + 198 + 20, 100, 10 }, "DUTY SWEEP");
 
-            GuiLabel((Rectangle){ paramsRec.x + 29, paramsRec.y + 234 + 5, 100, 10 }, "REPEAT SPEED");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("REPEAT SPEED", 10), paramsRec.y + 234 + 5, 100, 10 }, "REPEAT SPEED");
 
-            GuiLabel((Rectangle){ paramsRec.x + 26, paramsRec.y + 255 + 5, 100, 10 }, "PHASER OFFSET");
-            GuiLabel((Rectangle){ paramsRec.x + 29, paramsRec.y + 255 + 20, 100, 10 }, "PHASER SWEEP");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("PHASER OFFSET", 10), paramsRec.y + 255 + 5, 100, 10 }, "PHASER OFFSET");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("PHASER SWEEP", 10), paramsRec.y + 255 + 20, 100, 10 }, "PHASER SWEEP");
 
-            GuiLabel((Rectangle){ paramsRec.x + 37, paramsRec.y + 291 + 5, 100, 10 }, "LPF CUTOFF");
-            GuiLabel((Rectangle){ paramsRec.x + 4, paramsRec.y + 291 + 20, 100, 10 }, "LPF CUTOFF SWEEP");
-            GuiLabel((Rectangle){ paramsRec.x + 27, paramsRec.y + 291 + 35, 100, 10 }, "LPF RESONANCE");
-            GuiLabel((Rectangle){ paramsRec.x + 36, paramsRec.y + 291 + 50, 100, 10 }, "HPF CUTOFF");
-            GuiLabel((Rectangle){ paramsRec.x + 3, paramsRec.y + 291 + 65, 100, 10 }, "HPF CUTOFF SWEEP");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("LPF CUTOFF", 10), paramsRec.y + 291 + 5, 100, 10 }, "LPF CUTOFF");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("LPF CUTOFF SWEEP", 10), paramsRec.y + 291 + 20, 100, 10 }, "LPF CUTOFF SWEEP");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("LPF RESONANCE", 10), paramsRec.y + 291 + 35, 100, 10 }, "LPF RESONANCE");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("HPF CUTOFF", 10), paramsRec.y + 291 + 50, 100, 10 }, "HPF CUTOFF");
+            GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("HPF CUTOFF SWEEP", 10), paramsRec.y + 291 + 65, 100, 10 }, "HPF CUTOFF SWEEP");
             //--------------------------------------------------------------------------------
 
             // Sliders
@@ -610,6 +645,11 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 394, 307, 92, 20 }, "Save Sound")) BtnSaveSound();
             if (GuiButton((Rectangle){ 394, 389, 92, 20 }, "Export .Wav")) BtnExportWav(wave);
             //--------------------------------------------------------------------------------
+            
+            // Toggles
+            //--------------------------------------------------------------------------------
+            screenSizeToggle = GuiToggleButton((Rectangle){ 394, 15, 92, 20 }, "Screen Size x2", screenSizeToggle);
+            //--------------------------------------------------------------------------------
 
             // CheckBox
             //--------------------------------------------------------------------------------
@@ -641,10 +681,6 @@ int main(int argc, char *argv[])
             else DrawText(FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)), 394, 49, 10, DARKGRAY);
 
 #if defined(RENDER_WAVE_TO_TEXTURE)
-            BeginTextureMode(waveTarget);
-                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
-            EndTextureMode();
-
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
 #else
             DrawWave(&wave, waveRec, MAROON);
@@ -668,12 +704,16 @@ int main(int argc, char *argv[])
 
             DrawText("www/github.com/\nraysan5/raygui", 18, 280, 10, GRAY);
             DrawText("www/github.com/\nraysan5/raylib", 18, 318, 10, GRAY);
-            DrawText("powered by", 394, 134, 10, DARKGRAY);
-            DrawRectangle(394, 147, 92, 92, BLACK);
-            DrawRectangle(400, 153, 80, 80, RAYWHITE);
-            DrawText("raylib", 419, 208, 20, BLACK);
-            DrawText("www.raylib.com", 405, 250, 10, GRAY);
-
+            DrawText("powered by", 394, 140, 10, DARKGRAY);
+            DrawRectangle(394, 153, 92, 92, BLACK);
+            DrawRectangle(400, 159, 80, 80, RAYWHITE);
+            DrawText("raylib", 419, 214, 20, BLACK);
+            DrawText("www.raylib.com", 405, 256, 10, DARKGRAY);
+            
+            EndTextureMode();
+            if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
+ 
         EndDrawing();
         //------------------------------------------------------------------------------------
     }
@@ -682,6 +722,8 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
     UnloadSound(sound);
     UnloadWave(wave);
+    
+    UnloadRenderTexture(screenTarget);
 #if defined(RENDER_WAVE_TO_TEXTURE)
     UnloadRenderTexture(waveTarget);
 #endif
@@ -837,7 +879,7 @@ static Wave GenerateWave(WaveParams params)
 
     // NOTE: We reserve enough space for up to 10 seconds of wave audio at given sample rate
     // By default we use float size samples, they are converted to desired sample size at the end
-    float *buffer = (float *)malloc(MAX_WAVE_LENGTH_SECONDS*WAVE_SAMPLE_RATE*sizeof(float));
+    float *buffer = (float *)calloc(MAX_WAVE_LENGTH_SECONDS*WAVE_SAMPLE_RATE, sizeof(float));
     bool generatingSample = true;
     int sampleCount = 0;
 
@@ -1023,20 +1065,20 @@ static Wave GenerateWave(WaveParams params)
         buffer[i] = ssample;
     }
 
-    Wave wave;
-    wave.sampleCount = sampleCount;
-    wave.sampleRate = WAVE_SAMPLE_RATE; // By default 44100 Hz
-    wave.sampleSize = 32;               // By default 32 bit float samples
-    wave.channels = 1;                  // By default 1 channel (mono)
+    Wave genWave;
+    genWave.sampleCount = sampleCount;
+    genWave.sampleRate = WAVE_SAMPLE_RATE; // By default 44100 Hz
+    genWave.sampleSize = 32;               // By default 32 bit float samples
+    genWave.channels = 1;                  // By default 1 channel (mono)
 
     // NOTE: Wave can be converted to desired format after generation
 
-    wave.data = malloc(wave.sampleCount*wave.sampleSize/8);
-    memcpy(wave.data, buffer, wave.sampleCount*wave.sampleSize/8);
+    genWave.data = calloc(genWave.sampleCount*genWave.channels, genWave.sampleSize/8);
+    memcpy(genWave.data, buffer, genWave.sampleCount*genWave.channels*genWave.sampleSize/8);
 
     free(buffer);
 
-    return wave;
+    return genWave;
 }
 
 // Load .rfx (rFXGen) or .sfs (sfxr) sound parameters file
@@ -1704,7 +1746,9 @@ static void BtnSaveSound(void)
 
     // Save file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
-    const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currrentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
+    char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currrentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
+    
+    if (GetExtension(fileName) == NULL) strcat(fileName, ".rfx\0");     // No extension provided
 
     if (fileName != NULL) SaveSoundParams(fileName, params);
 }
@@ -1720,16 +1764,11 @@ static void BtnExportWav(Wave wave)
 
     // Save file dialog
     const char *filters[] = { "*.wav" };
-    const char *fileName = tinyfd_saveFileDialog("Save wave file", currrentPathFile, 1, filters, "Wave File (*.wav)");
+    char *fileName = tinyfd_saveFileDialog("Save wave file", currrentPathFile, 1, filters, "Wave File (*.wav)");
     
-    /*
-    if (GetExtension(fileName) == NULL)     // No extension provided
-    {
-        strcat(fileName, ".wav\0");
-    }
-    */
-    //if (strcmp(GetExtension(fileName), "wav") != 0)
-
+    if (GetExtension(fileName) == NULL) strcat(fileName, ".wav\0");             // No extension provided
+    if (strcmp(GetExtension(fileName), "wav") != 0) strcat(fileName, ".wav\0"); // Add required extension
+    
     Wave cwave = WaveCopy(wave);
 
     // Before exporting wave data, we format it as desired
