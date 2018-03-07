@@ -714,8 +714,8 @@ int main(int argc, char *argv[])
             
             SetTextureFilter(screenTarget.texture, 0);
             
-            if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
-            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, -screenTarget.texture.width, screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, -screenTarget.texture.width, screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
  
         EndDrawing();
         //------------------------------------------------------------------------------------
