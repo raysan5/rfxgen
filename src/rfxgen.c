@@ -163,6 +163,7 @@ static void SaveWAV(const char *fileName, Wave wave);                   // Expor
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
 
 static void ShowCommandLineInfo(void);              // Show command line usage parameters
+static void OpenLinkURL(const char *url);           // Open URL link
 
 // Buttons functions
 static void BtnPickupCoin(void);    // Generate sound: Pickup/Coin
@@ -173,7 +174,7 @@ static void BtnHitHurt(void);       // Generate sound: Hit/Hurt
 static void BtnJump(void);          // Generate sound: Jump
 static void BtnBlipSelect(void);    // Generate sound: Blip/Select
 static void BtnRandomize(void);     // Generate random sound
-static void BtnMutate(void);;       // Mutate current sound
+static void BtnMutate(void);        // Mutate current sound
 
 static void BtnLoadSound(void);     // Load sound parameters file
 static void BtnSaveSound(void);     // Save sound parameters file
@@ -706,14 +707,16 @@ int main(int argc, char *argv[])
 
             DrawLine(13, 268, 105, 268, GuiLinesColor());
 
-            DrawText("www/github.com/\nraysan5/raygui", 18, 280, 10, GRAY);
-            DrawText("www/github.com/\nraysan5/raylib", 18, 318, 10, GRAY);
+            if (GuiLabelButton((Rectangle){ 18, 280, MeasureText("www.github.com/\nraysan5/raygui", 10)/2, 24 }, "www.github.com/\nraysan5/raygui")) OpenLinkURL("https://www.github.com/raysan5/raygui");
+            if (GuiLabelButton((Rectangle){ 18, 320, MeasureText("www.github.com/\nraysan5/raylib", 10)/2, 24 }, "www.github.com/\nraysan5/raylib")) OpenLinkURL("https://www.github.com/raysan5/raylib");
+
             DrawText("powered by", 394, 140, 10, DARKGRAY);
             DrawRectangle(394, 153, 92, 92, BLACK);
             DrawRectangle(400, 159, 80, 80, RAYWHITE);
             DrawText("raylib", 419, 214, 20, BLACK);
-            DrawText("www.raylib.com", 405, 250, 10, DARKGRAY);
             
+            if (GuiLabelButton((Rectangle){ 405, 250, MeasureText("www.raylib.com", 10), 10 }, "www.raylib.com")) OpenLinkURL("http://www.raylib.com");
+
             EndTextureMode();
 
             if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
@@ -1093,69 +1096,73 @@ static WaveParams LoadSoundParams(const char *fileName)
 
     if (strcmp(GetExtension(fileName),"sfs") == 0)
     {
-        FILE *file = fopen(fileName, "rb");
+        FILE *sfsFile = fopen(fileName, "rb");
+        
+        if (sfsFile == NULL) return params;
 
         // Load .sfs sound parameters
         int version = 0;
-        fread(&version, 1, sizeof(int), file);
+        fread(&version, 1, sizeof(int), sfsFile);
 
         if ((version == 100) || (version == 101) || (version == 102))
         {
-            fread(&params.waveTypeValue, 1, sizeof(int), file);
+            fread(&params.waveTypeValue, 1, sizeof(int), sfsFile);
 
             volumeValue = 0.5f;
 
-            if (version == 102) fread(&volumeValue, 1, sizeof(float), file);
+            if (version == 102) fread(&volumeValue, 1, sizeof(float), sfsFile);
 
-            fread(&params.startFrequencyValue, 1, sizeof(float), file);
-            fread(&params.minFrequencyValue, 1, sizeof(float), file);
-            fread(&params.slideValue, 1, sizeof(float), file);
+            fread(&params.startFrequencyValue, 1, sizeof(float), sfsFile);
+            fread(&params.minFrequencyValue, 1, sizeof(float), sfsFile);
+            fread(&params.slideValue, 1, sizeof(float), sfsFile);
 
-            if (version >= 101) fread(&params.deltaSlideValue, 1, sizeof(float), file);
+            if (version >= 101) fread(&params.deltaSlideValue, 1, sizeof(float), sfsFile);
 
-            fread(&params.squareDutyValue, 1, sizeof(float), file);
-            fread(&params.dutySweepValue, 1, sizeof(float), file);
+            fread(&params.squareDutyValue, 1, sizeof(float), sfsFile);
+            fread(&params.dutySweepValue, 1, sizeof(float), sfsFile);
 
-            fread(&params.vibratoDepthValue, 1, sizeof(float), file);
-            fread(&params.vibratoSpeedValue, 1, sizeof(float), file);
+            fread(&params.vibratoDepthValue, 1, sizeof(float), sfsFile);
+            fread(&params.vibratoSpeedValue, 1, sizeof(float), sfsFile);
 
             float vibratoPhaseDelay = 0.0f;
-            fread(&vibratoPhaseDelay, 1, sizeof(float), file); // Not used
+            fread(&vibratoPhaseDelay, 1, sizeof(float), sfsFile); // Not used
 
-            fread(&params.attackTimeValue, 1, sizeof(float), file);
-            fread(&params.sustainTimeValue, 1, sizeof(float), file);
-            fread(&params.decayTimeValue, 1, sizeof(float), file);
-            fread(&params.sustainPunchValue, 1, sizeof(float), file);
+            fread(&params.attackTimeValue, 1, sizeof(float), sfsFile);
+            fread(&params.sustainTimeValue, 1, sizeof(float), sfsFile);
+            fread(&params.decayTimeValue, 1, sizeof(float), sfsFile);
+            fread(&params.sustainPunchValue, 1, sizeof(float), sfsFile);
 
             bool filterOn = false;
-            fread(&filterOn, 1, sizeof(bool), file); // Not used
+            fread(&filterOn, 1, sizeof(bool), sfsFile); // Not used
 
-            fread(&params.lpfResonanceValue, 1, sizeof(float), file);
-            fread(&params.lpfCutoffValue, 1, sizeof(float), file);
-            fread(&params.lpfCutoffSweepValue, 1, sizeof(float), file);
-            fread(&params.hpfCutoffValue, 1, sizeof(float), file);
-            fread(&params.hpfCutoffSweepValue, 1, sizeof(float), file);
+            fread(&params.lpfResonanceValue, 1, sizeof(float), sfsFile);
+            fread(&params.lpfCutoffValue, 1, sizeof(float), sfsFile);
+            fread(&params.lpfCutoffSweepValue, 1, sizeof(float), sfsFile);
+            fread(&params.hpfCutoffValue, 1, sizeof(float), sfsFile);
+            fread(&params.hpfCutoffSweepValue, 1, sizeof(float), sfsFile);
 
-            fread(&params.phaserOffsetValue, 1, sizeof(float), file);
-            fread(&params.phaserSweepValue, 1, sizeof(float), file);
-            fread(&params.repeatSpeedValue, 1, sizeof(float), file);
+            fread(&params.phaserOffsetValue, 1, sizeof(float), sfsFile);
+            fread(&params.phaserSweepValue, 1, sizeof(float), sfsFile);
+            fread(&params.repeatSpeedValue, 1, sizeof(float), sfsFile);
 
             if (version >= 101)
             {
-                fread(&params.changeSpeedValue, 1, sizeof(float), file);
-                fread(&params.changeAmountValue, 1, sizeof(float), file);
+                fread(&params.changeSpeedValue, 1, sizeof(float), sfsFile);
+                fread(&params.changeAmountValue, 1, sizeof(float), sfsFile);
             }
         }
         else printf("[%s] SFS file version not supported\n", fileName);
 
-        fclose(file);
+        fclose(sfsFile);
     }
     else if (strcmp(GetExtension(fileName),"rfx") == 0)
     {
         FILE *rfxFile = fopen(fileName, "rb");
+        
+        if (rfxFile == NULL) return params;
 
         // Load .rfx sound parameters
-        unsigned char signature[4];
+        unsigned char signature[5];
         fread(signature, 4, sizeof(unsigned char), rfxFile);
 
         if ((signature[0] == 'r') &&
@@ -1169,7 +1176,7 @@ static WaveParams LoadSoundParams(const char *fileName)
             // Load wave generation parameters
             fread(&params, 1, sizeof(WaveParams), rfxFile);
         }
-        else printf("[%s] Not a valid rFX file\n", fileName);
+        else printf("[%s] rFX file not valid\n", fileName);
 
         fclose(rfxFile);
     }
@@ -1219,6 +1226,8 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
     if (strcmp(GetExtension(fileName),"sfs") == 0)
     {
         FILE *sfsFile = fopen(fileName, "wb");
+        
+        if (sfsFile == NULL) return;
 
         // Save .sfs sound parameters
         int version = 102;
@@ -1268,9 +1277,11 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
     else if (strcmp(GetExtension(fileName),"rfx") == 0)
     {
         FILE *rfxFile = fopen(fileName, "wb");
+        
+        if (rfxFile == NULL) return;
 
         // Save .rfx sound parameters
-        unsigned char signature[4] = "rFX ";
+        unsigned char signature[5] = "rFX ";
         fwrite(signature, 4, sizeof(unsigned char), rfxFile);
 
         int version = 100;
@@ -1409,6 +1420,8 @@ static void SaveWAV(const char *fileName, Wave wave)
     waveData.subChunkSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
 
     FILE *wavFile = fopen(fileName, "wb");
+    
+    if (wavFile == NULL) return;
 
     fwrite(&riffHeader, 1, sizeof(RiffHeader), wavFile);
     fwrite(&waveFormat, 1, sizeof(WaveFormat), wavFile);
@@ -1782,4 +1795,19 @@ static void BtnExportWav(Wave wave)
     SaveWAV(fileName, cwave);
 
     UnloadWave(cwave);
+}
+
+// Open URL link
+static void OpenLinkURL(const char *url)
+{
+#if defined(_WIN32)
+    // Max length is "explorer ".length + url.maxlength (which is 2083), but let's round that
+    static char cmd[4096];
+
+    strcpy(cmd, "explorer ");
+    strcat(cmd, url);
+    system(cmd);
+
+    memset(cmd, 0, 4096);
+#endif
 }
