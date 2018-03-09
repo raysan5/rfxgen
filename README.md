@@ -1,15 +1,14 @@
 # rFXGen
 raylib fx sound generator, a tool to generate sound waves procedurally, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
-![rFXGen light interface](http://www.raylib.com/images/rfxgen_light.png)
+![rFXGen light interface](screenshots/rfxgen_v120.png)
 
 ## Features
 
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
  - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
- - Import .rfx and .sfs files (compatible with sfxr)
- - Export .rfx sounds, supported by [raylib](http://www.raylib.com/)
- - Export .wav wave data, configurable sample-rate and bit-rate
+ - Import/Export .rfx and .sfs files (compatible with sfxr)
+ - Export .wav wave data, configurable sample-rate and bits-per-sample
  - Supports command line usage for batch conversion
  - Wave data visualization in real-time
  - Completely portable (single file)
