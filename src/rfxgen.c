@@ -367,8 +367,6 @@ int main(int argc, char *argv[])
 
     InitAudioDevice();
     
-    RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
-
     Rectangle paramsRec = { 117, 43, 265, 373 };    // Parameters rectangle box
 
     // SliderBar data
@@ -447,6 +445,11 @@ int main(int argc, char *argv[])
     // To avoid enabling MSXAAx4, we will render wave to a texture x2
     RenderTexture2D waveTarget = LoadRenderTexture(waveRec.width*2, waveRec.height*2);
 #endif
+
+    // Render texture to draw full screen, enables screen scaling
+    // NOTE: If screen is scaled, mouse input should be scaled proportionally
+    RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
+    SetTextureFilter(screenTarget.texture, FILTER_POINT);
 
     // Get current directory
     // NOTE: Current working directory could not match current executable directory
@@ -528,8 +531,8 @@ int main(int argc, char *argv[])
 
             // Labels
             //--------------------------------------------------------------------------------
-            DrawText("rFXGen", 28, 19, 20, DARKGRAY);
-            DrawText("v1.2", 88, 14, 10, GRAY);
+            DrawText("rFXGen", 29, 19, 20, DARKGRAY);
+            DrawText("v1.2", 89, 14, 10, GRAY);
 
             GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("ATTACK TIME", 10), paramsRec.y + 5, 100, 10 }, "ATTACK TIME");
             GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("SUSTAIN TIME", 10), paramsRec.y + 20, 100, 10 }, "SUSTAIN TIME");
@@ -680,11 +683,12 @@ int main(int argc, char *argv[])
             if (volumeValue < 1.0f) DrawText(FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)), 394, 49, 10, DARKGRAY);
             else DrawText(FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)), 394, 49, 10, DARKGRAY);
 
-#if defined(RENDER_WAVE_TO_TEXTURE)
+            // Draw waveform
+        #if defined(RENDER_WAVE_TO_TEXTURE)
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
-#else
+        #else
             DrawWave(&wave, waveRec, MAROON);
-#endif
+        #endif
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GuiLinesColor());
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, LIGHTGRAY);
 
@@ -708,14 +712,12 @@ int main(int argc, char *argv[])
             DrawRectangle(394, 153, 92, 92, BLACK);
             DrawRectangle(400, 159, 80, 80, RAYWHITE);
             DrawText("raylib", 419, 214, 20, BLACK);
-            DrawText("www.raylib.com", 405, 256, 10, DARKGRAY);
+            DrawText("www.raylib.com", 405, 250, 10, DARKGRAY);
             
             EndTextureMode();
-            
-            SetTextureFilter(screenTarget.texture, 0);
-            
-            if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, -screenTarget.texture.width, screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
-            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, -screenTarget.texture.width, screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
+
+            if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
  
         EndDrawing();
         //------------------------------------------------------------------------------------
