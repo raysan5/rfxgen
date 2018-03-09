@@ -33,4 +33,4 @@
 *.su
 
 # Avoid release file
-!release/rfxgen.exe
+!release/win32/rfxgen.exe
