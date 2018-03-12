@@ -52,7 +52,7 @@
 
 #include "raylib.h"
 
-//#define RAYGUI_STYLE_DEFAULT_DARK
+// #define RAYGUI_STYLE_DEFAULT_DARK
 #define RAYGUI_NO_STYLE_SAVE_LOAD       // Avoid compiling style load/save code
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -510,7 +510,11 @@ int main(int argc, char *argv[])
             
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
+        #if defined(RAYGUI_STYLE_DEFAULT_DARK)
+                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(0xc7e9f5));
+        #else
                 DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
+        #endif
             EndTextureMode();
 #endif
             BeginTextureMode(screenTarget);
@@ -532,8 +536,9 @@ int main(int argc, char *argv[])
 
             // Labels
             //--------------------------------------------------------------------------------
-            DrawText("rFXGen", 29, 19, 20, DARKGRAY);
-            DrawText("v1.2", 89, 14, 10, GRAY);
+        
+            DrawText("rFXGen", 29, 19, 20, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
+            GuiLabel((Rectangle){ 89, 14, 10, 10 },"v1.2");
 
             GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("ATTACK TIME", 10), paramsRec.y + 5, 100, 10 }, "ATTACK TIME");
             GuiLabel((Rectangle){ paramsRec.x + 115 - MeasureText("SUSTAIN TIME", 10), paramsRec.y + 20, 100, 10 }, "SUSTAIN TIME");
@@ -603,34 +608,34 @@ int main(int argc, char *argv[])
 
             // Slider values
             //--------------------------------------------------------------------------------
-            DrawText(FormatText("%.02f", params.attackTimeValue), sldrAttackTimeRec.x + sldrAttackTimeRec.width + 7, sldrAttackTimeRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.sustainTimeValue), sldrSustainTimeRec.x + sldrSustainTimeRec.width + 7, sldrSustainTimeRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.sustainPunchValue), sldrSustainPunchRec.x + sldrSustainPunchRec.width + 7, sldrSustainPunchRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.decayTimeValue), sldrDecayTimeRec.x + sldrDecayTimeRec.width + 7, sldrDecayTimeRec.y + 1, 10, DARKGRAY);
-
-            DrawText(FormatText("%.02f", params.startFrequencyValue), sldrStartFrequencyRec.x + sldrStartFrequencyRec.width + 7, sldrStartFrequencyRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.minFrequencyValue), sldrMinFrequencyRec.x + sldrMinFrequencyRec.width + 7, sldrMinFrequencyRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.slideValue), sldrSlideRec.x + sldrSlideRec.width + 7, sldrSlideRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.deltaSlideValue), sldrDeltaSlideRec.x + sldrDeltaSlideRec.width + 7, sldrDeltaSlideRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.vibratoDepthValue), sldrVibratoDepthRec.x + sldrVibratoDepthRec.width + 7, sldrVibratoDepthRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.vibratoSpeedValue), sldrVibratoSpeedRec.x + sldrVibratoSpeedRec.width + 7, sldrVibratoSpeedRec.y + 1, 10, DARKGRAY);
-
-            DrawText(FormatText("%.02f", params.changeAmountValue), sldrChangeAmountRec.x + sldrChangeAmountRec.width + 7, sldrChangeAmountRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.changeSpeedValue), sldrChangeSpeedRec.x + sldrChangeSpeedRec.width + 7, sldrChangeSpeedRec.y + 1, 10, DARKGRAY);
-
-            DrawText(FormatText("%.02f", params.squareDutyValue), sldrSquareDutyRec.x + sldrSquareDutyRec.width + 7, sldrSquareDutyRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.dutySweepValue), sldrDutySweepRec.x + sldrDutySweepRec.width + 7, sldrDutySweepRec.y + 1, 10, DARKGRAY);
-
-            DrawText(FormatText("%.02f", params.repeatSpeedValue), sldrRepeatSpeedRec.x + sldrRepeatSpeedRec.width + 7, sldrRepeatSpeedRec.y + 1, 10, DARKGRAY);
-
-            DrawText(FormatText("%.02f", params.phaserOffsetValue), sldrPhaserOffsetRec.x + sldrPhaserOffsetRec.width + 7, sldrPhaserOffsetRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.phaserSweepValue), sldrPhaserSweepRec.x + sldrPhaserSweepRec.width + 7, sldrPhaserSweepRec.y + 1, 10, DARKGRAY);
-
-            DrawText(FormatText("%.02f", params.lpfCutoffValue), sldrLpfCutoffRec.x + sldrLpfCutoffRec.width + 7, sldrLpfCutoffRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.lpfCutoffSweepValue), sldrLpfCutoffSweepRec.x + sldrLpfCutoffSweepRec.width + 7, sldrLpfCutoffSweepRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.lpfResonanceValue), sldrLpfResonanceRec.x + sldrLpfResonanceRec.width + 7, sldrLpfResonanceRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.hpfCutoffValue), sldrHpfCutoffRec.x + sldrHpfCutoffRec.width + 7, sldrHpfCutoffRec.y + 1, 10, DARKGRAY);
-            DrawText(FormatText("%.02f", params.hpfCutoffSweepValue), sldrHpfCutoffSweepRec.x + sldrHpfCutoffSweepRec.width + 7, sldrHpfCutoffSweepRec.y + 1, 10, DARKGRAY);
+            GuiLabel((Rectangle){sldrAttackTimeRec.x + sldrAttackTimeRec.width + 7, sldrAttackTimeRec.y + 1, 10, 10 }, FormatText("%.02f", params.attackTimeValue));
+            GuiLabel((Rectangle){sldrSustainTimeRec.x + sldrSustainTimeRec.width + 7, sldrSustainTimeRec.y + 1, 10, 10 }, FormatText("%.02f", params.sustainTimeValue));
+            GuiLabel((Rectangle){sldrSustainPunchRec.x + sldrSustainPunchRec.width + 7, sldrSustainPunchRec.y + 1, 10, 10 }, FormatText("%.02f", params.sustainPunchValue));
+            GuiLabel((Rectangle){sldrDecayTimeRec.x + sldrDecayTimeRec.width + 7, sldrDecayTimeRec.y + 1, 10, 10 }, FormatText("%.02f", params.decayTimeValue));
+            
+            GuiLabel((Rectangle){sldrStartFrequencyRec.x + sldrStartFrequencyRec.width + 7, sldrStartFrequencyRec.y + 1, 10, 10 }, FormatText("%.02f", params.startFrequencyValue));
+            GuiLabel((Rectangle){sldrMinFrequencyRec.x + sldrMinFrequencyRec.width + 7, sldrMinFrequencyRec.y + 1, 10, 10 }, FormatText("%.02f", params.minFrequencyValue));
+            GuiLabel((Rectangle){sldrSlideRec.x + sldrSlideRec.width + 7, sldrSlideRec.y + 1, 10, 10 }, FormatText("%.02f", params.slideValue));
+            GuiLabel((Rectangle){sldrDeltaSlideRec.x + sldrDeltaSlideRec.width + 7, sldrDeltaSlideRec.y + 1, 10, 10 }, FormatText("%.02f", params.deltaSlideValue));
+            GuiLabel((Rectangle){sldrVibratoDepthRec.x + sldrVibratoDepthRec.width + 7, sldrVibratoDepthRec.y + 1, 10, 10 }, FormatText("%.02f", params.vibratoDepthValue));
+            GuiLabel((Rectangle){sldrVibratoSpeedRec.x + sldrVibratoSpeedRec.width + 7, sldrVibratoSpeedRec.y + 1, 10, 10 }, FormatText("%.02f", params.vibratoSpeedValue));
+            
+            GuiLabel((Rectangle){sldrChangeAmountRec.x + sldrChangeAmountRec.width + 7, sldrChangeAmountRec.y + 1, 10, 10 }, FormatText("%.02f", params.changeAmountValue));
+            GuiLabel((Rectangle){sldrChangeSpeedRec.x + sldrChangeSpeedRec.width + 7, sldrChangeSpeedRec.y + 1, 10, 10 }, FormatText("%.02f", params.changeSpeedValue));
+            
+            GuiLabel((Rectangle){sldrSquareDutyRec.x + sldrSquareDutyRec.width + 7, sldrSquareDutyRec.y + 1, 10, 10 }, FormatText("%.02f", params.squareDutyValue));
+            GuiLabel((Rectangle){sldrDutySweepRec.x + sldrDutySweepRec.width + 7, sldrDutySweepRec.y + 1, 10, 10 }, FormatText("%.02f", params.dutySweepValue));
+            
+            GuiLabel((Rectangle){sldrRepeatSpeedRec.x + sldrRepeatSpeedRec.width + 7, sldrRepeatSpeedRec.y + 1, 10, 10 }, FormatText("%.02f", params.repeatSpeedValue));
+            
+            GuiLabel((Rectangle){sldrPhaserOffsetRec.x + sldrPhaserOffsetRec.width + 7, sldrPhaserOffsetRec.y + 1, 10, 10 }, FormatText("%.02f", params.phaserOffsetValue));
+            GuiLabel((Rectangle){sldrPhaserSweepRec.x + sldrPhaserSweepRec.width + 7, sldrPhaserSweepRec.y + 1, 10, 10 }, FormatText("%.02f", params.phaserSweepValue));
+            
+            GuiLabel((Rectangle){sldrLpfCutoffRec.x + sldrLpfCutoffRec.width + 7, sldrLpfCutoffRec.y + 1, 10, 10 }, FormatText("%.02f", params.lpfCutoffValue));
+            GuiLabel((Rectangle){sldrLpfCutoffSweepRec.x + sldrLpfCutoffSweepRec.width + 7, sldrLpfCutoffSweepRec.y + 1, 10, 10 }, FormatText("%.02f", params.lpfCutoffSweepValue));
+            GuiLabel((Rectangle){sldrLpfResonanceRec.x + sldrLpfResonanceRec.width + 7, sldrLpfResonanceRec.y + 1, 10, 10 }, FormatText("%.02f", params.lpfResonanceValue));
+            GuiLabel((Rectangle){sldrHpfCutoffRec.x + sldrHpfCutoffRec.width + 7, sldrHpfCutoffRec.y + 1, 10, 10 }, FormatText("%.02f", params.hpfCutoffValue));
+            GuiLabel((Rectangle){sldrHpfCutoffSweepRec.x + sldrHpfCutoffSweepRec.width + 7, sldrHpfCutoffSweepRec.y + 1, 10, 10 }, FormatText("%.02f", params.hpfCutoffSweepValue));
             //--------------------------------------------------------------------------------
 
             // Buttons
@@ -681,8 +686,8 @@ int main(int argc, char *argv[])
             if (params.waveTypeValue != previousWaveTypeValue) regenerate = true;
             //--------------------------------------------------------------------------------
 
-            if (volumeValue < 1.0f) DrawText(FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)), 394, 49, 10, DARKGRAY);
-            else DrawText(FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)), 394, 49, 10, DARKGRAY);
+            if (volumeValue < 1.0f) GuiLabel((Rectangle){ 394, 49, 10, 10 }, FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)));
+            else GuiLabel((Rectangle){ 394, 49, 10, 10 }, FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)));
 
             // Draw waveform
         #if defined(RENDER_WAVE_TO_TEXTURE)
@@ -691,26 +696,29 @@ int main(int argc, char *argv[])
             DrawWave(&wave, waveRec, MAROON);
         #endif
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GuiLinesColor());
+            
+        #if defined(RAYGUI_STYLE_DEFAULT_DARK)
+            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, GetColor(style[DEFAULT_BORDER_COLOR_PRESSED]));
+        #else
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, LIGHTGRAY);
+        #endif
+            
 
             // Draw status bar
-            DrawRectangle(0, screenHeight - 20, screenWidth, 20, Fade(LIGHTGRAY, 0.5f));
-            DrawLine(0, screenHeight - 20, screenWidth, screenHeight - 20, LIGHTGRAY);
-            DrawText("SOUND INFO:", 14, 486, 10, DARKGRAY);
-            DrawText(FormatText("num samples: %i", wave.sampleCount), 89, 486, 10, DARKGRAY);
-            DrawText(FormatText("|    duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 206, 486, 10, DARKGRAY);
-            DrawText(FormatText("|   Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 328, 486, 10, DARKGRAY);
+            GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);
+            GuiStatusBar((Rectangle){ 206, screenHeight - 20, 122, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
+            GuiStatusBar((Rectangle){ 328, screenHeight - 20, screenWidth - 328, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
 
             // Adverts
-            DrawText("based on sfxr by", 16, 235, 10, GRAY);
-            DrawText("Tomas Pettersson", 13, 248, 10, GRAY);
+            GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
+            GuiLabel((Rectangle){ 13, 248, 10, 10 }, "Tomas Pettersson");
 
             DrawLine(13, 268, 105, 268, GuiLinesColor());
 
             if (GuiLabelButton((Rectangle){ 18, 280, MeasureText("www.github.com/\nraysan5/raygui", 10)/2, 24 }, "www.github.com/\nraysan5/raygui")) OpenLinkURL("https://www.github.com/raysan5/raygui");
             if (GuiLabelButton((Rectangle){ 18, 320, MeasureText("www.github.com/\nraysan5/raylib", 10)/2, 24 }, "www.github.com/\nraysan5/raylib")) OpenLinkURL("https://www.github.com/raysan5/raylib");
 
-            DrawText("powered by", 394, 140, 10, DARKGRAY);
+            GuiLabel((Rectangle){ 394, 140, 10, 10 }, "powered by");
             DrawRectangle(394, 153, 92, 92, BLACK);
             DrawRectangle(400, 159, 80, 80, RAYWHITE);
             DrawText("raylib", 419, 214, 20, BLACK);
@@ -851,7 +859,7 @@ static Wave GenerateWave(WaveParams params)
 
     arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
-    if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT!
+    if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT: float comparison
 
     // Reset filter parameters
     fltw = pow(params.lpfCutoffValue, 3.0f)*0.1f;
@@ -878,7 +886,7 @@ static Wave GenerateWave(WaveParams params)
 
     iphase = abs((int)fphase);
 
-    for (int i = 0; i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;
+    for (int i = 0; i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;      // WATCH OUT: GetRandomFloat()
 
     repeatLimit = (int)(pow(1.0f - params.repeatSpeedValue, 2.0f)*20000 + 32);
 
@@ -922,7 +930,7 @@ static Wave GenerateWave(WaveParams params)
             arpeggioTime = 0;
             arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
-            if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT!
+            if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT: float comparison
         }
 
         // Frequency envelopes/arpeggios
@@ -1006,7 +1014,7 @@ static Wave GenerateWave(WaveParams params)
 
                 if (params.waveTypeValue == 3)
                 {
-                    for (int i = 0;i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;
+                    for (int i = 0;i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;   // WATCH OUT: GetRandomFloat()
                 }
             }
 
