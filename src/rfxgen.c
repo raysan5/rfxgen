@@ -52,7 +52,7 @@
 
 #include "raylib.h"
 
-// #define RAYGUI_STYLE_DEFAULT_DARK
+//#define RAYGUI_STYLE_DEFAULT_DARK
 #define RAYGUI_NO_STYLE_SAVE_LOAD       // Avoid compiling style load/save code
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -71,15 +71,6 @@
 #else
     #include <unistd.h>
     #define GetCurrentDir getcwd
-#endif
-
-#if defined(_WIN32)
-//#define WIN32_LEAN_AND_MEAN
-//#include <windows.h>
-//#include <shellapi.h>
-
-// NOTE: Requires linkage with shell32.dll
-//void *ShellExecute(void *hwnd, const char *lpOperation, const char *lpFile, const char *lpParameters, const char *lpDirectory, int nShowCmd);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -185,10 +176,6 @@ static void BtnExportWav(Wave wave); // Export current sound as .wav
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    // ISSUE: not working, undefined reference to ShellExecute 
-    //#define SW_SHOWNORMAL 1
-    //ShellExecute(NULL, "open", "twitter.bmp", NULL, NULL, SW_SHOWNORMAL);
-    
     // Command line utility to generate wav files directly from .sfs and .rfx
     if (argc > 1)
     {
@@ -511,7 +498,7 @@ int main(int argc, char *argv[])
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
         #if defined(RAYGUI_STYLE_DEFAULT_DARK)
-                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(0xc7e9f5));
+                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(0x74dff1ff));
         #else
                 DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
         #endif
