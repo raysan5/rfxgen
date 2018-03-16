@@ -76,7 +76,7 @@
 //----------------------------------------------------------------------------------
 // Defines, Macros and Types
 //----------------------------------------------------------------------------------
-#RFXGEN_VERSION     120
+#define RFXGEN_VERSION     120
 
 #define rnd(n)      GetRandomValue(0, n)
 #define frnd(range) ((float)rnd(10000)/10000.0f*range)
