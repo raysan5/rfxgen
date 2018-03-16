@@ -751,7 +751,7 @@ int main(int argc, char *argv[])
 static void ResetParams(WaveParams *params)
 {
     // NOTE: Random seed is set to a random value
-    params->randSeed = GetRandomValue(1, 1000000);
+    params->randSeed = GetRandomValue(0x1, 0xFFFE);
     srand(params->randSeed);
     
     // Wave type
