@@ -8,7 +8,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       1.2  (Mar-2018) Working on some code improvements
+*       1.2  (16-Mar-2018) Working on some code improvements and GUI review
 *       1.1  (01-Oct-2017) Code review, simplified
 *       1.0  (18-Mar-2017) First release
 *       0.9x (XX-Jan-2017) Review complete file...
@@ -20,7 +20,7 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 1.9.4            - This program uses latest raylib audio module functionality.
+*       raylib 1.9.5            - This program uses latest raylib audio module functionality.
 *       raygui 2.0              - Simple IMGUI library (based on raylib)
 *       tinyfiledialogs 3.3.1   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
@@ -74,13 +74,18 @@
 #endif
 
 //----------------------------------------------------------------------------------
-// Defines and Macros
+// Defines, Macros and Types
 //----------------------------------------------------------------------------------
-#define rnd(n) GetRandomValue(0, n)
+#RFXGEN_VERSION     120
+
+#define rnd(n)      GetRandomValue(0, n)
 #define frnd(range) ((float)rnd(10000)/10000.0f*range)
 
-// Wave parameters type (92 bytes)
+// Wave parameters type (96 bytes)
 typedef struct WaveParams {
+    
+    // Random seed used to generate the wave
+    int randSeed;
 
     // Wave type (square, sawtooth, sine, noise)
     int waveTypeValue;
@@ -140,6 +145,7 @@ static WaveParams params;           // Stores wave parameters for generation
 static bool regenerate = false;     // Wave regeneration required
 
 static char currentPath[256];       // Path to current working folder
+
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -423,7 +429,9 @@ int main(int argc, char *argv[])
     Sound sound;
     sound = LoadSoundFromWave(wave);
     SetSoundVolume(sound, volumeValue);
-
+    
+    // Reset generation parameters
+    // NOTE: Random seed for generation is set
     ResetParams(&params);
 
     Rectangle waveRec = { 13, 421, 473, 50 };
@@ -690,7 +698,6 @@ int main(int argc, char *argv[])
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, LIGHTGRAY);
         #endif
             
-
             // Draw status bar
             GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);
             GuiStatusBar((Rectangle){ 206, screenHeight - 20, 122, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
@@ -743,6 +750,10 @@ int main(int argc, char *argv[])
 //--------------------------------------------------------------------------------------------
 static void ResetParams(WaveParams *params)
 {
+    // NOTE: Random seed is set to a random value
+    params->randSeed = GetRandomValue(1, 1000000);
+    srand(params->randSeed);
+    
     // Wave type
     params->waveTypeValue = 0;
 
@@ -793,6 +804,8 @@ static Wave GenerateWave(WaveParams params)
 
     // NOTE: GetRandomValue() is provided by raylib and seed is initialized at InitWindow()
     #define GetRandomFloat(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
+    
+    if (params.randSeed != 0) srand(params.randSeed);   // Initialize seed if required
 
     // Configuration parameters for generation
     // NOTE: Those parameters are calculated from selected values
@@ -1167,9 +1180,16 @@ static WaveParams LoadSoundParams(const char *fileName)
         {
             int version;
             fread(&version, 1, sizeof(int), rfxFile);
-
-            // Load wave generation parameters
-            fread(&params, 1, sizeof(WaveParams), rfxFile);
+            
+            if (version == 100)
+            {
+                printf("[%s] Wrong rFX file version (%i)\n", fileName, version);
+            }
+            else if (version == 120)
+            {
+                // Load wave generation parameters
+                fread(&params, 1, sizeof(WaveParams), rfxFile);
+            }
         }
         else printf("[%s] rFX file not valid\n", fileName);
 
@@ -1279,7 +1299,7 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
         unsigned char signature[5] = "rFX ";
         fwrite(signature, 4, sizeof(unsigned char), rfxFile);
 
-        int version = 100;
+        int version = RFXGEN_VERSION;
         fwrite(&version, 1, sizeof(int), rfxFile);
 
         // Save wave generation parameters
