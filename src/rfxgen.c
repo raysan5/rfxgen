@@ -480,8 +480,7 @@ int main(int argc, char *argv[])
             
             regenerate = false;
         }
-        
-        // if (params.startFrequencyValue < params.minFrequencyValue) params.startFrequencyValue = params.minFrequencyValue; // This may fix a bug
+
         if (screenSizeToggle)
         {   
             if (GetScreenWidth() <= 500)
@@ -843,6 +842,10 @@ static Wave GenerateWave(WaveParams params)
     int arpeggioTime = 0;
     int arpeggioLimit = 0;
     double arpeggioModulation = 0.0;
+    
+    // HACK: Security check to avoid crash (why?)
+    if (params.minFrequencyValue > params.startFrequencyValue) params.minFrequencyValue = params.startFrequencyValue;
+    if (params.slideValue < params.deltaSlideValue) params.slideValue = params.deltaSlideValue;
 
     // Reset sample parameters
     //----------------------------------------------------------------------------------------
@@ -1195,43 +1198,7 @@ static WaveParams LoadSoundParams(const char *fileName)
 
         fclose(rfxFile);
     }
-/*
-    printf("waveTypeValue: %i\n", params.waveTypeValue);
-    printf("attackTimeValue: %f\n", params.attackTimeValue);
-    printf("sustainTimeValue: %f\n", params.sustainTimeValue);
-    printf("sustainPunchValue: %f\n", params.sustainPunchValue);
-    printf("decayTimeValue: %f\n", params.decayTimeValue);
 
-    // Frequency parameters
-    printf("startFrequencyValue: %f\n", params.startFrequencyValue);
-    printf("minFrequencyValue: %f\n", params.minFrequencyValue);
-    printf("slideValue: %f\n", params.slideValue);
-    printf("deltaSlideValue: %f\n", params.deltaSlideValue);
-    printf("vibratoDepthValue: %f\n", params.vibratoDepthValue);
-    printf("vibratoSpeedValue: %f\n", params.vibratoSpeedValue);
-    //float vibratoPhaseDelayValue;
-
-    // Tone change parameters
-    printf("changeAmountValue: %f\n", params.changeAmountValue);
-    printf("changeSpeedValue: %f\n", params.changeSpeedValue);
-    // Square wave parameters
-    printf("squareDutyValue: %f\n", params.squareDutyValue);
-    printf("dutySweepValue: %f\n", params.dutySweepValue);
-    
-    // Repeat parameters
-    printf("repeatSpeedValue: %f\n", params.repeatSpeedValue);
-
-    // Phaser parameters
-    printf("phaserOffsetValue: %f\n", params.phaserOffsetValue);
-    printf("phaserSweepValue: %f\n", params.phaserSweepValue);
-
-    // Filter parameters
-    printf("lpfCutoffValue: %f\n", params.lpfCutoffValue);
-    printf("lpfCutoffSweepValue: %f\n", params.lpfCutoffSweepValue);
-    printf("lpfResonanceValue: %f\n", params.lpfResonanceValue);
-    printf("hpfCutoffValue: %f\n", params.hpfCutoffValue);
-    printf("hpfCutoffSweepValue: %f\n", params.hpfCutoffSweepValue);
-*/
     return params;
 }
 
@@ -1307,43 +1274,6 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
 
         fclose(rfxFile);
     }
-/*
-    printf("waveTypeValue: %i\n", params.waveTypeValue);
-    printf("attackTimeValue: %f\n", params.attackTimeValue);
-    printf("sustainTimeValue: %f\n", params.sustainTimeValue);
-    printf("sustainPunchValue: %f\n", params.sustainPunchValue);
-    printf("decayTimeValue: %f\n", params.decayTimeValue);
-
-    // Frequency parameters
-    printf("startFrequencyValue: %f\n", params.startFrequencyValue);
-    printf("minFrequencyValue: %f\n", params.minFrequencyValue);
-    printf("slideValue: %f\n", params.slideValue);
-    printf("deltaSlideValue: %f\n", params.deltaSlideValue);
-    printf("vibratoDepthValue: %f\n", params.vibratoDepthValue);
-    printf("vibratoSpeedValue: %f\n", params.vibratoSpeedValue);
-    //float vibratoPhaseDelayValue;
-
-    // Tone change parameters
-    printf("changeAmountValue: %f\n", params.changeAmountValue);
-    printf("changeSpeedValue: %f\n", params.changeSpeedValue);
-    // Square wave parameters
-    printf("squareDutyValue: %f\n", params.squareDutyValue);
-    printf("dutySweepValue: %f\n", params.dutySweepValue);
-    
-    // Repeat parameters
-    printf("repeatSpeedValue: %f\n", params.repeatSpeedValue);
-
-    // Phaser parameters
-    printf("phaserOffsetValue: %f\n", params.phaserOffsetValue);
-    printf("phaserSweepValue: %f\n", params.phaserSweepValue);
-
-    // Filter parameters
-    printf("lpfCutoffValue: %f\n", params.lpfCutoffValue);
-    printf("lpfCutoffSweepValue: %f\n", params.lpfCutoffSweepValue);
-    printf("lpfResonanceValue: %f\n", params.lpfResonanceValue);
-    printf("hpfCutoffValue: %f\n", params.hpfCutoffValue);
-    printf("hpfCutoffSweepValue: %f\n", params.hpfCutoffSweepValue);
-*/
 }
 
 // Draw wave data
@@ -1676,6 +1606,8 @@ static void BtnBlipSelect(void)
 // Generate random sound
 static void BtnRandomize(void)
 {
+    params.randSeed = rnd(0xFFFE);
+    
     params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 2.0f);
 
     if (rnd(1)) params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
@@ -1781,9 +1713,11 @@ static void BtnSaveSound(void)
     const char *filters[] = { "*.rfx", "*.sfs" };
     char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currrentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
     
-    if (GetExtension(fileName) == NULL) strcat(fileName, ".rfx\0");     // No extension provided
-
-    if (fileName != NULL) SaveSoundParams(fileName, params);
+    if (fileName != NULL)
+    {
+        if (GetExtension(fileName) == NULL) strcat(fileName, ".rfx\0");     // No extension provided
+        if (fileName != NULL) SaveSoundParams(fileName, params);
+    }
 }
 
 // Export current sound as .wav
@@ -1799,17 +1733,16 @@ static void BtnExportWav(Wave wave)
     const char *filters[] = { "*.wav" };
     char *fileName = tinyfd_saveFileDialog("Save wave file", currrentPathFile, 1, filters, "Wave File (*.wav)");
     
-    if (GetExtension(fileName) == NULL) strcat(fileName, ".wav\0");             // No extension provided
-    if (strcmp(GetExtension(fileName), "wav") != 0) strcat(fileName, ".wav\0"); // Add required extension
-    
-    Wave cwave = WaveCopy(wave);
-
-    // Before exporting wave data, we format it as desired
-    WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);
-
-    SaveWAV(fileName, cwave);
-
-    UnloadWave(cwave);
+    if (fileName != NULL)
+    {
+        if (GetExtension(fileName) == NULL) strcat(fileName, ".wav\0");             // No extension provided
+        if (strcmp(GetExtension(fileName), "wav") != 0) strcat(fileName, ".wav\0"); // Add required extension
+        
+        Wave cwave = WaveCopy(wave);
+        WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);    // Before exporting wave data, we format it as desired
+        SaveWAV(fileName, cwave);
+        UnloadWave(cwave);
+    }
 }
 
 // Open URL link
