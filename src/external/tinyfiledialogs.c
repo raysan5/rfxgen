@@ -1,21 +1,21 @@
 /*_________
- /         \ tinyfiledialogs.c v3.3.1 [Feb 16, 2018] zlib licence
+ /         \ tinyfiledialogs.c v3.3.4 [Mar 15, 2018] zlib licence
  |tiny file| Unique code file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2018 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
       \|     git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
-                 ____________________________________________
-                |                                            |
-                |   email: tinyfiledialogs at ysengrin.com   |
-                |____________________________________________|
-     ___________________________________________________________________
-    |                                                                   |
-    | the windows only wchar_t UTF-16 prototypes are in the header file |
-    |___________________________________________________________________|
+         ____________________________________________
+        |                                            |
+        |   email: tinyfiledialogs at ysengrin.com   |
+        |____________________________________________|
+         ___________________________________________________________________
+        |                                                                   |
+        | the windows only wchar_t UTF-16 prototypes are in the header file |
+        |___________________________________________________________________|
 
-Please 1) let me know If you are using it on exotic hardware / OS / compiler
-       2) leave a 1-word review on Sourceforge.
-       3) upvote my stackoverflow answer/advert https://stackoverflow.com/a/47651444
+Please 1) upvote my stackoverflow answer/advert https://stackoverflow.com/a/47651444
+       2) leave a one word review on Sourceforge.
+       3) let me know If you are using it on exotic hardware/OS/compiler
 
 tiny file dialogs (cross-platform C C++)
 InputBox PasswordBox MessageBox ColorPicker
@@ -23,7 +23,7 @@ OpenFileDialog SaveFileDialog SelectFolderDialog
 Native dialog library for WINDOWS MAC OSX GTK+ QT CONSOLE & more
 SSH supported via automatic switch to console mode or X11 forwarding
 
-a C file + a header (add them to your C or C++ project) with 8 functions:
+a C file and a header (add them to your C or C++ project) with 8 functions:
 - beep
 - notify popup
 - message & question
@@ -33,8 +33,9 @@ a C file + a header (add them to your C or C++ project) with 8 functions:
 - select folder
 - color picker
 
-Complements OpenGL GLFW GLUT GLUI VTK SFML TGUI SDL Ogre Unity3d ION OpenCV
-CEGUI MathGL GLM CPW GLOW IMGUI MyGUI GLT NGL STB & GUI less programs
+Complements OpenGL Vulkan GLFW GLUT GLUI VTK SFML TGUI
+SDL Ogre Unity3d ION OpenCV CEGUI MathGL GLM CPW GLOW
+IMGUI MyGUI GLT NGL STB & GUI less programs
 
 NO INIT
 NO MAIN LOOP
@@ -57,7 +58,7 @@ Unix (command line calls) ASCII UTF-8
 The same executable can run across desktops & distributions
 
 C89 & C++98 compliant: tested with C & C++ compilers
-VisualStudio MinGW-gcc GCC Clang TinyCC OpenWatcom-v2 BorlandC SunCC
+VisualStudio MinGW-gcc GCC Clang TinyCC OpenWatcom-v2 BorlandC SunCC Zapcc
 on Windows Mac Linux Bsd Solaris Minix Raspbian
 using Gnome Kde Enlightenment Mate Cinnamon Unity Lxde Lxqt Xfce
 WindowMaker IceWm Cde Jds OpenBox Awesome Jwm Xdm
@@ -130,7 +131,7 @@ misrepresented as being the original software.
 #define MAX_PATH_OR_CMD 1024 /* _MAX_PATH or MAX_PATH */
 #define MAX_MULTIPLE_FILES 32
 
-char tinyfd_version [8] = "3.3.1";
+char const tinyfd_version [8] = "3.3.4";
 
 int tinyfd_verbose = 0 ; /* on unix: prints the command line calls */
 
@@ -157,7 +158,7 @@ for graphic mode:
   python2-tkinter python3-tkinter python-dbus perl-dbus
   gxmessage gmessage xmessage xdialog gdialog
 for console mode:
-  dialog whiptail basicinput */
+  dialog whiptail basicinput no_solution */
 
 #if defined(TINYFD_NOLIB) && defined(_WIN32)
 static int gWarningDisplayed = 1 ;
@@ -165,10 +166,10 @@ static int gWarningDisplayed = 1 ;
 static int gWarningDisplayed = 0 ;
 #endif
 
-static char gTitle[]="missing software! (we will try basic console input)";
+static char const gTitle[]="missing software! (we will try basic console input)";
 
 #ifdef _WIN32
-char tinyfd_needs[] = "\
+char const tinyfd_needs[] = "\
  ___________\n\
 /           \\ \n\
 | tiny file |\n\
@@ -180,7 +181,7 @@ char tinyfd_needs[] = "\
 \nor dialog.exe (enhanced console mode)\
 \nor a console for basic input";
 #else
-char tinyfd_needs[] = "\
+char const tinyfd_needs[] = "\
  ___________\n\
 /           \\ \n\
 | tiny file |\n\
@@ -3271,9 +3272,15 @@ static int tryCommand( char const * const aCommand )
 }
 
 
-static int isTerminalRunning()
+static int isTerminalRunning( )
 {
-        return isatty(1);
+	static int lIsTerminalRunning = -1 ;
+	if ( lIsTerminalRunning < 0 ) 
+	{
+		lIsTerminalRunning = isatty(1);
+		if (tinyfd_verbose) printf("isTerminalRunning %d\n", lIsTerminalRunning );
+	}
+	return lIsTerminalRunning;
 }
 
 
@@ -3356,14 +3363,15 @@ static char const * terminalName( )
                 {
                         strcpy(lShellName , "bash -c " ) ; /*good for basic input*/
                 }
-        else if ( strlen(dialogNameOnly()) || whiptailPresentOnly() )
-        {
-                strcpy(lShellName , "sh -c " ) ; /*good enough for dialog & whiptail*/
-        }
-        else
-        {
-            return NULL ;
-        }
+				else if ( strlen(dialogNameOnly()) || whiptailPresentOnly() )
+				{
+						strcpy(lShellName , "sh -c " ) ; /*good enough for dialog & whiptail*/
+				}
+				else
+				{
+					strcpy(lTerminalName , "" ) ;
+					return NULL ;
+				}
 
                 if ( isDarwin() )
                 {
@@ -3408,6 +3416,12 @@ static char const * terminalName( )
                         strcat(lTerminalName , " -e " ) ;
                         strcat(lTerminalName , lShellName ) ;
                 }
+                else if ( strcpy(lTerminalName,"tilix") /*good*/
+                          && detectPresence(lTerminalName) )
+                {
+                        strcat(lTerminalName , " -e " ) ;
+                        strcat(lTerminalName , lShellName ) ;
+                }
                 else if ( strcpy(lTerminalName,"xfce4-terminal") /*good*/
                           && detectPresence(lTerminalName) )
                 {
@@ -3438,7 +3452,7 @@ static char const * terminalName( )
                         strcat(lTerminalName , " -e " ) ;
                         strcat(lTerminalName , lShellName ) ;
                 }
-                else if ( strcpy(lTerminalName,"gnome-terminal") /*bad (good if version < 3)*/
+                else if ( strcpy(lTerminalName,"gnome-terminal") /*bad (good if version <3 or >=3.18)*/
                 && detectPresence(lTerminalName) )
                 {
                         strcat(lTerminalName , " --disable-factory -x " ) ;
@@ -3494,7 +3508,7 @@ static int whiptailPresent( )
 
 
 
-static int graphicMode()
+static int graphicMode( )
 {
         return !( tinyfd_forceConsole && (isTerminalRunning() || terminalName()) )
           && ( getenv("DISPLAY")
@@ -3752,6 +3766,7 @@ static int zenity3Present()
         static int lZenity3Present = -1 ;
         char lBuff [MAX_PATH_OR_CMD] ;
         FILE * lIn ;
+		int lIntTmp ;
 
         if ( lZenity3Present < 0 )
         {
@@ -3764,11 +3779,16 @@ static int zenity3Present()
                                 if ( atoi(lBuff) >= 3 )
                                 {
                                         lZenity3Present = 3 ;
-                                        if ( atoi(strtok(lBuff,".")+2 ) >= 10 )
-                                        {
-                                                lZenity3Present = 4 ;
-                                        }
-                                }
+										lIntTmp = atoi(strtok(lBuff,".")+2 ) ;
+										if ( lIntTmp >= 18 )
+										{
+											lZenity3Present = 5 ;
+										}
+										else if ( lIntTmp >= 10 )
+										{
+											lZenity3Present = 4 ;
+										}
+								}
                                 else if ( ( atoi(lBuff) == 2 ) && ( atoi(strtok(lBuff,".")+2 ) >= 32 ) )
                                 {
                                         lZenity3Present = 2 ;
@@ -4254,7 +4274,7 @@ int tinyfd_messageBox(
                 }
                 if ( aMessage && strlen(aMessage) ) 
                 {
-                        strcat(lDialogString, " --text=\"") ;
+                        strcat(lDialogString, " --no-wrap --text=\"") ;
                         strcat(lDialogString, aMessage) ;
                         strcat(lDialogString, "\"") ;
                 }
@@ -4684,7 +4704,7 @@ tinyfdRes=$(cat /tmp/tinyfd.txt);echo $tinyfdBool$tinyfdRes") ;
                         }
                 }
         }
-        else if (  isTerminalRunning( ) && terminalName() )
+        else if (  !isTerminalRunning() && terminalName() )
         {
                 if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"basicinput");return 0;}
                 strcpy( lDialogString , terminalName() ) ;
@@ -5006,11 +5026,11 @@ int tinyfd_notifyPopup(
                 }
                 strcat( lDialogString , " \" 5" ) ;
         }
-        else if ( (zenity3Present()>=4) || matedialogPresent() || shellementaryPresent() || qarmaPresent() )
+        else if ( (zenity3Present()>=5) || matedialogPresent() || shellementaryPresent() || qarmaPresent() )
         {
-                /* zenity 2.32 has the notification but with a bug: it doesnt return from it */
+                /* zenity 2.32 & 3.14 has the notification but with a bug: it doesnt return from it */
                 /* zenity 3.8 show the notification as an alert ok cancel box */
-                if ( zenity3Present()>=3 )
+                if ( zenity3Present()>=5 )
                 {
                         if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"zenity");return 1;}
                         strcpy( lDialogString , "zenity" ) ;
@@ -5526,8 +5546,8 @@ frontmost of process \\\"Python\\\" to true' ''');");
                 strcat( lDialogString , "'" ) ;
                 if ( !gWarningDisplayed && !tinyfd_forceConsole)
                 {
-                        tinyfd_messageBox(gTitle,tinyfd_needs,"ok","warning",0);
-                        gWarningDisplayed = 1 ;
+					gWarningDisplayed = 1 ;
+					tinyfd_messageBox(gTitle,tinyfd_needs,"ok","warning",0);
                 }
                 if ( aTitle && strlen(aTitle) && !tinyfd_forceConsole)
                 {
@@ -5552,17 +5572,18 @@ frontmost of process \\\"Python\\\" to true' ''');");
                 strcat( lDialogString , "cat -v /tmp/tinyfd.txt");
         }
         else if ( !gWarningDisplayed && ! isTerminalRunning( ) && ! terminalName() ) {
-          tinyfd_messageBox(gTitle,tinyfd_needs,"ok","warning",0);
-          gWarningDisplayed = 1 ;
-          return NULL;
+			gWarningDisplayed = 1 ;
+			tinyfd_messageBox(gTitle,tinyfd_needs,"ok","warning",0);
+			if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"no_solution");return (char const *)0;}
+			return NULL;
         }
         else
         {
                 if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"basicinput");return (char const *)0;}
                 if ( !gWarningDisplayed && !tinyfd_forceConsole)
                 {
-                        tinyfd_messageBox(gTitle,tinyfd_needs,"ok","warning",0);
                         gWarningDisplayed = 1 ;
+                        tinyfd_messageBox(gTitle,tinyfd_needs,"ok","warning",0);
                 }
                 if ( aTitle && strlen(aTitle) )
                 {

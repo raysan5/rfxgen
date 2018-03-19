@@ -1,5 +1,5 @@
 /*_________
- /         \ tinyfiledialogs.h v3.3.1 [Feb 16, 2018] zlib licence
+ /         \ tinyfiledialogs.h v3.3.4 [Mar 15, 2018] zlib licence
  |tiny file| Unique header file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2018 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
@@ -8,14 +8,14 @@
 		|                                            |
 		|   email: tinyfiledialogs at ysengrin.com   |
 		|____________________________________________|
-     ________________________________________________________________________
-    |                                                                        |
-    | the windows only wchar_t UTF-16 prototypes are at the end of this file |
-    |________________________________________________________________________|
+         ________________________________________________________________________
+        |                                                                        |
+        | the windows only wchar_t UTF-16 prototypes are at the end of this file |
+        |________________________________________________________________________|
 
-Please 1) let me know If you are using it on exotic hardware / OS / compiler
-       2) leave a 1-word review on Sourceforge.
-	   3) upvote my stackoverflow answer/advert https://stackoverflow.com/a/47651444
+Please 1) upvote my stackoverflow answer/advert https://stackoverflow.com/a/47651444
+       2) leave a one word review on Sourceforge.
+       3) let me know If you are using it on exotic hardware/OS/compiler
 
 tiny file dialogs (cross-platform C C++)
 InputBox PasswordBox MessageBox ColorPicker
@@ -23,7 +23,7 @@ OpenFileDialog SaveFileDialog SelectFolderDialog
 Native dialog library for WINDOWS MAC OSX GTK+ QT CONSOLE & more
 SSH supported via automatic switch to console mode or X11 forwarding
 
-a C file + a header (add them to your C or C++ project) with 8 functions:
+a C file and a header (add them to your C or C++ project) with 8 functions:
 - beep
 - notify popup
 - message & question
@@ -33,8 +33,9 @@ a C file + a header (add them to your C or C++ project) with 8 functions:
 - select folder
 - color picker
 
-Complements OpenGL GLFW GLUT GLUI VTK SFML TGUI SDL Ogre Unity3d ION OpenCV
-CEGUI MathGL GLM CPW GLOW IMGUI MyGUI GLT NGL STB & GUI less programs
+Complements OpenGL Vulkan GLFW GLUT GLUI VTK SFML TGUI
+SDL Ogre Unity3d ION OpenCV CEGUI MathGL GLM CPW GLOW
+IMGUI MyGUI GLT NGL STB & GUI less programs
 
 NO INIT
 NO MAIN LOOP
@@ -57,7 +58,7 @@ Unix (command line calls) ASCII UTF-8
 The same executable can run across desktops & distributions
 
 C89 & C++98 compliant: tested with C & C++ compilers
-VisualStudio MinGW-gcc GCC Clang TinyCC OpenWatcom-v2 BorlandC SunCC
+VisualStudio MinGW-gcc GCC Clang TinyCC OpenWatcom-v2 BorlandC SunCC Zapcc
 on Windows Mac Linux Bsd Solaris Minix Raspbian
 using Gnome Kde Enlightenment Mate Cinnamon Unity Lxde Lxqt Xfce
 WindowMaker IceWm Cde Jds OpenBox Awesome Jwm Xdm
@@ -102,9 +103,9 @@ and the corresponding closing bracket near the end of this file:
 extern "C" {
 #endif
 
-extern char tinyfd_version[8]; /* contains tinyfd current version number */
+extern char const tinyfd_version[8]; /* contains tinyfd current version number */
+extern char const tinyfd_needs[]; /* info about requirements */
 extern int tinyfd_verbose; /* 0 (default) or 1 : on unix, prints the command line calls */
-extern char tinyfd_needs[]; /* info about requirements */
 
 #ifdef _WIN32
 /* for UTF-16 use the functions at the end of this files */
@@ -133,7 +134,7 @@ for graphic mode:
   python2-tkinter python3-tkinter python-dbus perl-dbus
   gxmessage gmessage xmessage xdialog gdialog
 for console mode:
-  dialog whiptail basicinput */
+  dialog whiptail basicinput no_solution */
 
 void tinyfd_beep();
 
