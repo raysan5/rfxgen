@@ -685,8 +685,8 @@ int main(int argc, char *argv[])
             
             // Draw status bar
             GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);
-            GuiStatusBar((Rectangle){ 206, screenHeight - 20, 122, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
-            GuiStatusBar((Rectangle){ 328, screenHeight - 20, screenWidth - 328, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
+            GuiStatusBar((Rectangle){ 205, screenHeight - 20, 123, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
+            GuiStatusBar((Rectangle){ 327, screenHeight - 20, screenWidth - 327, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
 
             // Adverts
             GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
