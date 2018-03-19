@@ -20,9 +20,9 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 1.9.5            - This program uses latest raylib audio module functionality.
+*       raylib 1.9.6            - This program uses latest raylib audio module functionality.
 *       raygui 2.0              - Simple IMGUI library (based on raylib)
-*       tinyfiledialogs 3.3.1   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       tinyfiledialogs 3.3.4   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (MinGW 7.2):
 *       gcc -o rfxgen.exe rfxen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
@@ -64,14 +64,6 @@
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
-
-#if defined(_WIN32)
-    #include <direct.h>
-    #define GetCurrentDir _getcwd
-#else
-    #include <unistd.h>
-    #define GetCurrentDir getcwd
-#endif
 
 //----------------------------------------------------------------------------------
 // Defines, Macros and Types
@@ -144,9 +136,6 @@ static int wavSampleRate = 44100;   // Wave sample rate (frequency)
 static WaveParams params;           // Stores wave parameters for generation
 static bool regenerate = false;     // Wave regeneration required
 
-static char currentPath[256];       // Path to current working folder
-
-
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
@@ -183,6 +172,9 @@ static void BtnExportWav(Wave wave); // Export current sound as .wav
 int main(int argc, char *argv[])
 {
     // Command line utility to generate wav files directly from .sfs and .rfx
+    // WARNING (Windows): If program is compiled as Window application (instead of console),
+    // no console is available to show output info... possible solutions are quite cumbersome:
+    // https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
     if (argc > 1)
     {
         char inputFileName[128] = "\0";
@@ -206,10 +198,10 @@ int main(int argc, char *argv[])
                     case 'v':
                     case 'V': 
                     {
-                        printf("rFXGen - raylib fx sound generator\n");  
-                        printf("v1.0.0 (based on raylib v1.7)\n\n");
+                        fprintf(stdout, "rFXGen v1.2 - raylib fx sound generator\n");  
+                        printf("based on raylib v1.9.6-dev and raygui v2.0\n\n");
                         printf("LICENSE: zlib/libpng\n");
-                        printf("Copyright (c) 2017 Ramon Santamaria (@raysan5)\n");
+                        printf("Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)\n\n");
                     } break;
                     case 'i':
                     {
@@ -446,12 +438,6 @@ int main(int argc, char *argv[])
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
     RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
     SetTextureFilter(screenTarget.texture, FILTER_POINT);
-
-    // Get current directory
-    // NOTE: Current working directory could not match current executable directory
-    GetCurrentDir(currentPath, sizeof(currentPath));
-    currentPath[strlen(currentPath)] = '\\';
-    currentPath[strlen(currentPath) + 1] = '\0';      // Not really required
 
     SetTargetFPS(60);
     //----------------------------------------------------------------------------------------
@@ -1386,8 +1372,10 @@ static void ShowCommandLineInfo()
     printf("-r value  : define parameter sample rate (supported: 22050, 44100)\n");
     printf("-b value  : define parameter bit rate (supported: 8, 16, 32)\n");
     printf("-c value  : define parameter channels (supported: 1-mono, 2-stereo)\n");
-    printf("-i input  : input filename\n");
-    printf("-o output : output filename\n");
+    printf("-o output : output filename (by default using same name as .rfx)\n\n");
+    printf("Example: rfxgen sound.rfx -r 22050 -b 8\n\n");
+    //printf("-i input  : input filename\n");
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -1689,9 +1677,19 @@ static void BtnMutate(void)
 // Load sound parameters file
 static void BtnLoadSound(void)
 {
+    char currrentPath[256];
+
+    // Add sample file name to currentPath
+    strcpy(currrentPath, GetWorkingDirectory());
+    strcat(currrentPath, "\\\0");
+    
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
-    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", currentPath, 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+#if defined(_WIN32)
+    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", currrentPath, 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+#elif defined(__linux__)
+    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+#endif
 
     if (fileName != NULL)
     {
@@ -1706,13 +1704,17 @@ static void BtnSaveSound(void)
     char currrentPathFile[256];
 
     // Add sample file name to currentPath
-    strcpy(currrentPathFile, currentPath);
-    strcat(currrentPathFile, "sound.rfx\0");
+    strcpy(currrentPathFile, GetWorkingDirectory());
+    strcat(currrentPathFile, "\\sound.rfx\0");
 
     // Save file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
+#if defined(_WIN32)
     char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currrentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
-    
+#elif defined(__linux__)
+    char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 2, filters, "Sound Param Files (*.rfx, *.sfs)");
+#endif
+
     if (fileName != NULL)
     {
         if (GetExtension(fileName) == NULL) strcat(fileName, ".rfx\0");     // No extension provided
@@ -1726,13 +1728,17 @@ static void BtnExportWav(Wave wave)
     char currrentPathFile[256];
 
     // Add sample file name to currentPath
-    strcpy(currrentPathFile, currentPath);
-    strcat(currrentPathFile, "sound.wav\0");
+    strcpy(currrentPathFile, GetWorkingDirectory());
+    strcat(currrentPathFile, "\\sound.wav\0");
 
     // Save file dialog
     const char *filters[] = { "*.wav" };
+#if defined(_WIN32)
     char *fileName = tinyfd_saveFileDialog("Save wave file", currrentPathFile, 1, filters, "Wave File (*.wav)");
-    
+#elif defined(__linux__)
+    char *fileName = tinyfd_saveFileDialog("Save wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
+#endif
+
     if (fileName != NULL)
     {
         if (GetExtension(fileName) == NULL) strcat(fileName, ".wav\0");             // No extension provided
