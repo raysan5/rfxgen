@@ -1,7 +1,12 @@
+<img align="left" src="logo/rfxgen_256x256.png" width=256>
+
 # rFXGen
 raylib fx sound generator, a tool to generate sound waves procedurally, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
-![rFXGen light interface](screenshots/rfxgen_v120.png)
+<br>
+<br>
+<br>
+<br>
 
 ## Features
 
@@ -12,6 +17,10 @@ raylib fx sound generator, a tool to generate sound waves procedurally, based on
  - Supports command line usage for batch conversion
  - Wave data visualization in real-time
  - Completely portable (single file)
+ 
+## Screenshots
+
+![rFXGen light interface](screenshots/rfxgen_v120.png)
 
 ## License
 
