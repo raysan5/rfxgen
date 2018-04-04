@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
                     case 'v':
                     case 'V': 
                     {
-                        fprintf(stdout, "rFXGen v1.2 - raylib fx sound generator\n");  
+                        printf("rFXGen v1.2 - raylib fx sound generator\n");  
                         printf("based on raylib v1.9.6-dev and raygui v2.0\n\n");
                         printf("LICENSE: zlib/libpng\n");
                         printf("Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)\n\n");
@@ -1677,16 +1677,16 @@ static void BtnMutate(void)
 // Load sound parameters file
 static void BtnLoadSound(void)
 {
-    char currrentPath[256];
+    char currentPath[256];
 
     // Add sample file name to currentPath
-    strcpy(currrentPath, GetWorkingDirectory());
-    strcat(currrentPath, "\\\0");
+    strcpy(currentPath, GetWorkingDirectory());
+    strcat(currentPath, "\\\0");
     
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
 #if defined(_WIN32)
-    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", currrentPath, 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", currentPath, 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
 #elif defined(__linux__)
     const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
 #endif
@@ -1701,16 +1701,16 @@ static void BtnLoadSound(void)
 // Save sound parameters file
 static void BtnSaveSound(void)
 {
-    char currrentPathFile[256];
+    char currentPathFile[256];
 
     // Add sample file name to currentPath
-    strcpy(currrentPathFile, GetWorkingDirectory());
-    strcat(currrentPathFile, "\\sound.rfx\0");
+    strcpy(currentPathFile, GetWorkingDirectory());
+    strcat(currentPathFile, "\\sound.rfx\0");
 
     // Save file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
 #if defined(_WIN32)
-    char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currrentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
+    char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
 #elif defined(__linux__)
     char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 2, filters, "Sound Param Files (*.rfx, *.sfs)");
 #endif
@@ -1725,16 +1725,16 @@ static void BtnSaveSound(void)
 // Export current sound as .wav
 static void BtnExportWav(Wave wave)
 {
-    char currrentPathFile[256];
+    char currentPathFile[256];
 
     // Add sample file name to currentPath
-    strcpy(currrentPathFile, GetWorkingDirectory());
-    strcat(currrentPathFile, "\\sound.wav\0");
+    strcpy(currentPathFile, GetWorkingDirectory());
+    strcat(currentPathFile, "\\sound.wav\0");
 
     // Save file dialog
     const char *filters[] = { "*.wav" };
 #if defined(_WIN32)
-    char *fileName = tinyfd_saveFileDialog("Save wave file", currrentPathFile, 1, filters, "Wave File (*.wav)");
+    char *fileName = tinyfd_saveFileDialog("Save wave file", currentPathFile, 1, filters, "Wave File (*.wav)");
 #elif defined(__linux__)
     char *fileName = tinyfd_saveFileDialog("Save wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
 #endif
