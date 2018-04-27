@@ -24,10 +24,13 @@
 *       raygui 2.0              - Simple IMGUI library (based on raylib)
 *       tinyfiledialogs 3.3.4   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
-*   COMPILATION (MinGW 7.2):
-*       gcc -o rfxgen.exe rfxen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
+*   COMPILATION (Windows - MinGW):
+*       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
 *           -lraylib -lopengl32 -lgdi32 -lcomdlg32 -lole32 -std=c99 -Wl,--subsystem,windows
-*
+* 
+*   COMPILATION (Linux - GCC):
+*       gcc -o rfxgen rfxgen.c external/tinyfiledialogs.c -s -Iexternal -no-pie -D_DEFAULT_SOURCE /
+*           -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 *
 *   LICENSE: zlib/libpng
 *
