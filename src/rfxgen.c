@@ -489,7 +489,7 @@ int main(int argc, char *argv[])
 
         BeginDrawing();
 
-            ClearBackground(GuiBackgroundColor());
+            ClearBackground(GetColor(GuiGetStyleProperty(DEFAULT_BACKGROUND_COLOR)));
             
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
@@ -502,20 +502,20 @@ int main(int argc, char *argv[])
 #endif
             BeginTextureMode(screenTarget);
 
-            DrawRectangleLines(paramsRec.x, paramsRec.y - 1, paramsRec.width, paramsRec.height + 1, GuiLinesColor());
+            DrawRectangleLines(paramsRec.x, paramsRec.y - 1, paramsRec.width, paramsRec.height + 1, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
 
-            DrawLine(paramsRec.x, paramsRec.y + 66, paramsRec.x + paramsRec.width, paramsRec.y + 66, GuiLinesColor());
-            DrawLine(paramsRec.x, paramsRec.y + 66 + 96, paramsRec.x + paramsRec.width, paramsRec.y + 66 + 96, GuiLinesColor());
-            DrawLine(paramsRec.x, paramsRec.y + 162 + 36, paramsRec.x + paramsRec.width, paramsRec.y + 162 + 36, GuiLinesColor());
-            DrawLine(paramsRec.x, paramsRec.y + 198 + 36, paramsRec.x + paramsRec.width, paramsRec.y + 198 + 36, GuiLinesColor());
-            DrawLine(paramsRec.x, paramsRec.y + 234 + 21, paramsRec.x + paramsRec.width, paramsRec.y + 234 + 21, GuiLinesColor());
-            DrawLine(paramsRec.x, paramsRec.y + 291, paramsRec.x + paramsRec.width, paramsRec.y + 291, GuiLinesColor());
+            DrawLine(paramsRec.x, paramsRec.y + 66, paramsRec.x + paramsRec.width, paramsRec.y + 66, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(paramsRec.x, paramsRec.y + 66 + 96, paramsRec.x + paramsRec.width, paramsRec.y + 66 + 96, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(paramsRec.x, paramsRec.y + 162 + 36, paramsRec.x + paramsRec.width, paramsRec.y + 162 + 36, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(paramsRec.x, paramsRec.y + 198 + 36, paramsRec.x + paramsRec.width, paramsRec.y + 198 + 36, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(paramsRec.x, paramsRec.y + 234 + 21, paramsRec.x + paramsRec.width, paramsRec.y + 234 + 21, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(paramsRec.x, paramsRec.y + 291, paramsRec.x + paramsRec.width, paramsRec.y + 291, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
 
-            DrawLine(13, 225, 105, 224, GuiLinesColor());
-            DrawLine(13, 358, 105, 358, GuiLinesColor());
-            DrawLine(394, 108, 486, 108, GuiLinesColor());
-            DrawLine(394, 277, 486, 277, GuiLinesColor());
-            DrawLine(394, 334, 486, 334, GuiLinesColor());
+            DrawLine(13, 225, 105, 224, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(13, 358, 105, 358, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(394, 108, 486, 108, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(394, 277, 486, 277, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawLine(394, 334, 486, 334, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
 
             // Labels
             //--------------------------------------------------------------------------------
@@ -678,7 +678,7 @@ int main(int argc, char *argv[])
         #else
             DrawWave(&wave, waveRec, MAROON);
         #endif
-            DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GuiLinesColor());
+            DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
             
         #if defined(RAYGUI_STYLE_DEFAULT_DARK)
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, GetColor(style[DEFAULT_BORDER_COLOR_PRESSED]));
@@ -695,7 +695,7 @@ int main(int argc, char *argv[])
             GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
             GuiLabel((Rectangle){ 13, 248, 10, 10 }, "Tomas Pettersson");
 
-            DrawLine(13, 268, 105, 268, GuiLinesColor());
+            DrawLine(13, 268, 105, 268, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
 
             if (GuiLabelButton((Rectangle){ 18, 280, MeasureText("www.github.com/\nraysan5/raygui", 10)/2, 24 }, "www.github.com/\nraysan5/raygui")) OpenLinkURL("https://www.github.com/raysan5/raygui");
             if (GuiLabelButton((Rectangle){ 18, 320, MeasureText("www.github.com/\nraysan5/raylib", 10)/2, 24 }, "www.github.com/\nraysan5/raylib")) OpenLinkURL("https://www.github.com/raysan5/raylib");
