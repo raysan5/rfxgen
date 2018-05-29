@@ -478,37 +478,37 @@ int main(int argc, char *argv[])
 
             // Parameters group boxes
             GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 0, 264, 71 }, "");
-			GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 70, 264, 96 }, "");
-			GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 165, 264, 36 }, "");
-			GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 200, 264, 36 }, "");
-			GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 235, 264, 21 }, "");
-			GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 255, 264, 36 }, "");
-			GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 290, 264, 85 }, "");
+            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 70, 264, 96 }, "");
+            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 165, 264, 36 }, "");
+            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 200, 264, 36 }, "");
+            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 235, 264, 21 }, "");
+            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 255, 264, 36 }, "");
+            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 290, 264, 85 }, "");
 
             // Parameters sliders
             //--------------------------------------------------------------------------------
             params.attackTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 10, 100, 10 },  params.attackTimeValue, 0, 1, "ATTACK TIME", true);
-			params.sustainTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 25, 100, 10 },  params.sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
-			params.sustainPunchValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 40, 100, 10 },  params.sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
-			params.decayTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 55, 100, 10 },  params.decayTimeValue, 0, 1, "DECAY TIME", true);
-			params.startFrequencyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 75, 100, 10 },  params.startFrequencyValue, 0, 1, "START FREQUENCY", true);
-			params.minFrequencyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 90, 100, 10 },  params.minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
-			params.slideValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 105, 100, 10 },  params.slideValue, -1, 1, "SLIDE", true);
-			params.deltaSlideValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 120, 100, 10 },  params.deltaSlideValue, -1, 1, "DELTA SLIDE", true);
-			params.vibratoDepthValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 135, 100, 10 },  params.vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
-			params.vibratoSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 150, 100, 10 },  params.vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
-			params.changeAmountValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 170, 100, 10 },  params.changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
-			params.changeSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 185, 100, 10 },  params.changeSpeedValue, 0, 1, "CHANGE SPEED", true);
-			params.squareDutyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 205, 100, 10 },  params.squareDutyValue, 0, 1, "SQUARE DUTY", true);
-			params.dutySweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 220, 100, 10 },  params.dutySweepValue, -1, 1, "DUTY SWEEP", true);
-			params.repeatSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 240, 100, 10 },  params.repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
-			params.phaserOffsetValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 260, 100, 10 },  params.phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
-			params.phaserSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 275, 100, 10 },  params.phaserSweepValue, -1, 1, "PHASER SWEEP", true);
-			params.lpfCutoffValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 295, 100, 10 },  params.lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
-			params.lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 310, 100, 10 },  params.lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
-			params.lpfResonanceValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 325, 100, 10 },  params.lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
-			params.hpfCutoffValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 340, 100, 10 },  params.hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
-			params.hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 355, 100, 10 },  params.hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
+            params.sustainTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 25, 100, 10 },  params.sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
+            params.sustainPunchValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 40, 100, 10 },  params.sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
+            params.decayTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 55, 100, 10 },  params.decayTimeValue, 0, 1, "DECAY TIME", true);
+            params.startFrequencyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 75, 100, 10 },  params.startFrequencyValue, 0, 1, "START FREQUENCY", true);
+            params.minFrequencyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 90, 100, 10 },  params.minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
+            params.slideValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 105, 100, 10 },  params.slideValue, -1, 1, "SLIDE", true);
+            params.deltaSlideValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 120, 100, 10 },  params.deltaSlideValue, -1, 1, "DELTA SLIDE", true);
+            params.vibratoDepthValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 135, 100, 10 },  params.vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
+            params.vibratoSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 150, 100, 10 },  params.vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
+            params.changeAmountValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 170, 100, 10 },  params.changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
+            params.changeSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 185, 100, 10 },  params.changeSpeedValue, 0, 1, "CHANGE SPEED", true);
+            params.squareDutyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 205, 100, 10 },  params.squareDutyValue, 0, 1, "SQUARE DUTY", true);
+            params.dutySweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 220, 100, 10 },  params.dutySweepValue, -1, 1, "DUTY SWEEP", true);
+            params.repeatSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 240, 100, 10 },  params.repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
+            params.phaserOffsetValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 260, 100, 10 },  params.phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
+            params.phaserSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 275, 100, 10 },  params.phaserSweepValue, -1, 1, "PHASER SWEEP", true);
+            params.lpfCutoffValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 295, 100, 10 },  params.lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
+            params.lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 310, 100, 10 },  params.lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
+            params.lpfResonanceValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 325, 100, 10 },  params.lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
+            params.hpfCutoffValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 340, 100, 10 },  params.hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
+            params.hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 355, 100, 10 },  params.hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
             //--------------------------------------------------------------------------------
 
             // Buttons
