@@ -21,9 +21,9 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 2.0-dev          - This program uses latest raylib audio module functionality.
+*       raylib 2.0              - This program uses latest raylib audio module functionality.
 *       raygui 2.0              - Simple IMGUI library (based on raylib)
-*       tinyfiledialogs 3.3.4   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       tinyfiledialogs 3.3.7   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
@@ -626,6 +626,8 @@ int main(int argc, char *argv[])
 //--------------------------------------------------------------------------------------------
 // Module Functions Definitions (local)
 //--------------------------------------------------------------------------------------------
+
+// Reset wave parameters
 static void ResetParams(WaveParams *params)
 {
     // NOTE: Random seed is set to a random value
