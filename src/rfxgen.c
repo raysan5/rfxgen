@@ -56,8 +56,11 @@
 
 #include "raylib.h"
 
+// Uncomment to choose a different raygui style
 //#define RAYGUI_STYLE_DEFAULT_DARK
-#define RAYGUI_NO_STYLE_SAVE_LOAD       // Avoid compiling style load/save code
+//#define RAYGUI_STYLE_CANDY
+
+#define RAYGUI_STYLE_SAVE_LOAD          // Support style load/save code
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
@@ -203,7 +206,7 @@ int main(int argc, char *argv[])
                     case 'V': 
                     {
                         printf("rFXGen v1.3 - raylib fx sound generator\n");  
-                        printf("based on raylib v2.0-dev and raygui v2.0\n\n");
+                        printf("based on raylib v2.0 and raygui v2.0\n\n");
                         printf("LICENSE: zlib/libpng\n");
                         printf("Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)\n\n");
                     } break;
@@ -351,7 +354,28 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
     const int screenWidth = 496;
     const int screenHeight = 500;
-
+    
+#if defined(RAYGUI_STYLE_CANDY)
+    // raygui color palette: Candy
+    Color palette[14] = {
+        GetColor(0xfff5e1ff),     // DEFAULT_BACKGROUND_COLOR
+        GetColor(0xd77575ff),     // DEFAULT_LINES_COLOR
+        GetColor(0xe58b68ff),     // DEFAULT_BORDER_COLOR_NORMAL
+        GetColor(0xfeda96ff),     // DEFAULT_BASE_COLOR_NORMAL
+        GetColor(0xe59b5fff),     // DEFAULT_TEXT_COLOR_NORMAL
+        GetColor(0xee813fff),     // DEFAULT_BORDER_COLOR_FOCUSED
+        GetColor(0xfcd85bff),     // DEFAULT_BASE_COLOR_FOCUSED
+        GetColor(0xf49641ff),     // DEFAULT_TEXT_COLOR_FOCUSED
+        GetColor(0xb34848ff),     // DEFAULT_BORDER_COLOR_PRESSED
+        GetColor(0xeb7272ff),     // DEFAULT_BASE_COLOR_PRESSED
+        GetColor(0xbd4a4aff),     // DEFAULT_TEXT_COLOR_PRESSED
+        GetColor(0x94795dff),     // DEFAULT_BORDER_COLOR_DISABLED
+        GetColor(0xc2a37aff),     // DEFAULT_BASE_COLOR_DISABLED
+        GetColor(0x9c8369ff)      // DEFAULT_TEXT_COLOR_DISABLED
+    };
+    
+    GuiLoadStylePalette(palette); // Color palette loading
+#endif
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "rFXGen - raylib fx sound generator");
 
