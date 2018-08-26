@@ -357,21 +357,21 @@ int main(int argc, char *argv[])
     
 #if defined(RAYGUI_STYLE_CANDY)
     // raygui color palette: Candy
-    Color palette[14] = {
-        GetColor(0xfff5e1ff),     // DEFAULT_BACKGROUND_COLOR
-        GetColor(0xd77575ff),     // DEFAULT_LINES_COLOR
-        GetColor(0xe58b68ff),     // DEFAULT_BORDER_COLOR_NORMAL
-        GetColor(0xfeda96ff),     // DEFAULT_BASE_COLOR_NORMAL
-        GetColor(0xe59b5fff),     // DEFAULT_TEXT_COLOR_NORMAL
-        GetColor(0xee813fff),     // DEFAULT_BORDER_COLOR_FOCUSED
-        GetColor(0xfcd85bff),     // DEFAULT_BASE_COLOR_FOCUSED
-        GetColor(0xf49641ff),     // DEFAULT_TEXT_COLOR_FOCUSED
-        GetColor(0xb34848ff),     // DEFAULT_BORDER_COLOR_PRESSED
-        GetColor(0xeb7272ff),     // DEFAULT_BASE_COLOR_PRESSED
-        GetColor(0xbd4a4aff),     // DEFAULT_TEXT_COLOR_PRESSED
-        GetColor(0x94795dff),     // DEFAULT_BORDER_COLOR_DISABLED
-        GetColor(0xc2a37aff),     // DEFAULT_BASE_COLOR_DISABLED
-        GetColor(0x9c8369ff)      // DEFAULT_TEXT_COLOR_DISABLED
+    int palette[14] = {
+        0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
+        0xd77575ff,     // DEFAULT_LINES_COLOR
+        0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
+        0xfeda96ff,     // DEFAULT_BASE_COLOR_NORMAL
+        0xe59b5fff,     // DEFAULT_TEXT_COLOR_NORMAL
+        0xee813fff,     // DEFAULT_BORDER_COLOR_FOCUSED
+        0xfcd85bff,     // DEFAULT_BASE_COLOR_FOCUSED
+        0xf49641ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+        0xb34848ff,     // DEFAULT_BORDER_COLOR_PRESSED
+        0xeb7272ff,     // DEFAULT_BASE_COLOR_PRESSED
+        0xbd4a4aff,     // DEFAULT_TEXT_COLOR_PRESSED
+        0x94795dff,     // DEFAULT_BORDER_COLOR_DISABLED
+        0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
+        0x9c8369ff      // DEFAULT_TEXT_COLOR_DISABLED
     };
     
     GuiLoadStylePalette(palette); // Color palette loading
