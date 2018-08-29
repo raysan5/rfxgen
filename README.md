@@ -20,7 +20,7 @@ raylib fx sound generator, a tool to generate sound waves procedurally, based on
  
 ## Screenshots
 
-![rFXGen light interface](screenshots/rfxgen_v120.png)
+![rFXGen light interface](screenshots/rfxgen_v130_light_shot01.png)
 
 ## License
 
