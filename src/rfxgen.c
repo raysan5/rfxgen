@@ -60,25 +60,29 @@
 //#define RAYGUI_STYLE_DEFAULT_DARK
 //#define RAYGUI_STYLE_CANDY
 
-#define RAYGUI_STYLE_SAVE_LOAD          // Support style load/save code
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
+#define RAYGUI_STYLE_SAVE_LOAD
+#include "raygui.h"                     // Required for: IMGUI controls
 
-#include "external/tinyfiledialogs.h"   // Required for native open/save file dialogs
+#include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
 
 #include <math.h>                       // Required for: sinf(), pow()
 #include <stdlib.h>                     // Required for: malloc(), free()
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
-                                        
-#define RFXGEN_VERSION  "1.3"           // Tool version string
 
 //----------------------------------------------------------------------------------
-// Defines, Macros and Types
+// Defines and Macros
 //----------------------------------------------------------------------------------
+#define RFXGEN_VERSION  "1.3"           // Tool version string
+
 #define rnd(n)      GetRandomValue(0, n)
 #define frnd(range) ((float)rnd(10000)/10000.0f*range)
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 
 // Wave parameters type (96 bytes)
 typedef struct WaveParams {
