@@ -21,8 +21,8 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 2.0              - This program uses latest raylib audio module functionality.
-*       raygui 2.0              - Simple IMGUI library (based on raylib)
+*       raylib 2.0              - Windowing/input management and drawing.
+*       raygui 2.0              - IMGUI controls (based on raylib).
 *       tinyfiledialogs 3.3.7   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
@@ -71,12 +71,12 @@
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
+                                        
+#define RFXGEN_VERSION  "1.3"           // Tool version string
 
 //----------------------------------------------------------------------------------
 // Defines, Macros and Types
 //----------------------------------------------------------------------------------
-#define RFXGEN_VERSION     120
-
 #define rnd(n)      GetRandomValue(0, n)
 #define frnd(range) ((float)rnd(10000)/10000.0f*range)
 
@@ -173,15 +173,21 @@ static void BtnLoadSound(void);     // Load sound parameters file
 static void BtnSaveSound(void);     // Save sound parameters file
 static void BtnExportWav(Wave wave); // Export current sound as .wav
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+bool __stdcall FreeConsole(void);   // Close console from code (kernel32.lib)
+#endif
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    // Command line utility to generate wav files directly from .sfs and .rfx
+    // Command-line usage mode
+    //--------------------------------------------------------------------------------------
+    // Generate wav files directly from .sfs and .rfx
     // WARNING (Windows): If program is compiled as Window application (instead of console),
-    // no console is available to show output info... possible solutions are quite cumbersome:
-    // https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
+    // no console is available to show output info... solution is compiling a console application
+    // and closing console (FreeConsole()) when changing to GUI interface
     if (argc > 1)
     {
         char inputFileName[128] = "\0";
@@ -205,7 +211,7 @@ int main(int argc, char *argv[])
                     case 'v':
                     case 'V': 
                     {
-                        printf("rFXGen v1.3 - raylib fx sound generator\n");  
+                        printf("rFXGen v%s - raylib fx sound generator\n", RFXGEN_VERSION);  
                         printf("based on raylib v2.0 and raygui v2.0\n\n");
                         printf("LICENSE: zlib/libpng\n");
                         printf("Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)\n\n");
@@ -376,9 +382,14 @@ int main(int argc, char *argv[])
     
     GuiLoadStylePalette(palette); // Color palette loading
 #endif
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+	FreeConsole();
+#endif
+
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "rFXGen - raylib fx sound generator");
-
+    
     InitAudioDevice();
     
     Rectangle paramsRec = { 117, 43, 265, 373 };    // Parameters rectangle box
@@ -498,7 +509,7 @@ int main(int argc, char *argv[])
             BeginTextureMode(screenTarget);
             
             DrawText("rFXGen", 29, 19, 20, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
-            GuiLabel((Rectangle){ 89, 14, 10, 10 },"v1.3");
+            GuiLabel((Rectangle){ 89, 14, 10, 10 }, FormatText("v%s", RFXGEN_VERSION));
 
             // Parameters group boxes
             GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 0, 264, 71 }, "");
@@ -1163,6 +1174,8 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
     }
     else if (strcmp(GetExtension(fileName),"rfx") == 0)
     {
+        #define RFXGEN_VERSION_BINARY     120
+        
         FILE *rfxFile = fopen(fileName, "wb");
         
         if (rfxFile == NULL) return;
@@ -1171,7 +1184,7 @@ static void SaveSoundParams(const char *fileName, WaveParams params)
         unsigned char signature[5] = "rFX ";
         fwrite(signature, 4, sizeof(unsigned char), rfxFile);
 
-        int version = RFXGEN_VERSION;
+        int version = RFXGEN_VERSION_BINARY;
         fwrite(&version, 1, sizeof(int), rfxFile);
 
         // Save wave generation parameters
