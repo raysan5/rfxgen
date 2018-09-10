@@ -150,6 +150,8 @@ static bool regenerate = false;     // Wave regeneration required
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+static void ShowUsageInfo(void);    // Show command line usage info
+
 static void ResetParams(WaveParams *params);        // Reset wave parameters
 static Wave GenerateWave(WaveParams params);        // Generate wave data from parameters
 
@@ -159,7 +161,6 @@ static void SaveSoundParams(const char *fileName, WaveParams params);   // Save 
 static void SaveWAV(const char *fileName, Wave wave);                   // Export sound to .wav file
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
 
-static void ShowCommandLineInfo(void);              // Show command line usage parameters
 static void OpenLinkURL(const char *url);           // Open URL link
 
 // Buttons functions
@@ -194,14 +195,14 @@ int main(int argc, char *argv[])
     // and closing console (FreeConsole()) when changing to GUI interface
     if (argc > 1)
     {
-        char inputFileName[128] = "\0";
-        char outputFileName[128] = "\0";
+        bool showUsageInfo = false;
         
-        int sampleRate = 44100;
-        int sampleSize = 16;
-        int channels = 1;
+        char inFileName[128] = "\0";
+        char outFileName[128] = "\0";
         
-        printf("\n");
+        int sampleRate = 44100;     // Default conversion sample rate
+        int sampleSize = 16;        // Default conversion sample size
+        int channels = 1;           // Default conversion channels number
         
         // Parse arguments parameters (i.e. -r 44100 -b 16 -c 2)
         for (int i = 1; i < argc; i++)
@@ -211,15 +212,9 @@ int main(int argc, char *argv[])
                 switch(argv[i][1])
                 {
                     case '?':
-                    case 'h': ShowCommandLineInfo(); break;
+                    case 'h':
                     case 'v':
-                    case 'V': 
-                    {
-                        printf("rFXGen v%s - raylib fx sound generator\n", RFXGEN_VERSION);  
-                        printf("based on raylib v2.0 and raygui v2.0\n\n");
-                        printf("LICENSE: zlib/libpng\n");
-                        printf("Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)\n\n");
-                    } break;
+                    case 'V': showUsageInfo = true; break;
                     case 'i':
                     {
                         if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
@@ -228,7 +223,7 @@ int main(int argc, char *argv[])
                             if ((strcmp(GetExtension(argv[i + 1]), "rfx") == 0) ||
                                 (strcmp(GetExtension(argv[i + 1]), "sfs") == 0))
                             {
-                                strcpy(inputFileName, argv[i + 1]);
+                                strcpy(inFileName, argv[i + 1]);
                                 i++;
                             }
                             else printf("WARNING: Input file extension not recognized\n");
@@ -236,7 +231,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             printf("WARNING: Wrong command line parameter!\n\n");
-                            ShowCommandLineInfo();
+                            showUsageInfo = true;
                         }
                     } break;
                     case 'o':
@@ -246,7 +241,7 @@ int main(int argc, char *argv[])
                             // Check if output filename is valid
                             if (strcmp(GetExtension(argv[i + 1]), "wav") == 0)
                             {
-                                strcpy(outputFileName, argv[i + 1]);
+                                strcpy(outFileName, argv[i + 1]);
                                 i++;
                             }
                             else printf("WARNING: Output file extension not recognized\n");
@@ -254,7 +249,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             printf("WARNING: Wrong command line parameter!\n\n");
-                            ShowCommandLineInfo();
+                            showUsageInfo = true;
                         }
                     } break;
                     case 'r': 
@@ -275,7 +270,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             printf("WARNING: Wrong command line parameter!\n\n");
-                            ShowCommandLineInfo();
+                            showUsageInfo = true;
                         }
                         
                     } break;
@@ -297,7 +292,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             printf("WARNING: Wrong command line parameter!\n\n");
-                            ShowCommandLineInfo();
+                            showUsageInfo = true;
                         }
                     } break;
                     case 'c': 
@@ -318,7 +313,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             printf("WARNING: Wrong command line parameter!\n\n");
-                            ShowCommandLineInfo();
+                            showUsageInfo = true;
                         }
                     } break;
                     default: break;
@@ -326,25 +321,27 @@ int main(int argc, char *argv[])
             }
         }
         
-        if (outputFileName[0] == '\0')
+        if (showUsageInfo) ShowUsageInfo();
+        
+        if (outFileName[0] == '\0')
         {
             // Output filename equal to input filename
-            strcpy(outputFileName, inputFileName);
-            int len = strlen(outputFileName);
-            outputFileName[len - 3] = 'w';
-            outputFileName[len - 2] = 'a';
-            outputFileName[len - 1] = 'v';
+            strcpy(outFileName, inFileName);
+            int len = strlen(outFileName);
+            outFileName[len - 3] = 'w';
+            outFileName[len - 2] = 'a';
+            outFileName[len - 1] = 'v';
         }
 
-        if ((inputFileName[0] != '\0') && (outputFileName[0] != '\0'))
+        if ((inFileName[0] != '\0') && (outFileName[0] != '\0'))
         {
-            printf("\nInput file:     %s", inputFileName);
-            printf("\nOutput file:    %s", outputFileName);
+            printf("\nInput file:     %s", inFileName);
+            printf("\nOutput file:    %s", outFileName);
             printf("\nSample rate:    %i", sampleRate);
             printf("\nSample size:    %i", sampleSize);
             printf("\nChannels:       %i\n", channels);
 
-            params = LoadSoundParams(inputFileName);
+            params = LoadSoundParams(inFileName);
             
             // NOTE: Default generation parameters: sampleRate = 44100, sampleSize = 16, channels = 1
             Wave wave = GenerateWave(params);
@@ -352,7 +349,7 @@ int main(int argc, char *argv[])
             // Format wave data to desired sampleRate, sampleSize and channels
             WaveFormat(&wave, sampleRate, sampleSize, channels);
 
-            SaveWAV(outputFileName, wave);
+            SaveWAV(outFileName, wave);
 
             if (wave.data != NULL) free(wave.data);  // Unload wave data
         }
@@ -665,6 +662,27 @@ int main(int argc, char *argv[])
 //--------------------------------------------------------------------------------------------
 // Module Functions Definitions (local)
 //--------------------------------------------------------------------------------------------
+
+// Show command line usage info
+static void ShowUsageInfo(void)
+{
+    printf("\nrFXGen v%s - textures packer and atlas generator\n\n", RFGGEN_VERSION);
+    printf("Powered by raylib v2.0 and raygui v2.0\n\n");
+    printf("Copyright (c) 2017-2018 Ramon Santamaria (@raysan5).\n\n");
+
+    printf("USAGE: rfxgen [--version] [--help] [--input <filename.rfx>]\n");
+    printf("       [--output <filename.wav>] --format <format>\n");
+    
+    printf("Command line Usage options:\n\n");
+    printf("-? | -h   : print help for command-line parameters\n");
+    printf("-v        : print rfxgen version\n");
+    printf("-r value  : define parameter sample rate (supported: 22050, 44100)\n");
+    printf("-b value  : define parameter bit rate (supported: 8, 16, 32)\n");
+    printf("-c value  : define parameter channels (supported: 1-mono, 2-stereo)\n");
+    printf("-o output : output filename (by default using same name as .rfx)\n\n");
+    printf("Example: rfxgen sound.rfx -r 22050 -b 8\n\n");
+    //printf("-i input  : input filename\n");
+}
 
 // Reset wave parameters
 static void ResetParams(WaveParams *params)
@@ -1297,21 +1315,6 @@ static void SaveWAV(const char *fileName, Wave wave)
     fwrite(wave.data, 1, wave.sampleCount*wave.channels*wave.sampleSize/8, wavFile);
 
     fclose(wavFile);
-}
-
-// Show command line usage parameters
-static void ShowCommandLineInfo()
-{
-    printf("Command line Usage options:\n\n");
-    printf("-? | -h   : print help for command-line parameters\n");
-    printf("-v        : print rfxgen version\n");
-    printf("-r value  : define parameter sample rate (supported: 22050, 44100)\n");
-    printf("-b value  : define parameter bit rate (supported: 8, 16, 32)\n");
-    printf("-c value  : define parameter channels (supported: 1-mono, 2-stereo)\n");
-    printf("-o output : output filename (by default using same name as .rfx)\n\n");
-    printf("Example: rfxgen sound.rfx -r 22050 -b 8\n\n");
-    //printf("-i input  : input filename\n");
-
 }
 
 //--------------------------------------------------------------------------------------------
