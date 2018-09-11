@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v1.3 - raylib FX sound generator (based on Tomas Petterson sfxr)
+*   rFXGen v1.4 - fx sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -8,6 +8,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
+*       1.4  (01-Oct-2018) Improved command line and comments
 *       1.3  (15-May-2018) Reimplemented gui using rGuiLayout
 *       1.2  (16-Mar-2018) Working on some code improvements and GUI review
 *       1.1  (01-Oct-2017) Code review, simplified
@@ -75,7 +76,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define RFXGEN_VERSION  "1.3"           // Tool version string
+#define RFXGEN_VERSION  "1.4"           // Tool version string
 
 #define rnd(n)      GetRandomValue(0, n)
 #define frnd(range) ((float)rnd(10000)/10000.0f*range)
@@ -389,7 +390,7 @@ int main(int argc, char *argv[])
 #endif
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "rFXGen - raylib fx sound generator");
+    InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - fx sounds generator", RFXGEN_VERSION));
     
     InitAudioDevice();
     
@@ -666,22 +667,37 @@ int main(int argc, char *argv[])
 // Show command line usage info
 static void ShowUsageInfo(void)
 {
-    printf("\nrFXGen v%s - textures packer and atlas generator\n\n", RFGGEN_VERSION);
-    printf("Powered by raylib v2.0 and raygui v2.0\n\n");
-    printf("Copyright (c) 2017-2018 Ramon Santamaria (@raysan5).\n\n");
+    printf("\nrFXGen v%s - fx sounds generator\n\n", RFXGEN_VERSION);
+    //printf("powered by raylib v2.0 and raygui v2.0\n\n");
 
-    printf("USAGE: rfxgen [--version] [--help] [--input <filename.rfx>]\n");
-    printf("       [--output <filename.wav>] --format <format>\n");
+    printf("USAGE:\n\n");
+    printf("    > rfxgen [--version] [--help] --input <filename.ext> [--output <filename.wav>]\n");
+    printf("             [--sample-rate <rate>] [--sample-size <bit_size>] [--channels <num_channels>]\n");
+    printf("             [--wave-image <filename.png>] [--play]\n");
     
-    printf("Command line Usage options:\n\n");
-    printf("-? | -h   : print help for command-line parameters\n");
-    printf("-v        : print rfxgen version\n");
-    printf("-r value  : define parameter sample rate (supported: 22050, 44100)\n");
-    printf("-b value  : define parameter bit rate (supported: 8, 16, 32)\n");
-    printf("-c value  : define parameter channels (supported: 1-mono, 2-stereo)\n");
-    printf("-o output : output filename (by default using same name as .rfx)\n\n");
-    printf("Example: rfxgen sound.rfx -r 22050 -b 8\n\n");
-    //printf("-i input  : input filename\n");
+    printf("\nOPTIONS:\n\n");
+    printf("    -v, --version                   Show tool version and command line usage help\n");
+    printf("    -?, -h, --help                  Show tool version and command line usage help\n");
+    printf("    -i, --input <filename.ext>      Define input file. Supported extensions: .rfx, .sfs\n");
+    printf("    -o, --output <filename.wav>     Define output file. Supported extensions: .wav\n");
+    printf("                                        DEFAULT: input_filename.wav\n");
+    printf("    -r, --sample-rate <rate>        Define output sample rate. Supported: 22050, 44100.\n"); 
+    printf("                                        DEFAULT: 44100\n"); 
+    printf("    -b, --sample-size <bit_size>    Define output sample size. Supported: 8, 16, 32 bit.\n"); 
+    printf("                                        DEFAULT: 16\n");
+    printf("    -c, --channels <num_channels>   Define output channels. Supported: 1 (mono), 2 (stereo).\n");
+    printf("                                        DEFAULT: 1 (mono)\n");
+    printf("    -i, --wave-image <filename.png> Export wave image. Supported: .png\n");
+    printf("    -p, --play                      Play sound\n");
+
+    printf("\nEXAMPLES:\n\n");
+    printf("    > rfxgen --input sound.rfx --output jump.wav --sample-rate 22050 --channels 2\n");
+    printf("        Process <sound.rfx> to generate <jump.wav> at 22050 Hz, 16bit, Stereo\n");
+    printf("    > rfxgen --input sound.rfx --sample-size 32\n");
+    printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32bit, Mono\n\n");
+
+    printf("LICENSE: zlib/libpng\n\n");
+    printf("    Copyright (c) 2017-2018 Ramon Santamaria (@raysan5).\n\n");
 }
 
 // Reset wave parameters
