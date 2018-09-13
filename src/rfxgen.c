@@ -68,6 +68,7 @@
 #include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
 
 #include <math.h>                       // Required for: sinf(), pow()
+#include <time.h>                       // Required for: clock()
 #include <stdlib.h>                     // Required for: malloc(), free()
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
@@ -183,6 +184,22 @@ static void BtnExportWav(Wave wave); // Export current sound as .wav
 bool __stdcall FreeConsole(void);   // Close console from code (kernel32.lib)
 #endif
 
+// Simple time wait
+void WaitTime(int ms)
+{
+    if (ms > 0)
+    {
+        // Current time of milliseconds
+        int msCount = clock()*1000/CLOCKS_PER_SEC;
+
+        // Needed count milliseconds of return from this timeout
+        int msTotal = msCount + ms;
+
+        // Wait while until needed time comes
+        while (msCount <= msTotal) msCount = clock()*1000/CLOCKS_PER_SEC;
+    }
+}
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -196,166 +213,131 @@ int main(int argc, char *argv[])
     // and closing console (FreeConsole()) when changing to GUI interface
     if (argc > 1)
     {
-        bool showUsageInfo = false;
+        // Default variables
+        bool showUsageInfo = false;     // Toggle command line usage info
         
-        char inFileName[128] = "\0";
-        char outFileName[128] = "\0";
+        char inFileName[128] = "\0";    // Input file name
+        char outFileName[128] = "\0";   // Output file name
         
-        int sampleRate = 44100;     // Default conversion sample rate
-        int sampleSize = 16;        // Default conversion sample size
-        int channels = 1;           // Default conversion channels number
+        int sampleRate = 44100;         // Default conversion sample rate
+        int sampleSize = 16;            // Default conversion sample size
+        int channels = 1;               // Default conversion channels number
         
-        // Parse arguments parameters (i.e. -r 44100 -b 16 -c 2)
-        for (int i = 1; i < argc; i++)
+        if (argc == 2)  // One file dropped over the executable or just one argument
         {
-            if (argv[i][0] == '-')
+            if (IsFileExtension(argv[1], ".rfx") || IsFileExtension(argv[1], ".sfs"))
             {
-                switch(argv[i][1])
-                {
-                    case '?':
-                    case 'h':
-                    case 'v':
-                    case 'V': showUsageInfo = true; break;
-                    case 'i':
-                    {
-                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
-                        {
-                            // Check if input filename is valid
-                            if ((strcmp(GetExtension(argv[i + 1]), "rfx") == 0) ||
-                                (strcmp(GetExtension(argv[i + 1]), "sfs") == 0))
-                            {
-                                strcpy(inFileName, argv[i + 1]);
-                                i++;
-                            }
-                            else printf("WARNING: Input file extension not recognized\n");
-                        }
-                        else
-                        {
-                            printf("WARNING: Wrong command line parameter!\n\n");
-                            showUsageInfo = true;
-                        }
-                    } break;
-                    case 'o':
-                    {
-                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
-                        {
-                            // Check if output filename is valid
-                            if (strcmp(GetExtension(argv[i + 1]), "wav") == 0)
-                            {
-                                strcpy(outFileName, argv[i + 1]);
-                                i++;
-                            }
-                            else printf("WARNING: Output file extension not recognized\n");
-                        }
-                        else
-                        {
-                            printf("WARNING: Wrong command line parameter!\n\n");
-                            showUsageInfo = true;
-                        }
-                    } break;
-                    case 'r': 
-                    {
-                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
-                        {
-                            sampleRate = atoi(argv[i + 1]);
-                            
-                            // Check if sample rate is valid
-                            if ((sampleRate != 44100) && (sampleRate != 22050))
-                            {
-                                printf("WARNING: Sample rate not supported\n");
-                                sampleRate = 44100;
-                            }
-                            
-                            i++;
-                        }
-                        else
-                        {
-                            printf("WARNING: Wrong command line parameter!\n\n");
-                            showUsageInfo = true;
-                        }
-                        
-                    } break;
-                    case 'b':
-                    {
-                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
-                        {
-                            sampleSize = atoi(argv[i + 1]);
-                            
-                            // Check if sample size is valid
-                            if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
-                            {
-                                printf("WARNING: Sample size not supported\n");
-                                sampleSize = 16;
-                            }
-                            
-                            i++;
-                        }
-                        else
-                        {
-                            printf("WARNING: Wrong command line parameter!\n\n");
-                            showUsageInfo = true;
-                        }
-                    } break;
-                    case 'c': 
-                    {
-                        if (((i + 1) < argc) && (argv[i + 1][0] != '-')) 
-                        {
-                            channels = atoi(argv[i + 1]);
-                            
-                            // Check if channels number is valid
-                            if ((channels != 1) && (channels != 2))
-                            {
-                                printf("WARNING: Channels number not supported\n");
-                                channels = 1;
-                            }
-                            
-                            i++;
-                        }
-                        else
-                        {
-                            printf("WARNING: Wrong command line parameter!\n\n");
-                            showUsageInfo = true;
-                        }
-                    } break;
-                    default: break;
-                }
+                // Open file with graphic interface
+            }
+            else if (IsFileExtension(argv[1], ".wav"))
+            {
+                // Play sound
+                InitAudioDevice();                  // Init audio device
+                Wave wave = LoadWave(argv[1]);      // Load wave data
+                Sound fxWav = LoadSound(argv[1]);   // Load WAV audio file
+                PlaySound(fxWav);                   // Play sound
+                WaitTime((float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels)); // Wait while audio is playing
+                UnloadSound(fxWav);                 // Unload sound data
+                UnloadWave(wave);                   // Unload wave data
+                CloseAudioDevice();                 // Close audio device
+                return 0;
+            }
+            else 
+            {
+                ShowUsageInfo();
+                return 0;
             }
         }
-        
-        if (showUsageInfo) ShowUsageInfo();
-        
-        if (outFileName[0] == '\0')
+        else
         {
-            // Output filename equal to input filename
-            strcpy(outFileName, inFileName);
-            int len = strlen(outFileName);
-            outFileName[len - 3] = 'w';
-            outFileName[len - 2] = 'a';
-            outFileName[len - 1] = 'v';
-        }
+            // Process command line arguments
+            for (int i = 1; i < argc; i++)
+            {
+                if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0))
+                {
+                    showUsageInfo = true;
+                }
+                else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
+                {                   
+                    // Verify an image is provided with a supported extension
+                    // Check that no "--" is comming after --input
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && ((IsFileExtension(inFileName, ".rfx")) || (IsFileExtension(inFileName, ".sfs")))) 
+                    {
+                        strcpy(inFileName, argv[i + 1]);    // Read input filename
+                        i++;
+                    }
+                    else printf("WARNING: Input file extension not recognized\n");
+                }
+                else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
+                {
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && ((IsFileExtension(inFileName, ".wav")) || (IsFileExtension(inFileName, ".h")))) 
+                    {
+                        strcpy(outFileName, argv[i + 1]);   // Read output filename
+                        i++;
+                    }
+                    else printf("WARNING: Output file extension not recognized\n");
+                }
+                else if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--format") == 0))
+                {
+                    if (((i + 3) < argc) &&             // Three arguments required after --format
+                        (argv[i + 1][0] != '-') &&
+                        (argv[i + 2][0] != '-') &&
+                        (argv[i + 3][0] != '-'))        // All those arguments should be values
+                    {
+                        // Read values text and convert to integer values
+                        sampleRate = atoi(argv[i + 1]);
+                        sampleSize = atoi(argv[i + 2]);
+                        channels = atoi(argv[i + 3]);
+                            
+                        // Verify retrieved values are valid
+                        if ((sampleRate != 44100) && (sampleRate != 22050))
+                        {
+                            printf("WARNING: Sample rate not supported\n");
+                            sampleRate = 44100;
+                        }
+                        
+                        if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
+                        {
+                            printf("WARNING: Sample size not supported\n");
+                            sampleSize = 16;
+                        }
+                        
+                        if ((channels != 1) && (channels != 2))
+                        {
+                            printf("WARNING: Channels number not supported\n");
+                            channels = 1;
+                        }
+                    }
+                    else printf("WARNING: Format parameters provided not valid\n");
+                }
+            }
 
-        if ((inFileName[0] != '\0') && (outFileName[0] != '\0'))
-        {
-            printf("\nInput file:     %s", inFileName);
-            printf("\nOutput file:    %s", outFileName);
-            printf("\nSample rate:    %i", sampleRate);
-            printf("\nSample size:    %i", sampleSize);
-            printf("\nChannels:       %i\n", channels);
+            // Set a default name for output in case not provided
+            if ((inFileName[0] != '\0') && (outFileName[0] == '\0')) strcpy(outFileName, "output.wav");
 
-            params = LoadSoundParams(inFileName);
+            if ((inFileName[0] != '\0') && (outFileName[0] != '\0'))
+            {
+                printf("\nInput file:       %s", inFileName);
+                printf("\nOutput file:      %s", outFileName);
+                printf("\nOutput format:    %i Hz, %i bit, %s", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
+
+                params = LoadSoundParams(inFileName);
+                
+                // NOTE: Default generation parameters: sampleRate = 44100, sampleSize = 16, channels = 1
+                Wave wave = GenerateWave(params);
+
+                // Format wave data to desired sampleRate, sampleSize and channels
+                WaveFormat(&wave, sampleRate, sampleSize, channels);
+
+                SaveWAV(outFileName, wave);
+
+                if (wave.data != NULL) free(wave.data);  // Unload wave data
+            }
             
-            // NOTE: Default generation parameters: sampleRate = 44100, sampleSize = 16, channels = 1
-            Wave wave = GenerateWave(params);
-
-            // Format wave data to desired sampleRate, sampleSize and channels
-            WaveFormat(&wave, sampleRate, sampleSize, channels);
-
-            SaveWAV(outFileName, wave);
-
-            if (wave.data != NULL) free(wave.data);  // Unload wave data
+            if (showUsageInfo) ShowUsageInfo();
+            
+            return 0;
         }
-
-        return 0;
     }
 
     // Initialization
@@ -667,37 +649,47 @@ int main(int argc, char *argv[])
 // Show command line usage info
 static void ShowUsageInfo(void)
 {
-    printf("\nrFXGen v%s - fx sounds generator\n\n", RFXGEN_VERSION);
-    //printf("powered by raylib v2.0 and raygui v2.0\n\n");
+    printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
+    printf("//                                                                              //\n");
+    printf("// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", RFXGEN_VERSION);
+    printf("// powered by raylib v2.0 (www.raylib.com) and raygui v2.0                      //\n");
+    printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
+    printf("//                                                                              //\n");
+    printf("// Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)                          //\n");
+    printf("//                                                                              //\n");
+    printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("USAGE:\n\n");
     printf("    > rfxgen [--version] [--help] --input <filename.ext> [--output <filename.wav>]\n");
-    printf("             [--sample-rate <rate>] [--sample-size <bit_size>] [--channels <num_channels>]\n");
-    printf("             [--wave-image <filename.png>] [--play]\n");
+    printf("             [--format <sample_rate> <sample_size> <channels>] [--play]\n");
     
     printf("\nOPTIONS:\n\n");
-    printf("    -v, --version                   Show tool version and command line usage help\n");
-    printf("    -?, -h, --help                  Show tool version and command line usage help\n");
-    printf("    -i, --input <filename.ext>      Define input file. Supported extensions: .rfx, .sfs\n");
-    printf("    -o, --output <filename.wav>     Define output file. Supported extensions: .wav\n");
-    printf("                                        DEFAULT: input_filename.wav\n");
-    printf("    -r, --sample-rate <rate>        Define output sample rate. Supported: 22050, 44100.\n"); 
-    printf("                                        DEFAULT: 44100\n"); 
-    printf("    -b, --sample-size <bit_size>    Define output sample size. Supported: 8, 16, 32 bit.\n"); 
-    printf("                                        DEFAULT: 16\n");
-    printf("    -c, --channels <num_channels>   Define output channels. Supported: 1 (mono), 2 (stereo).\n");
-    printf("                                        DEFAULT: 1 (mono)\n");
-    printf("    -i, --wave-image <filename.png> Export wave image. Supported: .png\n");
-    printf("    -p, --play                      Play sound\n");
+    printf("    -v, --version                   : Show tool version and command line usage help\n");
+    printf("    -h, --help                      : Show tool version and command line usage help\n");
+    printf("    -i, --input <filename.ext>      : Define input file.\n");
+    printf("                                      Supported extensions: .rfx, .sfs, .wav\n");
+    printf("    -o, --output <filename.ext>     : Define output file.\n");
+    printf("                                      Supported extensions: .wav, .h\n");
+    printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
+    printf("    -f, --format <sample_rate> <sample_size> <channels>\n");
+    printf("                                    : Format output wave.\n");
+    printf("                                      Supported values:\n");
+    printf("                                          Sample rate:      22050, 44100\n");
+    printf("                                          Sample size:      8, 16, 32\n");
+    printf("                                          Channels:         1 (mono), 2 (stereo)\n");
+    printf("                                      NOTE: If not specified, defaults to: 44100, 16, 1\n\n");
+    printf("    -p, --play                      : Play sound\n");
 
     printf("\nEXAMPLES:\n\n");
-    printf("    > rfxgen --input sound.rfx --output jump.wav --sample-rate 22050 --channels 2\n");
-    printf("        Process <sound.rfx> to generate <jump.wav> at 22050 Hz, 16bit, Stereo\n");
-    printf("    > rfxgen --input sound.rfx --sample-size 32\n");
-    printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32bit, Mono\n\n");
-
-    printf("LICENSE: zlib/libpng\n\n");
-    printf("    Copyright (c) 2017-2018 Ramon Santamaria (@raysan5).\n\n");
+    printf("    > rfxgen --input sound.rfx --output jump.wav\n");
+    printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32 bit, Mono\n\n");
+    printf("    > rfxgen --input sound.rfx --output jump.wav --format 22050 16 2\n");
+    printf("        Process <sound.rfx> to generate <jump.wav> at 22050 Hz, 16 bit, Stereo\n\n");
+    printf("    > rfxgen --input sound.rfx --play\n");
+    printf("        Plays <sound.rfx>, wave data is generated internally but not saved\n\n");
+    printf("    > rfxgen --input sound.wav --output jump.wav --format 22050 8 1 --play\n");
+    printf("        Process <sound.wav> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
+    printf("        Plays generated sound.\n");
 }
 
 // Reset wave parameters
