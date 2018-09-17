@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v1.4 - fx sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v1.5 - fx sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -8,7 +8,8 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       1.4  (01-Oct-2018) Improved command line and comments
+*       1.5  (23-Sep-2018) Support .wav export to code and sound playing on command line
+*       1.4  (15-Sep-2018) Redesigned command line and comments
 *       1.3  (15-May-2018) Reimplemented gui using rGuiLayout
 *       1.2  (16-Mar-2018) Working on some code improvements and GUI review
 *       1.1  (01-Oct-2017) Code review, simplified
@@ -77,10 +78,10 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define RFXGEN_VERSION  "1.4"           // Tool version string
+#define RFXGEN_VERSION  "1.5"           // Tool version string
 
-#define rnd(n)      GetRandomValue(0, n)
-#define frnd(range) ((float)rnd(10000)/10000.0f*range)
+// Float random number generation
+#define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -154,13 +155,10 @@ static bool regenerate = false;     // Wave regeneration required
 //----------------------------------------------------------------------------------
 static void ShowUsageInfo(void);    // Show command line usage info
 
-static void ResetParams(WaveParams *params);        // Reset wave parameters
-static Wave GenerateWave(WaveParams params);        // Generate wave data from parameters
-
-static WaveParams LoadSoundParams(const char *fileName);                // Load sound parameters from file
-static void SaveSoundParams(const char *fileName, WaveParams params);   // Save sound parameters to file
-
-static void SaveWAV(const char *fileName, Wave wave);                   // Export sound to .wav file
+static WaveParams LoadWaveParams(const char *fileName);                 // Load wave parameters from file
+static void SaveWaveParams(WaveParams params, const char *fileName);    // Save wave parameters to file
+static void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
+static Wave GenerateWave(WaveParams params);                            // Generate wave data from parameters
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
 
 static void OpenLinkURL(const char *url);           // Open URL link
@@ -178,27 +176,16 @@ static void BtnMutate(void);        // Mutate current sound
 
 static void BtnLoadSound(void);     // Load sound parameters file
 static void BtnSaveSound(void);     // Save sound parameters file
-static void BtnExportWav(Wave wave); // Export current sound as .wav
+static void BtnExportWave(Wave wave); // Export current sound as .wav
+
+static void ExportWaveAsCode(Wave wave, const char *fileName);          // Export wave sample data to code (.h)
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 bool __stdcall FreeConsole(void);   // Close console from code (kernel32.lib)
 #endif
 
-// Simple time wait
-void WaitTime(int ms)
-{
-    if (ms > 0)
-    {
-        // Current time of milliseconds
-        int msCount = clock()*1000/CLOCKS_PER_SEC;
-
-        // Needed count milliseconds of return from this timeout
-        int msTotal = msCount + ms;
-
-        // Wait while until needed time comes
-        while (msCount <= msTotal) msCount = clock()*1000/CLOCKS_PER_SEC;
-    }
-}
+static void WaitTime(int ms);       // Simple time wait in milliseconds
+static void PlayWaveCLI(Wave wave); // Play provided wave through CLI
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -223,28 +210,26 @@ int main(int argc, char *argv[])
         int sampleSize = 16;            // Default conversion sample size
         int channels = 1;               // Default conversion channels number
         
+        bool playWave = false;         // Play input/output wave
+
         if (argc == 2)  // One file dropped over the executable or just one argument
         {
             if (IsFileExtension(argv[1], ".rfx") || IsFileExtension(argv[1], ".sfs"))
             {
                 // Open file with graphic interface
+                strcpy(inFileName, argv[1]);        // Read input filename
             }
             else if (IsFileExtension(argv[1], ".wav"))
             {
-                // Play sound
-                InitAudioDevice();                  // Init audio device
                 Wave wave = LoadWave(argv[1]);      // Load wave data
-                Sound fxWav = LoadSound(argv[1]);   // Load WAV audio file
-                PlaySound(fxWav);                   // Play sound
-                WaitTime((float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels)); // Wait while audio is playing
-                UnloadSound(fxWav);                 // Unload sound data
+                PlayWaveCLI(wave);                  // Play provided wave
                 UnloadWave(wave);                   // Unload wave data
-                CloseAudioDevice();                 // Close audio device
+
                 return 0;
             }
             else 
             {
-                ShowUsageInfo();
+                ShowUsageInfo();                    // Show command line usage info
                 return 0;
             }
         }
@@ -261,7 +246,8 @@ int main(int argc, char *argv[])
                 {                   
                     // Verify an image is provided with a supported extension
                     // Check that no "--" is comming after --input
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && ((IsFileExtension(inFileName, ".rfx")) || (IsFileExtension(inFileName, ".sfs")))) 
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
+                        (IsFileExtension(argv[i + 1], ".rfx") || IsFileExtension(argv[i + 1], ".sfs") || IsFileExtension(argv[i + 1], ".wav")))
                     {
                         strcpy(inFileName, argv[i + 1]);    // Read input filename
                         i++;
@@ -270,7 +256,7 @@ int main(int argc, char *argv[])
                 }
                 else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
                 {
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && ((IsFileExtension(inFileName, ".wav")) || (IsFileExtension(inFileName, ".h")))) 
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && ((IsFileExtension(argv[i + 1], ".wav")) || (IsFileExtension(argv[i + 1], ".h")))) 
                     {
                         strcpy(outFileName, argv[i + 1]);   // Read output filename
                         i++;
@@ -310,28 +296,37 @@ int main(int argc, char *argv[])
                     }
                     else printf("WARNING: Format parameters provided not valid\n");
                 }
+                else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0)) playWave = true;
             }
 
-            // Set a default name for output in case not provided
-            if ((inFileName[0] != '\0') && (outFileName[0] == '\0')) strcpy(outFileName, "output.wav");
-
-            if ((inFileName[0] != '\0') && (outFileName[0] != '\0'))
+            // Process input file
+            if (inFileName[0] != '\0')
             {
+                if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");  // Set a default name for output in case not provided
+                
                 printf("\nInput file:       %s", inFileName);
                 printf("\nOutput file:      %s", outFileName);
-                printf("\nOutput format:    %i Hz, %i bit, %s", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
-
-                params = LoadSoundParams(inFileName);
+                printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
                 
-                // NOTE: Default generation parameters: sampleRate = 44100, sampleSize = 16, channels = 1
-                Wave wave = GenerateWave(params);
+                Wave wave = { 0 };
+
+                if (IsFileExtension(inFileName, ".rfx") || IsFileExtension(inFileName, ".sfs"))
+                {
+                    params = LoadWaveParams(inFileName);
+                    wave = GenerateWave(params);
+                }
+                else if (IsFileExtension(inFileName, ".wav")) wave = LoadWave(inFileName);
 
                 // Format wave data to desired sampleRate, sampleSize and channels
                 WaveFormat(&wave, sampleRate, sampleSize, channels);
+                
+                // Export wave data as audio file (.wav) or code file (.h)
+                if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
+                else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
+                
+                if (playWave) PlayWaveCLI(wave);    // Play formated wave
 
-                SaveWAV(outFileName, wave);
-
-                if (wave.data != NULL) free(wave.data);  // Unload wave data
+                UnloadWave(wave);
             }
             
             if (showUsageInfo) ShowUsageInfo();
@@ -368,7 +363,7 @@ int main(int argc, char *argv[])
 #endif
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-	FreeConsole();
+    FreeConsole();
 #endif
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
@@ -409,7 +404,7 @@ int main(int argc, char *argv[])
     
     // Reset generation parameters
     // NOTE: Random seed for generation is set
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
     Rectangle waveRec = { 10, 421, 475, 50 };
 
@@ -544,7 +539,7 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 390, 81, 95, 20 }, "Play Sound")) PlaySound(sound);
             if (GuiButton((Rectangle){ 390, 283, 95, 20 }, "Load Sound")) BtnLoadSound();
             if (GuiButton((Rectangle){ 390, 307, 95, 20 }, "Save Sound")) BtnSaveSound();
-            if (GuiButton((Rectangle){ 390, 389, 95, 20 }, "Export .Wav")) BtnExportWav(wave);
+            if (GuiButton((Rectangle){ 390, 389, 95, 20 }, "Export .Wav")) BtnExportWave(wave);
             //--------------------------------------------------------------------------------
                        
             // Right side controls
@@ -693,7 +688,7 @@ static void ShowUsageInfo(void)
 }
 
 // Reset wave parameters
-static void ResetParams(WaveParams *params)
+static void ResetWaveParams(WaveParams *params)
 {
     // NOTE: Random seed is set to a random value
     params->randSeed = GetRandomValue(0x1, 0xFFFE);
@@ -1047,7 +1042,7 @@ static Wave GenerateWave(WaveParams params)
 }
 
 // Load .rfx (rFXGen) or .sfs (sfxr) sound parameters file
-static WaveParams LoadSoundParams(const char *fileName)
+static WaveParams LoadWaveParams(const char *fileName)
 {
     WaveParams params = { 0 };
 
@@ -1130,15 +1125,9 @@ static WaveParams LoadSoundParams(const char *fileName)
             int version;
             fread(&version, 1, sizeof(int), rfxFile);
             
-            if (version == 100)
-            {
-                printf("[%s] Wrong rFX file version (%i)\n", fileName, version);
-            }
-            else if (version == 120)
-            {
-                // Load wave generation parameters
-                fread(&params, 1, sizeof(WaveParams), rfxFile);
-            }
+            // Load wave generation parameters
+            if (version == 100) printf("[%s] Wrong rFX file version (%i)\n", fileName, version);
+            else if (version == 120) fread(&params, 1, sizeof(WaveParams), rfxFile);
         }
         else printf("[%s] rFX file not valid\n", fileName);
 
@@ -1149,7 +1138,7 @@ static WaveParams LoadSoundParams(const char *fileName)
 }
 
 // Save .rfx (rFXGen) or .sfs (sfxr) sound parameters file
-static void SaveSoundParams(const char *fileName, WaveParams params)
+static void SaveWaveParams(WaveParams params, const char *fileName)
 {
     if (strcmp(GetExtension(fileName),"sfs") == 0)
     {
@@ -1253,78 +1242,6 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
     }
 }
 
-// Save wave data to WAV file
-static void SaveWAV(const char *fileName, Wave wave)
-{
-    // Basic WAV headers structs
-    typedef struct {
-        char chunkID[4];
-        int chunkSize;
-        char format[4];
-    } RiffHeader;
-
-    typedef struct {
-        char subChunkID[4];
-        int subChunkSize;
-        short audioFormat;
-        short numChannels;
-        int sampleRate;
-        int byteRate;
-        short blockAlign;
-        short bitsPerSample;
-    } WaveFormat;
-
-    typedef struct {
-        char subChunkID[4];
-        int subChunkSize;
-    } WaveData;
-
-    RiffHeader riffHeader;
-    WaveFormat waveFormat;
-    WaveData waveData;
-
-    // Fill structs with data
-    riffHeader.chunkID[0] = 'R';
-    riffHeader.chunkID[1] = 'I';
-    riffHeader.chunkID[2] = 'F';
-    riffHeader.chunkID[3] = 'F';
-    riffHeader.chunkSize = 44 - 4 + wave.sampleCount*wave.sampleSize/8;
-    riffHeader.format[0] = 'W';
-    riffHeader.format[1] = 'A';
-    riffHeader.format[2] = 'V';
-    riffHeader.format[3] = 'E';
-
-    waveFormat.subChunkID[0] = 'f';
-    waveFormat.subChunkID[1] = 'm';
-    waveFormat.subChunkID[2] = 't';
-    waveFormat.subChunkID[3] = ' ';
-    waveFormat.subChunkSize = 16;
-    waveFormat.audioFormat = 1;
-    waveFormat.numChannels = wave.channels;
-    waveFormat.sampleRate = wave.sampleRate;
-    waveFormat.byteRate = wave.sampleRate*wave.sampleSize/8;
-    waveFormat.blockAlign = wave.sampleSize/8;
-    waveFormat.bitsPerSample = wave.sampleSize;
-
-    waveData.subChunkID[0] = 'd';
-    waveData.subChunkID[1] = 'a';
-    waveData.subChunkID[2] = 't';
-    waveData.subChunkID[3] = 'a';
-    waveData.subChunkSize = wave.sampleCount*wave.channels*wave.sampleSize/8;
-
-    FILE *wavFile = fopen(fileName, "wb");
-    
-    if (wavFile == NULL) return;
-
-    fwrite(&riffHeader, 1, sizeof(RiffHeader), wavFile);
-    fwrite(&waveFormat, 1, sizeof(WaveFormat), wavFile);
-    fwrite(&waveData, 1, sizeof(WaveData), wavFile);
-
-    fwrite(wave.data, 1, wave.sampleCount*wave.channels*wave.sampleSize/8, wavFile);
-
-    fclose(wavFile);
-}
-
 //--------------------------------------------------------------------------------------------
 // Buttons functions: sound generation
 //--------------------------------------------------------------------------------------------
@@ -1332,7 +1249,7 @@ static void SaveWAV(const char *fileName, Wave wave)
 // Generate sound: Pickup/Coin
 static void BtnPickupCoin(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
     params.startFrequencyValue = 0.4f + frnd(0.5f);
     params.attackTimeValue = 0.0f;
@@ -1340,7 +1257,7 @@ static void BtnPickupCoin(void)
     params.decayTimeValue = 0.1f + frnd(0.4f);
     params.sustainPunchValue = 0.3f + frnd(0.3f);
 
-    if (rnd(1))
+    if (GetRandomValue(0, 1))
     {
         params.changeSpeedValue = 0.5f + frnd(0.2f);
         params.changeAmountValue = 0.2f + frnd(0.4f);
@@ -1352,11 +1269,11 @@ static void BtnPickupCoin(void)
 // Generate sound: Laser shoot
 static void BtnLaserShoot(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
-    params.waveTypeValue = rnd(2);
+    params.waveTypeValue = GetRandomValue(0, 2);
 
-    if ((params.waveTypeValue == 2) && rnd(1)) params.waveTypeValue = rnd(1);
+    if ((params.waveTypeValue == 2) && GetRandomValue(0, 1)) params.waveTypeValue = GetRandomValue(0, 1);
 
     params.startFrequencyValue = 0.5f + frnd(0.5f);
     params.minFrequencyValue = params.startFrequencyValue - 0.2f - frnd(0.6f);
@@ -1365,14 +1282,14 @@ static void BtnLaserShoot(void)
 
     params.slideValue = -0.15f - frnd(0.2f);
 
-    if (rnd(2) == 0)
+    if (GetRandomValue(0, 2) == 0)
     {
         params.startFrequencyValue = 0.3f + frnd(0.6f);
         params.minFrequencyValue = frnd(0.1f);
         params.slideValue = -0.35f - frnd(0.3f);
     }
 
-    if (rnd(1))
+    if (GetRandomValue(0, 1))
     {
         params.squareDutyValue = frnd(0.5f);
         params.dutySweepValue = frnd(0.2f);
@@ -1387,15 +1304,15 @@ static void BtnLaserShoot(void)
     params.sustainTimeValue = 0.1f + frnd(0.2f);
     params.decayTimeValue = frnd(0.4f);
 
-    if (rnd(1)) params.sustainPunchValue = frnd(0.3f);
+    if (GetRandomValue(0, 1)) params.sustainPunchValue = frnd(0.3f);
 
-    if (rnd(2) == 0)
+    if (GetRandomValue(0, 2) == 0)
     {
         params.phaserOffsetValue = frnd(0.2f);
         params.phaserSweepValue = -frnd(0.2f);
     }
 
-    if (rnd(1)) params.hpfCutoffValue = frnd(0.3f);
+    if (GetRandomValue(0, 1)) params.hpfCutoffValue = frnd(0.3f);
 
     regenerate = true;
 }
@@ -1403,11 +1320,11 @@ static void BtnLaserShoot(void)
 // Generate sound: Explosion
 static void BtnExplosion(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
     params.waveTypeValue = 3;
 
-    if (rnd(1))
+    if (GetRandomValue(0, 1))
     {
         params.startFrequencyValue = 0.1f + frnd(0.4f);
         params.slideValue = -0.1f + frnd(0.4f);
@@ -1420,14 +1337,14 @@ static void BtnExplosion(void)
 
     params.startFrequencyValue *= params.startFrequencyValue;
 
-    if (rnd(4) == 0) params.slideValue = 0.0f;
-    if (rnd(2) == 0) params.repeatSpeedValue = 0.3f + frnd(0.5f);
+    if (GetRandomValue(0, 4) == 0) params.slideValue = 0.0f;
+    if (GetRandomValue(0, 2) == 0) params.repeatSpeedValue = 0.3f + frnd(0.5f);
 
     params.attackTimeValue = 0.0f;
     params.sustainTimeValue = 0.1f + frnd(0.3f);
     params.decayTimeValue = frnd(0.5f);
 
-    if (rnd(1) == 0)
+    if (GetRandomValue(0, 1) == 0)
     {
         params.phaserOffsetValue = -0.3f + frnd(0.9f);
         params.phaserSweepValue = -frnd(0.3f);
@@ -1435,13 +1352,13 @@ static void BtnExplosion(void)
 
     params.sustainPunchValue = 0.2f + frnd(0.6f);
 
-    if (rnd(1))
+    if (GetRandomValue(0, 1))
     {
         params.vibratoDepthValue = frnd(0.7f);
         params.vibratoSpeedValue = frnd(0.6f);
     }
 
-    if (rnd(2) == 0)
+    if (GetRandomValue(0, 2) == 0)
     {
         params.changeSpeedValue = 0.6f + frnd(0.3f);
         params.changeAmountValue = 0.8f - frnd(1.6f);
@@ -1453,12 +1370,12 @@ static void BtnExplosion(void)
 // Generate sound: Powerup
 static void BtnPowerup(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
-    if (rnd(1)) params.waveTypeValue = 1;
+    if (GetRandomValue(0, 1)) params.waveTypeValue = 1;
     else params.squareDutyValue = frnd(0.6f);
 
-    if (rnd(1))
+    if (GetRandomValue(0, 1))
     {
         params.startFrequencyValue = 0.2f + frnd(0.3f);
         params.slideValue = 0.1f + frnd(0.4f);
@@ -1469,7 +1386,7 @@ static void BtnPowerup(void)
         params.startFrequencyValue = 0.2f + frnd(0.3f);
         params.slideValue = 0.05f + frnd(0.2f);
 
-        if (rnd(1))
+        if (GetRandomValue(0, 1))
         {
             params.vibratoDepthValue = frnd(0.7f);
             params.vibratoSpeedValue = frnd(0.6f);
@@ -1486,9 +1403,9 @@ static void BtnPowerup(void)
 // Generate sound: Hit/Hurt
 static void BtnHitHurt(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
-    params.waveTypeValue = rnd(2);
+    params.waveTypeValue = GetRandomValue(0, 2);
     if (params.waveTypeValue == 2) params.waveTypeValue = 3;
     if (params.waveTypeValue == 0) params.squareDutyValue = frnd(0.6f);
 
@@ -1498,7 +1415,7 @@ static void BtnHitHurt(void)
     params.sustainTimeValue = frnd(0.1f);
     params.decayTimeValue = 0.1f + frnd(0.2f);
 
-    if (rnd(1)) params.hpfCutoffValue = frnd(0.3f);
+    if (GetRandomValue(0, 1)) params.hpfCutoffValue = frnd(0.3f);
 
     regenerate = true;
 }
@@ -1506,7 +1423,7 @@ static void BtnHitHurt(void)
 // Generate sound: Jump
 static void BtnJump(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
     params.waveTypeValue = 0;
     params.squareDutyValue = frnd(0.6f);
@@ -1516,8 +1433,8 @@ static void BtnJump(void)
     params.sustainTimeValue = 0.1f + frnd(0.3f);
     params.decayTimeValue = 0.1f + frnd(0.2f);
 
-    if (rnd(1)) params.hpfCutoffValue = frnd(0.3f);
-    if (rnd(1)) params.lpfCutoffValue = 1.0f - frnd(0.6f);
+    if (GetRandomValue(0, 1)) params.hpfCutoffValue = frnd(0.3f);
+    if (GetRandomValue(0, 1)) params.lpfCutoffValue = 1.0f - frnd(0.6f);
 
     regenerate = true;
 }
@@ -1525,9 +1442,9 @@ static void BtnJump(void)
 // Generate sound: Blip/Select
 static void BtnBlipSelect(void)
 {
-    ResetParams(&params);
+    ResetWaveParams(&params);
 
-    params.waveTypeValue = rnd(1);
+    params.waveTypeValue = GetRandomValue(0, 1);
     if (params.waveTypeValue == 0) params.squareDutyValue = frnd(0.6f);
     params.startFrequencyValue = 0.2f + frnd(0.4f);
     params.attackTimeValue = 0.0f;
@@ -1541,11 +1458,11 @@ static void BtnBlipSelect(void)
 // Generate random sound
 static void BtnRandomize(void)
 {
-    params.randSeed = rnd(0xFFFE);
+    params.randSeed = GetRandomValue(0, 0xFFFE);
     
     params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 2.0f);
 
-    if (rnd(1)) params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
+    if (GetRandomValue(0, 1)) params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
 
     params.minFrequencyValue = 0.0f;
     params.slideValue = pow(frnd(2.0f) - 1.0f, 5.0f);
@@ -1590,29 +1507,29 @@ static void BtnRandomize(void)
 // Mutate current sound
 static void BtnMutate(void)
 {
-    if (rnd(1)) params.startFrequencyValue += frnd(0.1f) - 0.05f;
-    //if (rnd(1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.slideValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.deltaSlideValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.squareDutyValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.dutySweepValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.vibratoDepthValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.vibratoSpeedValue += frnd(0.1f) - 0.05f;
-    //if (rnd(1)) params.vibratoPhaseDelay += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.attackTimeValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.sustainTimeValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.decayTimeValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.sustainPunchValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.lpfResonanceValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.lpfCutoffValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.lpfCutoffSweepValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.hpfCutoffValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.hpfCutoffSweepValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.phaserOffsetValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.phaserSweepValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.repeatSpeedValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.changeSpeedValue += frnd(0.1f) - 0.05f;
-    if (rnd(1)) params.changeAmountValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.startFrequencyValue += frnd(0.1f) - 0.05f;
+    //if (GetRandomValue(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.slideValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.deltaSlideValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.squareDutyValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.dutySweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.vibratoDepthValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.vibratoSpeedValue += frnd(0.1f) - 0.05f;
+    //if (GetRandomValue(0, 1)) params.vibratoPhaseDelay += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.attackTimeValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.sustainTimeValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.decayTimeValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.sustainPunchValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.lpfResonanceValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.lpfCutoffValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.lpfCutoffSweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.hpfCutoffValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.hpfCutoffSweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.phaserOffsetValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.phaserSweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.repeatSpeedValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.changeSpeedValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params.changeAmountValue += frnd(0.1f) - 0.05f;
 
     regenerate = true;
 }
@@ -1640,7 +1557,7 @@ static void BtnLoadSound(void)
 
     if (fileName != NULL)
     {
-        params = LoadSoundParams(fileName);
+        params = LoadWaveParams(fileName);
         regenerate = true;
     }
 }
@@ -1668,12 +1585,12 @@ static void BtnSaveSound(void)
         strcpy(outFileName, fileName);
         
         if (GetExtension(outFileName) == NULL) strcat(outFileName, ".rfx\0");     // No extension provided
-        if (outFileName != NULL) SaveSoundParams(outFileName, params);
+        if (outFileName != NULL) SaveWaveParams(params, outFileName);
     }
 }
 
 // Export current sound as .wav
-static void BtnExportWav(Wave wave)
+static void BtnExportWave(Wave wave)
 {
     char currentPathFile[256];
 
@@ -1699,9 +1616,34 @@ static void BtnExportWav(Wave wave)
         
         Wave cwave = WaveCopy(wave);
         WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);    // Before exporting wave data, we format it as desired
-        SaveWAV(outFileName, cwave);
+        ExportWave(cwave, outFileName);                         // Export wave data to file
         UnloadWave(cwave);
     }
+}
+
+// Export wave sample data to code (.h)
+static void ExportWaveAsCode(Wave wave, const char *fileName)
+{
+    FILE *txtFile = fopen(fileName, "wt");
+    
+    char outFileName[256] = "\0";
+    strcpy(outFileName, fileName);
+    outFileName[strlen(outFileName) - 2] = '\0';
+    
+    fprintf(txtFile, "// rFXGen Wave exporter v1.0\n\n");
+    fprintf(txtFile, "// Wave sample data exported as array of bytes, channels interlaced\n");
+    fprintf(txtFile, "//     Samples Count:     %i\n", wave.sampleCount);
+    fprintf(txtFile, "//     Sample Rate:       %i\n", wave.sampleRate);
+    fprintf(txtFile, "//     Sample Size:       %i\n", wave.sampleSize);
+    fprintf(txtFile, "//     Channels num:      %i\n\n", wave.channels);
+    fprintf(txtFile, "// LICENSE: zlib/libpng\n");
+    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
+
+    fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
+    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, "0x%x, ", ((unsigned char *)wave.data)[i]);
+    fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
+
+    fclose(txtFile);
 }
 
 // Open URL link
@@ -1717,4 +1659,30 @@ static void OpenLinkURL(const char *url)
 
     memset(cmd, 0, 4096);
 #endif
+}
+
+// Simple time wait in milliseconds
+static void WaitTime(int ms)
+{
+    if (ms > 0)
+    {
+        int currentTime = clock()*1000/CLOCKS_PER_SEC;  // Current time in milliseconds
+        int totalTime = currentTime + ms;               // Total required time in ms to return from this timeout
+
+        // Wait until current ms time matches total ms time
+        while (currentTime <= totalTime) currentTime = clock()*1000/CLOCKS_PER_SEC;
+    }
+}
+
+// Play provided wave through CLI
+static void PlayWaveCLI(Wave wave)
+{
+    float waveTimeMs = (float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels);
+    
+    InitAudioDevice();                  // Init audio device
+    Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
+    PlaySound(fx);                      // Play sound
+    WaitTime(waveTimeMs);               // Wait while audio is playing
+    UnloadSound(fx);                    // Unload sound data
+    CloseAudioDevice();                 // Close audio device
 }
