@@ -1,8 +1,9 @@
 <img align="left" src="logo/rfxgen_256x256.png" width=256>
 
 # rFXGen
-A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
-Generate sounds procedurally for your games!
+A simple and easy-to-use fx sounds generator.
+
+Based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html), use it to generate sounds procedurally for your games!
 
 <br>
 <br>
