@@ -1,7 +1,8 @@
 <img align="left" src="logo/rfxgen_256x256.png" width=256>
 
 # rFXGen
-raylib fx sound generator, a tool to generate sound waves procedurally, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
+A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
+Generate sounds procedurally for your games!
 
 <br>
 <br>
@@ -12,11 +13,13 @@ raylib fx sound generator, a tool to generate sound waves procedurally, based on
 
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
  - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
- - Import/Export .rfx and .sfs files (compatible with sfxr)
- - Export .wav wave data, configurable sample-rate and bits-per-sample
- - Supports command line usage for batch conversion
+ - **Load .rfx** sounds and import .sfs files (compatible with sfxr)
+ - **Save **.rfx** sounds including re-generation parameters (**104 bytes!**)
+ - **Export .wav** files, configurable sample-rate and bits-per-sample
+ - Powerful **command line** for batch conversion and playing
  - Wave data visualization in real-time
- - Completely portable (single file)
+ - **Completely portable (single file)**
+ - **Free and open source**
  
 ## Screenshots
 
@@ -24,6 +27,8 @@ raylib fx sound generator, a tool to generate sound waves procedurally, based on
 
 ## License
 
-rFXGen is licensed under zlib/libpng license. Check [LICENSE](LICENSE) for further details.
+rFXGen is **free and open source software**. rFXGen source code is licensed under an unmodified [zlib/libpng license](LICENSE].
 
-*Copyright (c) 2017 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))*
+Despite being completely free, [consider a small donation](https://www.paypal.com/donate/?token=Oo3h2bHS9ux4lNzahXhmH3oaAqQpBeeMy2zNoH1lxHuD5Vdi1-B6XlPRlEyEzLmBb7rGwG) for the development efforts or [contributing to raylib patreon](https://www.patreon.com/raylib) to help the author keep working on free software for games development.
+
+*Copyright (c) 2016-2018 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))*
