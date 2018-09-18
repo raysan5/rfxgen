@@ -16,7 +16,7 @@ Generate sounds procedurally for your games!
  - **Load .rfx** sounds and import .sfs files (compatible with sfxr)
  - **Save **.rfx** sounds including re-generation parameters (**104 bytes!**)
  - **Export .wav** files, configurable sample-rate and bits-per-sample
- - Powerful **command line** for batch conversion and playing
+ - **Powerful command line** for batch conversion and wave playing
  - Wave data visualization in real-time
  - **Completely portable (single file)**
  - **Free and open source**
