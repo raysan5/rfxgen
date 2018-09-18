@@ -13,8 +13,8 @@ Generate sounds procedurally for your games!
 
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
  - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
- - **Load .rfx** sounds and import .sfs files (compatible with sfxr)
- - **Save **.rfx** sounds including re-generation parameters (**104 bytes!**)
+ - **Load .rfx** sounds and import **.sfs** files (compatible with sfxr)
+ - **Save .rfx** sounds with generation parameters (**only 104 bytes!**)
  - **Export .wav** files, configurable sample-rate and bits-per-sample
  - **Powerful command line** for batch conversion and wave playing
  - Wave data visualization in real-time
