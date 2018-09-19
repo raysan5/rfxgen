@@ -1,8 +1,11 @@
 /*******************************************************************************************
 *
-*   rFXGen v1.5 - fx sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v1.5 - A simple and easy to use fx sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
+*
+*   #define ENABLE_PRO_FEATURES
+*       Enable PRO features for the tool. Usually command-line and export options related.
 *
 *   #define RENDER_WAVE_TO_TEXTURE (defined by default)
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
@@ -35,9 +38,12 @@
 *       gcc -o rfxgen rfxgen.c external/tinyfiledialogs.c -s -Iexternal -no-pie -D_DEFAULT_SOURCE /
 *           -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 *
+*   DEVELOPERS:
+*       Ramon Santamaria (@raysan5):   Developer, supervisor, updater and maintainer.
+*
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 raylib technologies (@raylibtech).
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -78,7 +84,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define RFXGEN_VERSION  "1.5"           // Tool version string
+#define ENABLE_PRO_FEATURES             // Enable PRO version features
+
+#define TOOL_VERSION_TEXT  "1.5"        // Tool version string
 
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
@@ -194,23 +202,19 @@ int main(int argc, char *argv[])
 {
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
-    // Generate wav files directly from .sfs and .rfx
-    // WARNING (Windows): If program is compiled as Window application (instead of console),
-    // no console is available to show output info... solution is compiling a console application
-    // and closing console (FreeConsole()) when changing to GUI interface
+    char inFileName[128] = "\0";        // Input file name (required in case of drag & drop over executable)
+    
     if (argc > 1)
     {
         // Default variables
         bool showUsageInfo = false;     // Toggle command line usage info
         
-        char inFileName[128] = "\0";    // Input file name
         char outFileName[128] = "\0";   // Output file name
+        char playFileName[128] = "\0";  // Play file name
         
         int sampleRate = 44100;         // Default conversion sample rate
         int sampleSize = 16;            // Default conversion sample size
         int channels = 1;               // Default conversion channels number
-        
-        bool playWave = false;         // Play input/output wave
 
         if (argc == 2)  // One file dropped over the executable or just one argument
         {
@@ -224,7 +228,6 @@ int main(int argc, char *argv[])
                 Wave wave = LoadWave(argv[1]);      // Load wave data
                 PlayWaveCLI(wave);                  // Play provided wave
                 UnloadWave(wave);                   // Unload wave data
-
                 return 0;
             }
             else 
@@ -296,10 +299,22 @@ int main(int argc, char *argv[])
                     }
                     else printf("WARNING: Format parameters provided not valid\n");
                 }
-                else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0)) playWave = true;
+                else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0)) 
+                {
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
+                        (IsFileExtension(argv[i + 1], ".wav") || 
+                         IsFileExtension(argv[i + 1], ".ogg") ||
+                         IsFileExtension(argv[i + 1], ".flac") || 
+                         IsFileExtension(argv[i + 1], ".mp3"))) 
+                    {
+                        strcpy(playFileName, argv[i + 1]);   // Read filename to play
+                        i++;
+                    }
+                    else printf("WARNING: Play file extension not supported\n");
+                }
             }
 
-            // Process input file
+            // Process input file if provided
             if (inFileName[0] != '\0')
             {
                 if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");  // Set a default name for output in case not provided
@@ -324,8 +339,14 @@ int main(int argc, char *argv[])
                 if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
                 else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
                 
-                if (playWave) PlayWaveCLI(wave);    // Play formated wave
-
+                UnloadWave(wave);
+            }
+            
+            // Play audio file if provided
+            if (playFileName[0] != '\0')
+            {
+                Wave wave = LoadWave(playFileName);
+                PlayWaveCLI(wave);
                 UnloadWave(wave);
             }
             
@@ -363,17 +384,19 @@ int main(int argc, char *argv[])
 #endif
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+    // WARNING (Windows): If program is compiled as Window application (instead of console),
+    // no console is available to show output info... solution is compiling a console application
+    // and closing console (FreeConsole()) when changing to GUI interface
     FreeConsole();
 #endif
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - fx sounds generator", RFXGEN_VERSION));
+    InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
     
     InitAudioDevice();
     
-    Rectangle paramsRec = { 117, 43, 265, 373 };    // Parameters rectangle box
-
-    Vector2 anchor02 = { 115, 40 };
+    Rectangle waveRec = { 10, 421, 475, 50 };       // Wave drawing rectangle box
+    Vector2 paramsAnchor = { 115, 40 };             // Parameters box anchor point
 
     // Gui controls data
     //----------------------------------------------------------------------------------------
@@ -390,24 +413,35 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
 
     Wave wave;
-
-    // Default wave values
-    wave.sampleRate = 44100;
-    wave.sampleSize = 32;       // 32 bit -> float
-    wave.channels = 1;
-    wave.sampleCount = 10*wave.sampleRate*wave.channels;    // Max sampleCount for 10 seconds
-    wave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
-
     Sound sound;
-    sound = LoadSoundFromWave(wave);
+    
+    // Check if a wave parameters file has been provided on command line
+    if (inFileName[0] != '\0') 
+    {
+        params = LoadWaveParams(inFileName);    // Load wave parameters from .rfx 
+        wave = GenerateWave(params);            // Generate wave from parameters
+        sound = LoadSoundFromWave(wave);        // Load sound from new wave
+        PlaySound(sound);                       // Play generated sound
+    }
+    else 
+    {
+        // Reset generation parameters
+        // NOTE: Random seed for generation is set
+        ResetWaveParams(&params);
+    
+        // Default wave values
+        wave.sampleRate = 44100;
+        wave.sampleSize = 32;       // 32 bit -> float
+        wave.channels = 1;
+        wave.sampleCount = 10*wave.sampleRate*wave.channels;    // Max sampleCount for 10 seconds
+        wave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
+   
+        sound = LoadSoundFromWave(wave);
+    }
+    
+    // Set default sound volume
     SetSoundVolume(sound, volumeValue);
     
-    // Reset generation parameters
-    // NOTE: Random seed for generation is set
-    ResetWaveParams(&params);
-
-    Rectangle waveRec = { 10, 421, 475, 50 };
-
 #define RENDER_WAVE_TO_TEXTURE
 #if defined(RENDER_WAVE_TO_TEXTURE)
     // To avoid enabling MSXAAx4, we will render wave to a texture x2
@@ -425,8 +459,26 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Update & Draw
+        // Update
         //------------------------------------------------------------------------------------
+        // Check for dropped files
+
+        if (IsFileDropped())
+        {
+            int dropsCount = 0;   
+            char **droppedFiles = GetDroppedFiles(&dropsCount);
+            
+            // Support loading .rfx or .sfs files (wave parameters)
+            if (IsFileExtension(droppedFiles[0], ".rfx") || 
+                IsFileExtension(droppedFiles[0], ".sfs"))
+            {
+                params = LoadWaveParams(droppedFiles[0]);
+                regenerate = true;
+            }
+
+            ClearDroppedFiles();
+        }
+        
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);
 
         // Consider two possible cases to regenerate wave and update sound:
@@ -447,6 +499,7 @@ int main(int argc, char *argv[])
             regenerate = false;
         }
 
+        // Change window size to x2
         if (screenSizeToggle)
         {   
             if (GetScreenWidth() < screenWidth*2)
@@ -464,14 +517,17 @@ int main(int argc, char *argv[])
             }
         }
         
+        // Check gui combo box selected options
         if (comboxSampleRateValue == 0) wavSampleRate = 22050;
         else if (comboxSampleRateValue == 1) wavSampleRate = 44100;
 
         if (comboxSampleSizeValue == 0) wavSampleSize = 8;
         else if (comboxSampleSizeValue == 1) wavSampleSize = 16;
         else if (comboxSampleSizeValue == 2) wavSampleSize = 32;
-            
-
+        //----------------------------------------------------------------------------------
+        
+        // Draw
+        //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(GetColor(GuiGetStyleProperty(DEFAULT_BACKGROUND_COLOR)));
@@ -483,46 +539,47 @@ int main(int argc, char *argv[])
         #else
                 DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
         #endif
+                // TODO: Draw playing progress rectangle
             EndTextureMode();
 #endif
             BeginTextureMode(screenTarget);
             
             DrawText("rFXGen", 29, 19, 20, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
-            GuiLabel((Rectangle){ 89, 14, 10, 10 }, FormatText("v%s", RFXGEN_VERSION));
+            GuiLabel((Rectangle){ 89, 14, 10, 10 }, FormatText("v%s", TOOL_VERSION_TEXT));
 
             // Parameters group boxes
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 0, 264, 71 }, "");
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 70, 264, 96 }, "");
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 165, 264, 36 }, "");
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 200, 264, 36 }, "");
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 235, 264, 21 }, "");
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 255, 264, 36 }, "");
-            GuiGroupBox((Rectangle){ anchor02.x + 0, anchor02.y + 290, 264, 85 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 0, 264, 71 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 70, 264, 96 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 165, 264, 36 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 200, 264, 36 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 235, 264, 21 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 255, 264, 36 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 290, 264, 85 }, "");
 
             // Parameters sliders
             //--------------------------------------------------------------------------------
-            params.attackTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 10, 100, 10 },  params.attackTimeValue, 0, 1, "ATTACK TIME", true);
-            params.sustainTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 25, 100, 10 },  params.sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
-            params.sustainPunchValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 40, 100, 10 },  params.sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
-            params.decayTimeValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 55, 100, 10 },  params.decayTimeValue, 0, 1, "DECAY TIME", true);
-            params.startFrequencyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 75, 100, 10 },  params.startFrequencyValue, 0, 1, "START FREQUENCY", true);
-            params.minFrequencyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 90, 100, 10 },  params.minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
-            params.slideValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 105, 100, 10 },  params.slideValue, -1, 1, "SLIDE", true);
-            params.deltaSlideValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 120, 100, 10 },  params.deltaSlideValue, -1, 1, "DELTA SLIDE", true);
-            params.vibratoDepthValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 135, 100, 10 },  params.vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
-            params.vibratoSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 150, 100, 10 },  params.vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
-            params.changeAmountValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 170, 100, 10 },  params.changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
-            params.changeSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 185, 100, 10 },  params.changeSpeedValue, 0, 1, "CHANGE SPEED", true);
-            params.squareDutyValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 205, 100, 10 },  params.squareDutyValue, 0, 1, "SQUARE DUTY", true);
-            params.dutySweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 220, 100, 10 },  params.dutySweepValue, -1, 1, "DUTY SWEEP", true);
-            params.repeatSpeedValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 240, 100, 10 },  params.repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
-            params.phaserOffsetValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 260, 100, 10 },  params.phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
-            params.phaserSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 275, 100, 10 },  params.phaserSweepValue, -1, 1, "PHASER SWEEP", true);
-            params.lpfCutoffValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 295, 100, 10 },  params.lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
-            params.lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 310, 100, 10 },  params.lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
-            params.lpfResonanceValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 325, 100, 10 },  params.lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
-            params.hpfCutoffValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 340, 100, 10 },  params.hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
-            params.hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ anchor02.x + 125, anchor02.y + 355, 100, 10 },  params.hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
+            params.attackTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 10, 100, 10 },  params.attackTimeValue, 0, 1, "ATTACK TIME", true);
+            params.sustainTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 25, 100, 10 },  params.sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
+            params.sustainPunchValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 40, 100, 10 },  params.sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
+            params.decayTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 55, 100, 10 },  params.decayTimeValue, 0, 1, "DECAY TIME", true);
+            params.startFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 75, 100, 10 },  params.startFrequencyValue, 0, 1, "START FREQUENCY", true);
+            params.minFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 90, 100, 10 },  params.minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
+            params.slideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 105, 100, 10 },  params.slideValue, -1, 1, "SLIDE", true);
+            params.deltaSlideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 120, 100, 10 },  params.deltaSlideValue, -1, 1, "DELTA SLIDE", true);
+            params.vibratoDepthValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 135, 100, 10 },  params.vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
+            params.vibratoSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 150, 100, 10 },  params.vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
+            params.changeAmountValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 170, 100, 10 },  params.changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
+            params.changeSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 185, 100, 10 },  params.changeSpeedValue, 0, 1, "CHANGE SPEED", true);
+            params.squareDutyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 205, 100, 10 },  params.squareDutyValue, 0, 1, "SQUARE DUTY", true);
+            params.dutySweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 220, 100, 10 },  params.dutySweepValue, -1, 1, "DUTY SWEEP", true);
+            params.repeatSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 240, 100, 10 },  params.repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
+            params.phaserOffsetValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 260, 100, 10 },  params.phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
+            params.phaserSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 275, 100, 10 },  params.phaserSweepValue, -1, 1, "PHASER SWEEP", true);
+            params.lpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 295, 100, 10 },  params.lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
+            params.lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 310, 100, 10 },  params.lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
+            params.lpfResonanceValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 325, 100, 10 },  params.lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
+            params.hpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 340, 100, 10 },  params.hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
+            params.hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 355, 100, 10 },  params.hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
             //--------------------------------------------------------------------------------
 
             // Buttons
@@ -646,11 +703,11 @@ static void ShowUsageInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", RFXGEN_VERSION);
+    printf("// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
     printf("// powered by raylib v2.0 (www.raylib.com) and raygui v2.0                      //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2016-2018 Ramon Santamaria (@raysan5)                          //\n");
+    printf("// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -673,8 +730,9 @@ static void ShowUsageInfo(void)
     printf("                                          Sample size:      8, 16, 32\n");
     printf("                                          Channels:         1 (mono), 2 (stereo)\n");
     printf("                                      NOTE: If not specified, defaults to: 44100, 16, 1\n\n");
-    printf("    -p, --play                      : Play sound\n");
-
+    printf("    -p, --play <filename.ext>       : Play provided sound.\n");
+    printf("                                      Supported extensions: .wav, .ogg, .flac, .mp3\n");
+    
     printf("\nEXAMPLES:\n\n");
     printf("    > rfxgen --input sound.rfx --output jump.wav\n");
     printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32 bit, Mono\n\n");
@@ -1193,7 +1251,7 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
     }
     else if (strcmp(GetExtension(fileName),"rfx") == 0)
     {
-        #define RFXGEN_VERSION_BINARY     120
+        #define TOOL_VERSION_TEXT_BINARY     120
         
         FILE *rfxFile = fopen(fileName, "wb");
         
@@ -1203,7 +1261,7 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
         unsigned char signature[5] = "rFX ";
         fwrite(signature, 4, sizeof(unsigned char), rfxFile);
 
-        int version = RFXGEN_VERSION_BINARY;
+        int version = TOOL_VERSION_TEXT_BINARY;
         fwrite(&version, 1, sizeof(int), rfxFile);
 
         // Save wave generation parameters
@@ -1630,17 +1688,24 @@ static void ExportWaveAsCode(Wave wave, const char *fileName)
     strcpy(outFileName, fileName);
     outFileName[strlen(outFileName) - 2] = '\0';
     
-    fprintf(txtFile, "// rFXGen Wave exporter v1.0\n\n");
-    fprintf(txtFile, "// Wave sample data exported as array of bytes, channels interlaced\n");
+    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
+    fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
+    fprintf(txtFile, "// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
+    
+    fprintf(txtFile, "// Wave data:\n", wave.sampleCount);
     fprintf(txtFile, "//     Samples Count:     %i\n", wave.sampleCount);
     fprintf(txtFile, "//     Sample Rate:       %i\n", wave.sampleRate);
     fprintf(txtFile, "//     Sample Size:       %i\n", wave.sampleSize);
     fprintf(txtFile, "//     Channels num:      %i\n\n", wave.channels);
-    fprintf(txtFile, "// LICENSE: zlib/libpng\n");
-    fprintf(txtFile, "// Copyright (c) 2018 Ramon Santamaria (@raysan5)\n\n");
 
     fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
-    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, "0x%x, ", ((unsigned char *)wave.data)[i]);
+    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, ((i%20 == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
     fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
 
     fclose(txtFile);
@@ -1678,6 +1743,8 @@ static void WaitTime(int ms)
 static void PlayWaveCLI(Wave wave)
 {
     float waveTimeMs = (float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels);
+    
+    if (waveTimeMs > 3000) printf("WARNING: Playing a long sound (%.2f seconds). Press CTRL+C to stop playing.\n", waveTimeMs/1000.0f);
     
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
