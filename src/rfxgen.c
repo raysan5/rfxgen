@@ -738,11 +738,11 @@ static void ShowUsageInfo(void)
     printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32 bit, Mono\n\n");
     printf("    > rfxgen --input sound.rfx --output jump.wav --format 22050 16 2\n");
     printf("        Process <sound.rfx> to generate <jump.wav> at 22050 Hz, 16 bit, Stereo\n\n");
-    printf("    > rfxgen --input sound.rfx --play\n");
-    printf("        Plays <sound.rfx>, wave data is generated internally but not saved\n\n");
-    printf("    > rfxgen --input sound.wav --output jump.wav --format 22050 8 1 --play\n");
+    printf("    > rfxgen --input sound.rfx --play output.wav\n");
+    printf("        Process <sound.rfx> to generate <output.wav> and play <output.wav>\n\n");
+    printf("    > rfxgen --input sound.wav --output jump.wav --format 22050 8 1 --play jump.wav\n");
     printf("        Process <sound.wav> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
-    printf("        Plays generated sound.\n");
+    printf("        Plays generated sound <jump.wav>.\n");
 }
 
 // Reset wave parameters
@@ -1682,6 +1682,8 @@ static void BtnExportWave(Wave wave)
 // Export wave sample data to code (.h)
 static void ExportWaveAsCode(Wave wave, const char *fileName)
 {
+    #define BYTES_TEXT_PER_LINE     20
+    
     FILE *txtFile = fopen(fileName, "wt");
     
     char outFileName[256] = "\0";
@@ -1698,14 +1700,14 @@ static void ExportWaveAsCode(Wave wave, const char *fileName)
     fprintf(txtFile, "//                                                                              //\n");
     fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
     
-    fprintf(txtFile, "// Wave data:\n", wave.sampleCount);
-    fprintf(txtFile, "//     Samples Count:     %i\n", wave.sampleCount);
-    fprintf(txtFile, "//     Sample Rate:       %i\n", wave.sampleRate);
-    fprintf(txtFile, "//     Sample Size:       %i\n", wave.sampleSize);
-    fprintf(txtFile, "//     Channels num:      %i\n\n", wave.channels);
+    fprintf(txtFile, "// Wave data information\n");
+    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", outFileName, wave.sampleCount);
+    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", outFileName, wave.sampleRate);
+    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", outFileName, wave.sampleSize);
+    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", outFileName, wave.channels);
 
     fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
-    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, ((i%20 == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
     fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
 
     fclose(txtFile);
