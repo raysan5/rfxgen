@@ -84,7 +84,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define ENABLE_PRO_FEATURES             // Enable PRO version features
+//#define ENABLE_PRO_FEATURES             // Enable PRO version features
 
 #define TOOL_VERSION_TEXT  "1.5"        // Tool version string
 
@@ -186,7 +186,9 @@ static void BtnLoadSound(void);     // Load sound parameters file
 static void BtnSaveSound(void);     // Save sound parameters file
 static void BtnExportWave(Wave wave); // Export current sound as .wav
 
+#if defined(ENABLE_PRO_FEATURES)
 static void ExportWaveAsCode(Wave wave, const char *fileName);          // Export wave sample data to code (.h)
+#endif      // ENABLE_PRO_FEATURES
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 bool __stdcall FreeConsole(void);   // Close console from code (kernel32.lib)
@@ -223,19 +225,25 @@ int main(int argc, char *argv[])
                 // Open file with graphic interface
                 strcpy(inFileName, argv[1]);        // Read input filename
             }
-            else if (IsFileExtension(argv[1], ".wav"))
+#if defined(ENABLE_PRO_FEATURES)
+            else if (IsFileExtension(argv[i + 1], ".wav") || 
+                     IsFileExtension(argv[i + 1], ".ogg") ||
+                     IsFileExtension(argv[i + 1], ".flac") || 
+                     IsFileExtension(argv[i + 1], ".mp3"))
             {
                 Wave wave = LoadWave(argv[1]);      // Load wave data
                 PlayWaveCLI(wave);                  // Play provided wave
                 UnloadWave(wave);                   // Unload wave data
                 return 0;
             }
+#endif
             else 
             {
                 ShowUsageInfo();                    // Show command line usage info
                 return 0;
             }
         }
+#if defined(ENABLE_PRO_FEATURES)
         else
         {
             // Process command line arguments
@@ -354,6 +362,7 @@ int main(int argc, char *argv[])
             
             return 0;
         }
+#endif      // ENABLE_PRO_FEATURES
     }
 
     // Initialization
@@ -462,7 +471,6 @@ int main(int argc, char *argv[])
         // Update
         //------------------------------------------------------------------------------------
         // Check for dropped files
-
         if (IsFileDropped())
         {
             int dropsCount = 0;   
@@ -626,14 +634,7 @@ int main(int argc, char *argv[])
             //--------------------------------------------------------------------------------
             GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
             GuiLabel((Rectangle){ 13, 248, 10, 10 }, "Tomas Pettersson");
-
-            // DrawLine(13, 268, 105, 268, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR))); ---> GuiLine()
-            // DrawLine(13, 225, 105, 224, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
-            // DrawLine(13, 358, 105, 358, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
-            // DrawLine(394, 108, 486, 108, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
-            // DrawLine(394, 277, 486, 277, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
-            // DrawLine(394, 334, 486, 334, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
-            
+           
             GuiLine((Rectangle){ 10, 268, 95, 1 }, 1);
             GuiLine((Rectangle){ 10, 225, 95, 1 }, 1);
             GuiLine((Rectangle){ 10, 358, 95, 1 }, 1);
@@ -710,7 +711,8 @@ static void ShowUsageInfo(void)
     printf("// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
-
+    
+#if defined(ENABLE_PRO_FEATURES)
     printf("USAGE:\n\n");
     printf("    > rfxgen [--version] [--help] --input <filename.ext> [--output <filename.wav>]\n");
     printf("             [--format <sample_rate> <sample_size> <channels>] [--play]\n");
@@ -743,6 +745,7 @@ static void ShowUsageInfo(void)
     printf("    > rfxgen --input sound.wav --output jump.wav --format 22050 8 1 --play jump.wav\n");
     printf("        Process <sound.wav> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
     printf("        Plays generated sound <jump.wav>.\n");
+#endif
 }
 
 // Reset wave parameters
@@ -1679,6 +1682,22 @@ static void BtnExportWave(Wave wave)
     }
 }
 
+// Open URL link
+static void OpenLinkURL(const char *url)
+{
+#if defined(_WIN32)
+    // Max length is "explorer ".length + url.maxlength (which is 2083), but let's round that
+    static char cmd[4096];
+
+    strcpy(cmd, "explorer ");
+    strcat(cmd, url);
+    system(cmd);
+
+    memset(cmd, 0, 4096);
+#endif
+}
+
+#if defined(ENABLE_PRO_FEATURES)
 // Export wave sample data to code (.h)
 static void ExportWaveAsCode(Wave wave, const char *fileName)
 {
@@ -1713,21 +1732,6 @@ static void ExportWaveAsCode(Wave wave, const char *fileName)
     fclose(txtFile);
 }
 
-// Open URL link
-static void OpenLinkURL(const char *url)
-{
-#if defined(_WIN32)
-    // Max length is "explorer ".length + url.maxlength (which is 2083), but let's round that
-    static char cmd[4096];
-
-    strcpy(cmd, "explorer ");
-    strcat(cmd, url);
-    system(cmd);
-
-    memset(cmd, 0, 4096);
-#endif
-}
-
 // Simple time wait in milliseconds
 static void WaitTime(int ms)
 {
@@ -1755,3 +1759,4 @@ static void PlayWaveCLI(Wave wave)
     UnloadSound(fx);                    // Unload sound data
     CloseAudioDevice();                 // Close audio device
 }
+#endif      // ENABLE_PRO_FEATURES
