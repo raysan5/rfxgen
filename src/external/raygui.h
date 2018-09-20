@@ -450,7 +450,7 @@ typedef enum GuiControlState {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static int guiState = NORMAL;
+static GuiControlState guiState = NORMAL;
 static float guiAlpha = 1.0f;
 
 // Current GUI style (light or dark)
@@ -3075,13 +3075,13 @@ RAYGUIDEF Vector2 GuiGrid(Rectangle bounds, int spacing, int subdivs, bool snap)
             // Draw vertical grid lines
             for (int i = 0; i < (bounds.width/spacing + 1)*subdivs; i++)
             {
-                DrawRectangle(bounds.y + spacing*i, 0, 1, bounds.height, ((i%subdivs) == 0) ? Fade(BLACK, GRID_COLOR_ALPHA*2) : Fade(GRAY, GRID_COLOR_ALPHA));
+                DrawRectangle(bounds.x + spacing*i, bounds.y, 1, bounds.height, ((i%subdivs) == 0) ? Fade(BLACK, GRID_COLOR_ALPHA*2) : Fade(GRAY, GRID_COLOR_ALPHA));
             }
 
             // Draw horizontal grid lines
             for (int i = 0; i < (bounds.height/spacing + 1)*subdivs; i++)
             {
-                DrawRectangle(0, bounds.x + spacing*i, bounds.width, 1, ((i%subdivs) == 0) ? Fade(BLACK, GRID_COLOR_ALPHA*2) : Fade(GRAY, GRID_COLOR_ALPHA));
+                DrawRectangle(bounds.x, bounds.y + spacing*i, bounds.width, 1, ((i%subdivs) == 0) ? Fade(BLACK, GRID_COLOR_ALPHA*2) : Fade(GRAY, GRID_COLOR_ALPHA));
             }
         } break;
         default: break;
