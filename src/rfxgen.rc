@@ -1,22 +1,22 @@
 GLFW_ICON ICON "rfxgen.ico"
 
 1 VERSIONINFO
-FILEVERSION     1,3,0,0
-PRODUCTVERSION  1,3,0,0
+FILEVERSION     1,5,0,0
+PRODUCTVERSION  1,5,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
 	//BLOCK "080904E4" 	// English UK
     BLOCK "040904E4"	// English US
     BEGIN
-	  //VALUE "CompanyName", "My Company Name"
-      VALUE "FileDescription", "rFXGen - raylib fx sound generator"
-      VALUE "FileVersion", "1.3"
+	  VALUE "CompanyName", "raylib technologies"
+      VALUE "FileDescription", "rFXGen - A simple and easy-to-use fx sound generator"
+      VALUE "FileVersion", "1.5"
       VALUE "InternalName", "rfxgen"
-      VALUE "LegalCopyright", "(c) 2018 Ramon Santamaria (@raysan5)"
-      //VALUE "OriginalFilename", "raylib_app.exe"
+      VALUE "LegalCopyright", "(c) 2018 raylib technologies (@raylibtech)"
+      //VALUE "OriginalFilename", "rfxgen.exe"
       VALUE "ProductName", "rFXGen"
-      VALUE "ProductVersion", "1.3"
+      VALUE "ProductVersion", "1.5"
     END
   END
   BLOCK "VarFileInfo"
