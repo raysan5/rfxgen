@@ -84,7 +84,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//#define ENABLE_PRO_FEATURES             // Enable PRO version features
+#define ENABLE_PRO_FEATURES             // Enable PRO version features
 
 #define TOOL_VERSION_TEXT  "1.5"        // Tool version string
 
@@ -226,10 +226,10 @@ int main(int argc, char *argv[])
                 strcpy(inFileName, argv[1]);        // Read input filename
             }
 #if defined(ENABLE_PRO_FEATURES)
-            else if (IsFileExtension(argv[i + 1], ".wav") || 
-                     IsFileExtension(argv[i + 1], ".ogg") ||
-                     IsFileExtension(argv[i + 1], ".flac") || 
-                     IsFileExtension(argv[i + 1], ".mp3"))
+            else if (IsFileExtension(argv[1], ".wav") || 
+                     IsFileExtension(argv[1], ".ogg") ||
+                     IsFileExtension(argv[1], ".flac") || 
+                     IsFileExtension(argv[1], ".mp3"))
             {
                 Wave wave = LoadWave(argv[1]);      // Load wave data
                 PlayWaveCLI(wave);                  // Play provided wave
@@ -714,12 +714,12 @@ static void ShowUsageInfo(void)
     
 #if defined(ENABLE_PRO_FEATURES)
     printf("USAGE:\n\n");
-    printf("    > rfxgen [--version] [--help] --input <filename.ext> [--output <filename.wav>]\n");
-    printf("             [--format <sample_rate> <sample_size> <channels>] [--play]\n");
+    printf("    > rfxgen [--version] [--help] --input <filename.ext> [--output <filename.ext>]\n");
+    printf("             [--format <sample_rate> <sample_size> <channels>] [--play <filename.ext>]\n");
     
     printf("\nOPTIONS:\n\n");
-    printf("    -v, --version                   : Show tool version and command line usage help\n");
-    printf("    -h, --help                      : Show tool version and command line usage help\n");
+    printf("    -v, --version                   : Show tool version and info\n");
+    printf("    -h, --help                      : Show command line usage help\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
     printf("                                      Supported extensions: .rfx, .sfs, .wav\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
