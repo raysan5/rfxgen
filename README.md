@@ -28,8 +28,8 @@ Based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html
 
 ## License
 
-rFXGen is **free and open source software**. rFXGen source code is licensed under an unmodified [zlib/libpng license](LICENSE].
+rFXGen is **open source software**. rFXGen source code is licensed under an unmodified [zlib/libpng license](LICENSE).
 
-Despite being completely free, [consider a small donation](https://www.paypal.com/donate/?token=Oo3h2bHS9ux4lNzahXhmH3oaAqQpBeeMy2zNoH1lxHuD5Vdi1-B6XlPRlEyEzLmBb7rGwG) for the development efforts or [contributing to raylib patreon](https://www.patreon.com/raylib) to help the author keep working on free software for games development.
+Despite being open source and free for everebody willing to compile it, [consider a small donation](https://www.paypal.com/donate/?token=Oo3h2bHS9ux4lNzahXhmH3oaAqQpBeeMy2zNoH1lxHuD5Vdi1-B6XlPRlEyEzLmBb7rGwG) for the development efforts or [contributing to raylib patreon](https://www.patreon.com/raylib) to help the author keep working on open source software for games development.
 
 *Copyright (c) 2016-2018 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))*
