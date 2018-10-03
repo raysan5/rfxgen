@@ -1602,19 +1602,9 @@ static void BtnMutate(void)
 // Load sound parameters file
 static void BtnLoadSound(void)
 {
-    char currentPath[256];
-
-    // Add sample file name to currentPath
-    strcpy(currentPath, GetWorkingDirectory());
-    strcat(currentPath, "\\\0");
-    
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
-#if defined(_WIN32)
-    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", currentPath, 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
-#elif defined(__linux__)
     const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
-#endif
 
     if (fileName != NULL)
     {
@@ -1626,19 +1616,9 @@ static void BtnLoadSound(void)
 // Save sound parameters file
 static void BtnSaveSound(void)
 {
-    char currentPathFile[256];
-
-    // Add sample file name to currentPath
-    strcpy(currentPathFile, GetWorkingDirectory());
-    strcat(currentPathFile, "\\sound.rfx\0");
-
     // Save file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
-#if defined(_WIN32)
-    const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", currentPathFile, 2, filters, "Sound Param Files (*.rfx, *.sfs)");
-#elif defined(__linux__)
     const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 2, filters, "Sound Param Files (*.rfx, *.sfs)");
-#endif
 
     if (fileName != NULL)
     {
@@ -1653,19 +1633,9 @@ static void BtnSaveSound(void)
 // Export current sound as .wav
 static void BtnExportWave(Wave wave)
 {
-    char currentPathFile[256];
-
-    // Add sample file name to currentPath
-    strcpy(currentPathFile, GetWorkingDirectory());
-    strcat(currentPathFile, "\\sound.wav\0");
-
     // Save file dialog
     const char *filters[] = { "*.wav" };
-#if defined(_WIN32)
-    const char *fileName = tinyfd_saveFileDialog("Save wave file", currentPathFile, 1, filters, "Wave File (*.wav)");
-#elif defined(__linux__)
     const char *fileName = tinyfd_saveFileDialog("Save wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
-#endif
 
     if (fileName != NULL)
     {
