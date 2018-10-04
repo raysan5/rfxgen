@@ -206,6 +206,8 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------------
     char inFileName[128] = "\0";        // Input file name (required in case of drag & drop over executable)
     
+    SetTraceLog(0);                     // Disable trace log messsages
+    
     if (argc > 1)
     {
         // Default variables
@@ -370,9 +372,45 @@ int main(int argc, char *argv[])
     const int screenWidth = 496;
     const int screenHeight = 500;
     
-#if defined(RAYGUI_STYLE_CANDY)
+#if defined(ENABLE_PRO_FEATURES)
+    // raygui color palette: Light
+    int paletteStyleLight[14] = {
+        0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
+        0x90abb5ff,     // DEFAULT_LINES_COLOR
+        0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
+        0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
+        0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
+        0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+        0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
+        0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
+        0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
+        0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
+        0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
+        0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
+        0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
+        0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
+    };
+
+    // raygui color palette: Dark
+    int paletteStyleDark[14] = {
+        0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
+        0x638465ff,     // DEFAULT_LINES_COLOR
+        0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
+        0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
+        0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
+        0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+        0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
+        0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+        0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
+        0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
+        0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
+        0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
+        0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
+        0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
+    };
+    
     // raygui color palette: Candy
-    int palette[14] = {
+    int paletteStyleCandy[14] = {
         0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
         0xd77575ff,     // DEFAULT_LINES_COLOR
         0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
@@ -388,8 +426,6 @@ int main(int argc, char *argv[])
         0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
         0x9c8369ff      // DEFAULT_TEXT_COLOR_DISABLED
     };
-    
-    GuiLoadStylePalette(palette); // Color palette loading
 #endif
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -487,7 +523,16 @@ int main(int argc, char *argv[])
             ClearDroppedFiles();
         }
         
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);
+        // Keyboard shortcuts
+        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);                               // Play current sound
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) BtnSaveSound();      // Show save sound dialog (.rfx)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) BtnLoadSound();      // Show load sound dialog (.rfx, .sfs)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) BtnExportWave(wave); // Show export wave dialog (.wav)
+#if defined(ENABLE_PRO_FEATURES)
+        if (IsKeyPressed(KEY_ONE)) GuiLoadStylePalette(paletteStyleLight);           // Load style color palette: light
+        if (IsKeyPressed(KEY_TWO)) GuiLoadStylePalette(paletteStyleDark);            // Load style color palette: dark
+        if (IsKeyPressed(KEY_THREE)) GuiLoadStylePalette(paletteStyleCandy);         // Load style color palette: candy
+#endif
 
         // Consider two possible cases to regenerate wave and update sound:
         // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -661,12 +706,7 @@ int main(int argc, char *argv[])
             DrawWave(&wave, waveRec, MAROON);
         #endif
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
-            
-        #if defined(RAYGUI_STYLE_DEFAULT_DARK)
-            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, GetColor(style[DEFAULT_BORDER_COLOR_PRESSED]));
-        #else
-            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, LIGHTGRAY);
-        #endif
+            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(style[DEFAULT_LINES_COLOR]), 0.7f));
             //--------------------------------------------------------------------------------
 
             EndTextureMode();
@@ -1635,7 +1675,7 @@ static void BtnExportWave(Wave wave)
 {
     // Save file dialog
     const char *filters[] = { "*.wav" };
-    const char *fileName = tinyfd_saveFileDialog("Save wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
+    const char *fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
 
     if (fileName != NULL)
     {
@@ -1655,16 +1695,22 @@ static void BtnExportWave(Wave wave)
 // Open URL link
 static void OpenLinkURL(const char *url)
 {
-#if defined(_WIN32)
-    // Max length is "explorer ".length + url.maxlength (which is 2083), but let's round that
-    static char cmd[4096];
+    // Max length is "explorer ".length + url.maxlength (which is 2083),
+    // but we are not wasting that much memory here... let's set it up to 512
+    static char cmd[512] = { 0 };
 
+#if defined(_WIN32)
     strcpy(cmd, "explorer ");
+#elif defined(__linux__)
+    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
+#elif defined(__APPLE__)
+    strcpy(cmd, "open ");
+#endif
+
     strcat(cmd, url);
     system(cmd);
 
     memset(cmd, 0, 4096);
-#endif
 }
 
 #if defined(ENABLE_PRO_FEATURES)
@@ -1724,6 +1770,7 @@ static void PlayWaveCLI(Wave wave)
     
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
+    printf("Playing sound [%.2f sec.]...", waveTimeMs/1000.0f);
     PlaySound(fx);                      // Play sound
     WaitTime(waveTimeMs);               // Wait while audio is playing
     UnloadSound(fx);                    // Unload sound data
