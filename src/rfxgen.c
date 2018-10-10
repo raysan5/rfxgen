@@ -81,7 +81,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//#define ENABLE_PRO_FEATURES             // Enable PRO version features
+#define ENABLE_PRO_FEATURES             // Enable PRO version features
 
 #define TOOL_VERSION_TEXT    "2.0"      // Tool version string
 
@@ -245,8 +245,10 @@ static void GenRandomize(void);             // Generate random sound
 static void GenMutate(void);                // Mutate current sound
 
 // Auxiliar functions
-static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
 static void OpenLinkURL(const char *url);   // Open URL link
+static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
+static char **StringSplit(char *str, char delimiter, int *strCount);    // Split string into multiple strings
+
 #if defined(ENABLE_PRO_FEATURES)
 static void WaitTime(int ms);               // Simple time wait in milliseconds
 static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
@@ -313,7 +315,9 @@ int main(int argc, char *argv[])
                     // Verify a file is provided with a supported extension
                     // Check that no "--" is comming after --input
                     if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                        (IsFileExtension(argv[i + 1], ".rfx") || IsFileExtension(argv[i + 1], ".sfs") || IsFileExtension(argv[i + 1], ".wav")))
+                        (IsFileExtension(argv[i + 1], ".rfx") || 
+                         IsFileExtension(argv[i + 1], ".sfs") || 
+                         IsFileExtension(argv[i + 1], ".wav")))
                     {
                         strcpy(inFileName, argv[i + 1]);    // Read input filename
                         i++;
@@ -322,7 +326,9 @@ int main(int argc, char *argv[])
                 }
                 else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
                 {
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && ((IsFileExtension(argv[i + 1], ".wav")) || (IsFileExtension(argv[i + 1], ".h")))) 
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
+                        (IsFileExtension(argv[i + 1], ".wav") || 
+                         IsFileExtension(argv[i + 1], ".h"))) 
                     {
                         strcpy(outFileName, argv[i + 1]);   // Read output filename
                         i++;
@@ -331,34 +337,41 @@ int main(int argc, char *argv[])
                 }
                 else if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--format") == 0))
                 {
-                    if (((i + 3) < argc) &&             // Three arguments required after --format
-                        (argv[i + 1][0] != '-') &&
-                        (argv[i + 2][0] != '-') &&
-                        (argv[i + 3][0] != '-'))        // All those arguments should be values
+                    if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
                     {
-                        // Read values text and convert to integer values
-                        sampleRate = atoi(argv[i + 1]);
-                        sampleSize = atoi(argv[i + 2]);
-                        channels = atoi(argv[i + 3]);
+                        int numValues = 0;
+                        char **values = StringSplit(argv[i + 1], ',', &numValues);
+                        
+                        if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
+                        else
+                        {
+                            // Read values text and convert to integer values
+                            sampleRate = atoi(values[0]);
+                            sampleSize = atoi(values[1]);
+                            channels = atoi(values[2]);
                             
-                        // Verify retrieved values are valid
-                        if ((sampleRate != 44100) && (sampleRate != 22050))
-                        {
-                            printf("WARNING: Sample rate not supported\n");
-                            sampleRate = 44100;
+                            // Verify retrieved values are valid
+                            if ((sampleRate != 44100) && (sampleRate != 22050))
+                            {
+                                printf("WARNING: Sample rate not supported. Default: 44100 Hz\n");
+                                sampleRate = 44100;
+                            }
+                            
+                            if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
+                            {
+                                printf("WARNING: Sample size not supported. Default: 16 bit\n");
+                                sampleSize = 16;
+                            }
+                            
+                            if ((channels != 1) && (channels != 2))
+                            {
+                                printf("WARNING: Channels number not supported. Default: 1 (mono)\n");
+                                channels = 1;
+                            }
                         }
                         
-                        if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
-                        {
-                            printf("WARNING: Sample size not supported\n");
-                            sampleSize = 16;
-                        }
-                        
-                        if ((channels != 1) && (channels != 2))
-                        {
-                            printf("WARNING: Channels number not supported\n");
-                            channels = 1;
-                        }
+                        for (int i = 0; i < numValues; i++) free(values[i]);
+                        if (values != NULL) free(values);
                     }
                     else printf("WARNING: Format parameters provided not valid\n");
                 }
@@ -768,8 +781,8 @@ static void ShowUsageInfo(void)
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
-    printf("    -f, --format <sample_rate> <sample_size> <channels>\n");
-    printf("                                    : Format output wave.\n");
+    printf("    -f, --format <sample_rate>,<sample_size>,<channels>\n");
+    printf("                                    : Define output wave format. Comma separated values.\n");
     printf("                                      Supported values:\n");
     printf("                                          Sample rate:      22050, 44100\n");
     printf("                                          Sample size:      8, 16, 32\n");
@@ -785,7 +798,7 @@ static void ShowUsageInfo(void)
     printf("        Process <sound.rfx> to generate <jump.wav> at 22050 Hz, 16 bit, Stereo\n\n");
     printf("    > rfxgen --input sound.rfx --play output.wav\n");
     printf("        Process <sound.rfx> to generate <output.wav> and play <output.wav>\n\n");
-    printf("    > rfxgen --input sound.wav --output jump.wav --format 22050 8 1 --play jump.wav\n");
+    printf("    > rfxgen --input sound.wav --output jump.wav --format 22050,8,1 --play jump.wav\n");
     printf("        Process <sound.wav> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
     printf("        Plays generated sound <jump.wav>.\n");
 #endif
@@ -1708,6 +1721,27 @@ static void GenMutate(void)
 // Auxiliar functions
 //--------------------------------------------------------------------------------------------
 
+// Open URL link
+static void OpenLinkURL(const char *url)
+{
+    // Max length is "explorer ".length + url.maxlength (which is 2083),
+    // but we are not wasting that much memory here... let's set it up to 512
+    static char cmd[512] = { 0 };
+
+#if defined(_WIN32)
+    strcpy(cmd, "explorer ");
+#elif defined(__linux__)
+    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
+#elif defined(__APPLE__)
+    strcpy(cmd, "open ");
+#endif
+
+    strcat(cmd, url);
+    system(cmd);
+
+    memset(cmd, 0, 512);
+}
+
 // Draw wave data
 // NOTE: For proper visualization, MSAA x4 is recommended, alternatively
 // it should be rendered to a bigger texture and then scaled down with
@@ -1737,25 +1771,40 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
     }
 }
 
-// Open URL link
-static void OpenLinkURL(const char *url)
+// Split string into multiple strings
+// NOTE: Files count is returned by parameters pointer
+// NOTE: Allocated memory should be manually freed
+static char **StringSplit(char *str, char delimiter, int *strCount)
 {
-    // Max length is "explorer ".length + url.maxlength (which is 2083),
-    // but we are not wasting that much memory here... let's set it up to 512
-    static char cmd[512] = { 0 };
+    #define MAX_SUBSTRING_LENGTH 128
 
-#if defined(_WIN32)
-    strcpy(cmd, "explorer ");
-#elif defined(__linux__)
-    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
-#elif defined(__APPLE__)
-    strcpy(cmd, "open ");
-#endif
-
-    strcat(cmd, url);
-    system(cmd);
-
-    memset(cmd, 0, 512);
+    char **strings = NULL;
+    int len = strlen(str);
+    char *strDup = (char *)malloc(len + 1);
+    strcpy(strDup, str);
+    int counter = 1;
+    
+    // Count how many substrings we have on string
+    for (int i = 0; i < len; i++) if (str[i] == delimiter) counter++;
+    
+    // Memory allocation for substrings
+    strings = (char **)malloc(sizeof(char *)*counter);
+    for (int i = 0; i < counter; i++) strings[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
+    
+    char *substrPtr = NULL;
+    char delimiters[1] = { delimiter };         // Only caring for one delimiter
+    substrPtr = strtok(strDup, delimiters);
+    
+    for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
+    {
+        strcpy(strings[i], substrPtr);
+        substrPtr = strtok(NULL, delimiters);
+    }
+    
+    *strCount = counter;
+    free(strDup);
+    
+    return strings;
 }
 
 #if defined(ENABLE_PRO_FEATURES)
