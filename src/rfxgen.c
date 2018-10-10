@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v1.5 - A simple and easy to use fx sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v2.0 - A simple and easy to use fx sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -11,6 +11,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
+*       2.0  (10-Oct-2018) Functions renaming, code reorganized, better consistency...
 *       1.5  (23-Sep-2018) Support .wav export to code and sound playing on command line
 *       1.4  (15-Sep-2018) Redesigned command line and comments
 *       1.3  (15-May-2018) Reimplemented gui using rGuiLayout
@@ -26,8 +27,8 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 2.0              - Windowing/input management and drawing.
-*       raygui 2.0              - IMGUI controls (based on raylib).
+*       raylib 2.1-dev          - Windowing/input management and drawing.
+*       raygui 2.1              - IMGUI controls (based on raylib).
 *       tinyfiledialogs 3.3.7   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
@@ -64,10 +65,6 @@
 
 #include "raylib.h"
 
-// Uncomment to choose a different raygui style
-//#define RAYGUI_STYLE_DEFAULT_DARK
-//#define RAYGUI_STYLE_CANDY
-
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_STYLE_SAVE_LOAD
 #include "raygui.h"                     // Required for: IMGUI controls
@@ -84,12 +81,16 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define ENABLE_PRO_FEATURES             // Enable PRO version features
+//#define ENABLE_PRO_FEATURES             // Enable PRO version features
 
-#define TOOL_VERSION_TEXT  "1.5"        // Tool version string
+#define TOOL_VERSION_TEXT    "2.0"      // Tool version string
 
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib)
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -158,63 +159,115 @@ static int wavSampleRate = 44100;   // Wave sample rate (frequency)
 static WaveParams params;           // Stores wave parameters for generation
 static bool regenerate = false;     // Wave regeneration required
 
+#if defined(ENABLE_PRO_FEATURES)
+// raygui color palette: Light
+static const int paletteStyleLight[14] = {
+    0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
+    0x90abb5ff,     // DEFAULT_LINES_COLOR
+    0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
+    0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
+    0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
+    0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+    0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
+    0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
+    0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
+    0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
+    0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
+    0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
+    0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
+    0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
+};
+
+// raygui color palette: Dark
+static const int paletteStyleDark[14] = {
+    0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
+    0x638465ff,     // DEFAULT_LINES_COLOR
+    0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
+    0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
+    0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
+    0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+    0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
+    0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+    0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
+    0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
+    0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
+    0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
+    0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
+    0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
+};
+
+// raygui color palette: Candy
+static const int paletteStyleCandy[14] = {
+    0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
+    0xd77575ff,     // DEFAULT_LINES_COLOR
+    0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
+    0xfeda96ff,     // DEFAULT_BASE_COLOR_NORMAL
+    0xe59b5fff,     // DEFAULT_TEXT_COLOR_NORMAL
+    0xee813fff,     // DEFAULT_BORDER_COLOR_FOCUSED
+    0xfcd85bff,     // DEFAULT_BASE_COLOR_FOCUSED
+    0xf49641ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+    0xb34848ff,     // DEFAULT_BORDER_COLOR_PRESSED
+    0xeb7272ff,     // DEFAULT_BASE_COLOR_PRESSED
+    0xbd4a4aff,     // DEFAULT_TEXT_COLOR_PRESSED
+    0x94795dff,     // DEFAULT_BORDER_COLOR_DISABLED
+    0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
+    0x9c8369ff      // DEFAULT_TEXT_COLOR_DISABLED
+};
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void ShowUsageInfo(void);    // Show command line usage info
 
+// Load/Save/Export data functions
 static WaveParams LoadWaveParams(const char *fileName);                 // Load wave parameters from file
 static void SaveWaveParams(WaveParams params, const char *fileName);    // Save wave parameters to file
 static void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
 static Wave GenerateWave(WaveParams params);                            // Generate wave data from parameters
-static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
-
-static void OpenLinkURL(const char *url);           // Open URL link
-
-// Buttons functions
-static void BtnPickupCoin(void);    // Generate sound: Pickup/Coin
-static void BtnLaserShoot(void);    // Generate sound: Laser shoot
-static void BtnExplosion(void);     // Generate sound: Explosion
-static void BtnPowerup(void);       // Generate sound: Powerup
-static void BtnHitHurt(void);       // Generate sound: Hit/Hurt
-static void BtnJump(void);          // Generate sound: Jump
-static void BtnBlipSelect(void);    // Generate sound: Blip/Select
-static void BtnRandomize(void);     // Generate random sound
-static void BtnMutate(void);        // Mutate current sound
-
-static void BtnLoadSound(void);     // Load sound parameters file
-static void BtnSaveSound(void);     // Save sound parameters file
-static void BtnExportWave(Wave wave); // Export current sound as .wav
-
 #if defined(ENABLE_PRO_FEATURES)
 static void ExportWaveAsCode(Wave wave, const char *fileName);          // Export wave sample data to code (.h)
-#endif      // ENABLE_PRO_FEATURES
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-bool __stdcall FreeConsole(void);   // Close console from code (kernel32.lib)
 #endif
 
-static void WaitTime(int ms);       // Simple time wait in milliseconds
-static void PlayWaveCLI(Wave wave); // Play provided wave through CLI
+static void DialogLoadSound(void);          // Show dialog: load sound parameters file
+static void DialogSaveSound(void);          // Show dialog: save sound parameters file
+static void DialogExportWave(Wave wave);    // Show dialog: export current sound as .wav
+
+// Sound generation functions
+static void GenPickupCoin(void);            // Generate sound: Pickup/Coin
+static void GenLaserShoot(void);            // Generate sound: Laser shoot
+static void GenExplosion(void);             // Generate sound: Explosion
+static void GenPowerup(void);               // Generate sound: Powerup
+static void GenHitHurt(void);               // Generate sound: Hit/Hurt
+static void GenJump(void);                  // Generate sound: Jump
+static void GenBlipSelect(void);            // Generate sound: Blip/Select
+static void GenRandomize(void);             // Generate random sound
+static void GenMutate(void);                // Mutate current sound
+
+// Auxiliar functions
+static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
+static void OpenLinkURL(const char *url);   // Open URL link
+#if defined(ENABLE_PRO_FEATURES)
+static void WaitTime(int ms);               // Simple time wait in milliseconds
+static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
+#endif
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    char inFileName[256] = { 0 };       // Input file name (required in case of drag & drop over executable)
+
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
-    char inFileName[128] = "\0";        // Input file name (required in case of drag & drop over executable)
-    
-    SetTraceLog(0);                     // Disable trace log messsages
-    
     if (argc > 1)
     {
-        // Default variables
+        // CLI required variables
         bool showUsageInfo = false;     // Toggle command line usage info
         
-        char outFileName[128] = "\0";   // Output file name
-        char playFileName[128] = "\0";  // Play file name
+        char outFileName[256] = { 0 };  // Output file name
+        char playFileName[256] = { 0 }; // Play file name
         
         int sampleRate = 44100;         // Default conversion sample rate
         int sampleSize = 16;            // Default conversion sample size
@@ -257,7 +310,7 @@ int main(int argc, char *argv[])
                 }
                 else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
                 {                   
-                    // Verify an image is provided with a supported extension
+                    // Verify a file is provided with a supported extension
                     // Check that no "--" is comming after --input
                     if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
                         (IsFileExtension(argv[i + 1], ".rfx") || IsFileExtension(argv[i + 1], ".sfs") || IsFileExtension(argv[i + 1], ".wav")))
@@ -367,83 +420,29 @@ int main(int argc, char *argv[])
 #endif      // ENABLE_PRO_FEATURES
     }
 
-    // Initialization
-    //----------------------------------------------------------------------------------------
-    const int screenWidth = 496;
-    const int screenHeight = 500;
-    
-#if defined(ENABLE_PRO_FEATURES)
-    // raygui color palette: Light
-    int paletteStyleLight[14] = {
-        0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
-        0x90abb5ff,     // DEFAULT_LINES_COLOR
-        0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
-        0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
-        0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
-        0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
-        0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
-        0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
-        0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
-        0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
-        0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
-        0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
-        0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
-        0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
-    };
-
-    // raygui color palette: Dark
-    int paletteStyleDark[14] = {
-        0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
-        0x638465ff,     // DEFAULT_LINES_COLOR
-        0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
-        0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
-        0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
-        0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
-        0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
-        0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
-        0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
-        0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
-        0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
-        0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
-        0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
-        0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
-    };
-    
-    // raygui color palette: Candy
-    int paletteStyleCandy[14] = {
-        0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
-        0xd77575ff,     // DEFAULT_LINES_COLOR
-        0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
-        0xfeda96ff,     // DEFAULT_BASE_COLOR_NORMAL
-        0xe59b5fff,     // DEFAULT_TEXT_COLOR_NORMAL
-        0xee813fff,     // DEFAULT_BORDER_COLOR_FOCUSED
-        0xfcd85bff,     // DEFAULT_BASE_COLOR_FOCUSED
-        0xf49641ff,     // DEFAULT_TEXT_COLOR_FOCUSED
-        0xb34848ff,     // DEFAULT_BORDER_COLOR_PRESSED
-        0xeb7272ff,     // DEFAULT_BASE_COLOR_PRESSED
-        0xbd4a4aff,     // DEFAULT_TEXT_COLOR_PRESSED
-        0x94795dff,     // DEFAULT_BORDER_COLOR_DISABLED
-        0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
-        0x9c8369ff      // DEFAULT_TEXT_COLOR_DISABLED
-    };
-#endif
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#if (defined(ENABLE_PRO_FEATURES) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
     // and closing console (FreeConsole()) when changing to GUI interface
     FreeConsole();
 #endif
 
-    //SetConfigFlags(FLAG_MSAA_4X_HINT);
+    // GUI usage mode - Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 496;
+    const int screenHeight = 500;
+    
+    SetTraceLog(0);                             // Disable trace log messsages
+    //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
+    //SetExitKey(0);
     
     InitAudioDevice();
     
     Rectangle waveRec = { 10, 421, 475, 50 };       // Wave drawing rectangle box
     Vector2 paramsAnchor = { 115, 40 };             // Parameters box anchor point
 
-    // Gui controls data
+    // GUI controls data
     //----------------------------------------------------------------------------------------
     bool playOnChangeValue = true;
 
@@ -504,12 +503,11 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Update
-        //------------------------------------------------------------------------------------
-        // Check for dropped files
+        // Dropped files logic
+        //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
-            int dropsCount = 0;   
+            int dropsCount = 0;
             char **droppedFiles = GetDroppedFiles(&dropsCount);
             
             // Support loading .rfx or .sfs files (wave parameters)
@@ -518,40 +516,29 @@ int main(int argc, char *argv[])
             {
                 params = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
+                
+                //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(droppedFiles[0])));
             }
 
             ClearDroppedFiles();
         }
+        //----------------------------------------------------------------------------------
         
         // Keyboard shortcuts
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);                               // Play current sound
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) BtnSaveSound();      // Show save sound dialog (.rfx)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) BtnLoadSound();      // Show load sound dialog (.rfx, .sfs)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) BtnExportWave(wave); // Show export wave dialog (.wav)
+        //------------------------------------------------------------------------------------
+        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);                                  // Play current sound
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound();      // Show dialog: save sound (.rfx)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) DialogLoadSound();      // Show dialog: load sound (.rfx, .sfs)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave); // Show dialog: export wave (.wav)
 #if defined(ENABLE_PRO_FEATURES)
-        if (IsKeyPressed(KEY_ONE)) GuiLoadStylePalette(paletteStyleLight);           // Load style color palette: light
-        if (IsKeyPressed(KEY_TWO)) GuiLoadStylePalette(paletteStyleDark);            // Load style color palette: dark
-        if (IsKeyPressed(KEY_THREE)) GuiLoadStylePalette(paletteStyleCandy);         // Load style color palette: candy
+        if (IsKeyPressed(KEY_ONE)) GuiLoadStylePalette(paletteStyleLight);              // Load style color palette: light
+        if (IsKeyPressed(KEY_TWO)) GuiLoadStylePalette(paletteStyleDark);               // Load style color palette: dark
+        if (IsKeyPressed(KEY_THREE)) GuiLoadStylePalette(paletteStyleCandy);            // Load style color palette: candy
 #endif
+        //----------------------------------------------------------------------------------
 
-        // Consider two possible cases to regenerate wave and update sound:
-        // CASE1: regenerate flag is true (set by sound buttons functions)
-        // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
-        if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), (Rectangle){ 243, 48, 102, 362 })) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
-        {
-            UnloadWave(wave);
-            wave = GenerateWave(params);        // Generate new wave from parameters
-            
-            UnloadSound(sound);
-            sound = LoadSoundFromWave(wave);    // Reload sound from new wave
-            
-            //UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
-
-            if (regenerate || playOnChangeValue) PlaySound(sound);
-            
-            regenerate = false;
-        }
-
+        // Basic program flow logic
+        //----------------------------------------------------------------------------------
         // Change window size to x2
         if (screenSizeToggle)
         {   
@@ -570,6 +557,23 @@ int main(int argc, char *argv[])
             }
         }
         
+        // Consider two possible cases to regenerate wave and update sound:
+        // CASE1: regenerate flag is true (set by sound buttons functions)
+        // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
+        if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), (Rectangle){ 243, 48, 102, 362 })) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
+        {
+            UnloadWave(wave);
+            wave = GenerateWave(params);        // Generate new wave from parameters
+            
+            UnloadSound(sound);
+            sound = LoadSoundFromWave(wave);    // Reload sound from new wave
+            //UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
+
+            if (regenerate || playOnChangeValue) PlaySound(sound);
+            
+            regenerate = false;
+        }
+
         // Check gui combo box selected options
         if (comboxSampleRateValue == 0) wavSampleRate = 22050;
         else if (comboxSampleRateValue == 1) wavSampleRate = 44100;
@@ -587,14 +591,10 @@ int main(int argc, char *argv[])
             
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
-        #if defined(RAYGUI_STYLE_DEFAULT_DARK)
-                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(0x74dff1ff));
-        #else
-                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
-        #endif
-                // TODO: Draw playing progress rectangle
+                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
             EndTextureMode();
 #endif
+            // Render all screen to a texture (for scaling)
             BeginTextureMode(screenTarget);
             
             DrawText("rFXGen", 29, 19, 20, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
@@ -637,19 +637,19 @@ int main(int argc, char *argv[])
 
             // Buttons
             //--------------------------------------------------------------------------------
-            if (GuiButton((Rectangle){ 10, 45, 95, 20 },  "Pickup/Coin")) BtnPickupCoin();
-            if (GuiButton((Rectangle){ 10, 70, 95, 20 },  "Laser/Shoot")) BtnLaserShoot();
-            if (GuiButton((Rectangle){ 10, 95, 95, 20 },  "Explosion")) BtnExplosion();
-            if (GuiButton((Rectangle){ 10, 120, 95, 20 }, "Powerup")) BtnPowerup();
-            if (GuiButton((Rectangle){ 10, 145, 95, 20 }, "Hit/Hurt")) BtnHitHurt();
-            if (GuiButton((Rectangle){ 10, 170, 95, 20 }, "Jump")) BtnJump();
-            if (GuiButton((Rectangle){ 10, 195, 95, 20 }, "Blip/Select")) BtnBlipSelect();
-            if (GuiButton((Rectangle){ 10, 364, 95, 20 }, "Mutate")) BtnMutate();
-            if (GuiButton((Rectangle){ 10, 389, 95, 20 }, "Randomize")) BtnRandomize();
+            if (GuiButton((Rectangle){ 10, 45, 95, 20 },  "Pickup/Coin")) GenPickupCoin();
+            if (GuiButton((Rectangle){ 10, 70, 95, 20 },  "Laser/Shoot")) GenLaserShoot();
+            if (GuiButton((Rectangle){ 10, 95, 95, 20 },  "Explosion")) GenExplosion();
+            if (GuiButton((Rectangle){ 10, 120, 95, 20 }, "Powerup")) GenPowerup();
+            if (GuiButton((Rectangle){ 10, 145, 95, 20 }, "Hit/Hurt")) GenHitHurt();
+            if (GuiButton((Rectangle){ 10, 170, 95, 20 }, "Jump")) GenJump();
+            if (GuiButton((Rectangle){ 10, 195, 95, 20 }, "Blip/Select")) GenBlipSelect();
+            if (GuiButton((Rectangle){ 10, 364, 95, 20 }, "Mutate")) GenMutate();
+            if (GuiButton((Rectangle){ 10, 389, 95, 20 }, "Randomize")) GenRandomize();
             if (GuiButton((Rectangle){ 390, 81, 95, 20 }, "Play Sound")) PlaySound(sound);
-            if (GuiButton((Rectangle){ 390, 283, 95, 20 }, "Load Sound")) BtnLoadSound();
-            if (GuiButton((Rectangle){ 390, 307, 95, 20 }, "Save Sound")) BtnSaveSound();
-            if (GuiButton((Rectangle){ 390, 389, 95, 20 }, "Export .Wav")) BtnExportWave(wave);
+            if (GuiButton((Rectangle){ 390, 283, 95, 20 }, "Load Sound")) DialogLoadSound();
+            if (GuiButton((Rectangle){ 390, 307, 95, 20 }, "Save Sound")) DialogSaveSound();
+            if (GuiButton((Rectangle){ 390, 389, 95, 20 }, "Export .Wav")) DialogExportWave(wave);
             //--------------------------------------------------------------------------------
                        
             // Right side controls
@@ -703,8 +703,11 @@ int main(int argc, char *argv[])
         #if defined(RENDER_WAVE_TO_TEXTURE)
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
         #else
-            DrawWave(&wave, waveRec, MAROON);
+            DrawWave(&wave, waveRec, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
         #endif
+        
+            // TODO: Draw playing progress rectangle
+        
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(style[DEFAULT_LINES_COLOR]), 0.7f));
             //--------------------------------------------------------------------------------
@@ -787,6 +790,10 @@ static void ShowUsageInfo(void)
     printf("        Plays generated sound <jump.wav>.\n");
 #endif
 }
+
+//--------------------------------------------------------------------------------------------
+// Load/Save/Export functions
+//--------------------------------------------------------------------------------------------
 
 // Reset wave parameters
 static void ResetWaveParams(WaveParams *params)
@@ -1314,41 +1321,103 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
     }
 }
 
-// Draw wave data
-// NOTE: For proper visualization, MSAA x4 is recommended, alternatively
-// it should be rendered to a bigger texture and then scaled down with
-// bilinear/trilinear texture filtering
-static void DrawWave(Wave *wave, Rectangle bounds, Color color)
+#if defined(ENABLE_PRO_FEATURES)
+// Export wave sample data to code (.h)
+static void ExportWaveAsCode(Wave wave, const char *fileName)
 {
-    float sample, sampleNext;
-    float currentSample = 0.0f;
-    float sampleIncrement = (float)wave->sampleCount/(float)(bounds.width*2);
-    float sampleScale = (float)bounds.height;
+    #define BYTES_TEXT_PER_LINE     20
+    
+    FILE *txtFile = fopen(fileName, "wt");
+    
+    char outFileName[256] = { 0 };
+    strcpy(outFileName, fileName);
+    outFileName[strlen(outFileName) - 2] = '\0';
+    
+    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
+    fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
+    fprintf(txtFile, "// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
+    fprintf(txtFile, "//                                                                              //\n");
+    fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
+    
+    fprintf(txtFile, "// Wave data information\n");
+    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", outFileName, wave.sampleCount);
+    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", outFileName, wave.sampleRate);
+    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", outFileName, wave.sampleSize);
+    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", outFileName, wave.channels);
 
-    for (int i = 1; i < bounds.width*2 - 1; i++)
+    fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
+    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
+
+    fclose(txtFile);
+}
+#endif
+
+// Show dialog: load sound parameters file
+static void DialogLoadSound(void)
+{
+    // Open file dialog
+    const char *filters[] = { "*.rfx", "*.sfs" };
+    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+
+    if (fileName != NULL)
     {
-        sample = ((float *)wave->data)[(int)currentSample]*sampleScale;
-        sampleNext = ((float *)wave->data)[(int)(currentSample + sampleIncrement)]*sampleScale;
+        params = LoadWaveParams(fileName);
+        regenerate = true;
+        
+        //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(fileName)));
+    }
+}
 
-        if (sample > bounds.height/2) sample = bounds.height/2;
-        else if (sample < -bounds.height/2) sample = -bounds.height/2;
+// Show dialog: save sound parameters file
+static void DialogSaveSound(void)
+{
+    // Save file dialog
+    const char *filters[] = { "*.rfx", "*.sfs" };
+    const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 2, filters, "Sound Param Files (*.rfx, *.sfs)");
 
-        if (sampleNext > bounds.height/2) sampleNext = bounds.height/2;
-        else if (sampleNext < -bounds.height/2) sampleNext = -bounds.height/2;
+    if (fileName != NULL)
+    {
+        char outFileName[64] = { 0 };
+        strcpy(outFileName, fileName);
+        
+        if (GetExtension(outFileName) == NULL) strcat(outFileName, ".rfx\0");     // No extension provided
+        if (outFileName != NULL) SaveWaveParams(params, outFileName);
+    }
+}
 
-        DrawLineV((Vector2){ (float)bounds.x + (float)i/2.0f, (float)(bounds.y + bounds.height/2) + sample },
-                  (Vector2){ (float)bounds.x + (float)i/2.0f, (float)(bounds.y  + bounds.height/2) + sampleNext }, color);
+// Show dialog: export current sound as .wav
+static void DialogExportWave(Wave wave)
+{
+    // Save file dialog
+    const char *filters[] = { "*.wav" };
+    const char *fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
 
-        currentSample += sampleIncrement;
+    if (fileName != NULL)
+    {
+        char outFileName[64] = { 0 };
+        strcpy(outFileName, fileName);
+        
+        if (GetExtension(outFileName) == NULL) strcat(outFileName, ".wav\0");             // No extension provided
+        if (strcmp(GetExtension(outFileName), "wav") != 0) strcat(outFileName, ".wav\0"); // Add required extension
+        
+        Wave cwave = WaveCopy(wave);
+        WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);    // Before exporting wave data, we format it as desired
+        ExportWave(cwave, outFileName);                         // Export wave data to file
+        UnloadWave(cwave);
     }
 }
 
 //--------------------------------------------------------------------------------------------
-// Buttons functions: sound generation
+// Sound generation functions
 //--------------------------------------------------------------------------------------------
 
 // Generate sound: Pickup/Coin
-static void BtnPickupCoin(void)
+static void GenPickupCoin(void)
 {
     ResetWaveParams(&params);
 
@@ -1368,7 +1437,7 @@ static void BtnPickupCoin(void)
 }
 
 // Generate sound: Laser shoot
-static void BtnLaserShoot(void)
+static void GenLaserShoot(void)
 {
     ResetWaveParams(&params);
 
@@ -1419,7 +1488,7 @@ static void BtnLaserShoot(void)
 }
 
 // Generate sound: Explosion
-static void BtnExplosion(void)
+static void GenExplosion(void)
 {
     ResetWaveParams(&params);
 
@@ -1469,7 +1538,7 @@ static void BtnExplosion(void)
 }
 
 // Generate sound: Powerup
-static void BtnPowerup(void)
+static void GenPowerup(void)
 {
     ResetWaveParams(&params);
 
@@ -1502,7 +1571,7 @@ static void BtnPowerup(void)
 }
 
 // Generate sound: Hit/Hurt
-static void BtnHitHurt(void)
+static void GenHitHurt(void)
 {
     ResetWaveParams(&params);
 
@@ -1522,7 +1591,7 @@ static void BtnHitHurt(void)
 }
 
 // Generate sound: Jump
-static void BtnJump(void)
+static void GenJump(void)
 {
     ResetWaveParams(&params);
 
@@ -1541,7 +1610,7 @@ static void BtnJump(void)
 }
 
 // Generate sound: Blip/Select
-static void BtnBlipSelect(void)
+static void GenBlipSelect(void)
 {
     ResetWaveParams(&params);
 
@@ -1557,7 +1626,7 @@ static void BtnBlipSelect(void)
 }
 
 // Generate random sound
-static void BtnRandomize(void)
+static void GenRandomize(void)
 {
     params.randSeed = GetRandomValue(0, 0xFFFE);
     
@@ -1606,7 +1675,7 @@ static void BtnRandomize(void)
 }
 
 // Mutate current sound
-static void BtnMutate(void)
+static void GenMutate(void)
 {
     if (GetRandomValue(0, 1)) params.startFrequencyValue += frnd(0.1f) - 0.05f;
     //if (GetRandomValue(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
@@ -1636,59 +1705,35 @@ static void BtnMutate(void)
 }
 
 //--------------------------------------------------------------------------------------------
-// Buttons functions: sound playing and export functions
+// Auxiliar functions
 //--------------------------------------------------------------------------------------------
 
-// Load sound parameters file
-static void BtnLoadSound(void)
+// Draw wave data
+// NOTE: For proper visualization, MSAA x4 is recommended, alternatively
+// it should be rendered to a bigger texture and then scaled down with
+// bilinear/trilinear texture filtering
+static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 {
-    // Open file dialog
-    const char *filters[] = { "*.rfx", "*.sfs" };
-    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+    float sample, sampleNext;
+    float currentSample = 0.0f;
+    float sampleIncrement = (float)wave->sampleCount/(float)(bounds.width*2);
+    float sampleScale = (float)bounds.height;
 
-    if (fileName != NULL)
+    for (int i = 1; i < bounds.width*2 - 1; i++)
     {
-        params = LoadWaveParams(fileName);
-        regenerate = true;
-    }
-}
+        sample = ((float *)wave->data)[(int)currentSample]*sampleScale;
+        sampleNext = ((float *)wave->data)[(int)(currentSample + sampleIncrement)]*sampleScale;
 
-// Save sound parameters file
-static void BtnSaveSound(void)
-{
-    // Save file dialog
-    const char *filters[] = { "*.rfx", "*.sfs" };
-    const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 2, filters, "Sound Param Files (*.rfx, *.sfs)");
+        if (sample > bounds.height/2) sample = bounds.height/2;
+        else if (sample < -bounds.height/2) sample = -bounds.height/2;
 
-    if (fileName != NULL)
-    {
-        char outFileName[64] = { 0 };
-        strcpy(outFileName, fileName);
-        
-        if (GetExtension(outFileName) == NULL) strcat(outFileName, ".rfx\0");     // No extension provided
-        if (outFileName != NULL) SaveWaveParams(params, outFileName);
-    }
-}
+        if (sampleNext > bounds.height/2) sampleNext = bounds.height/2;
+        else if (sampleNext < -bounds.height/2) sampleNext = -bounds.height/2;
 
-// Export current sound as .wav
-static void BtnExportWave(Wave wave)
-{
-    // Save file dialog
-    const char *filters[] = { "*.wav" };
-    const char *fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
+        DrawLineV((Vector2){ (float)bounds.x + (float)i/2.0f, (float)(bounds.y + bounds.height/2) + sample },
+                  (Vector2){ (float)bounds.x + (float)i/2.0f, (float)(bounds.y  + bounds.height/2) + sampleNext }, color);
 
-    if (fileName != NULL)
-    {
-        char outFileName[64] = { 0 };
-        strcpy(outFileName, fileName);
-        
-        if (GetExtension(outFileName) == NULL) strcat(outFileName, ".wav\0");             // No extension provided
-        if (strcmp(GetExtension(outFileName), "wav") != 0) strcat(outFileName, ".wav\0"); // Add required extension
-        
-        Wave cwave = WaveCopy(wave);
-        WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);    // Before exporting wave data, we format it as desired
-        ExportWave(cwave, outFileName);                         // Export wave data to file
-        UnloadWave(cwave);
+        currentSample += sampleIncrement;
     }
 }
 
@@ -1710,44 +1755,10 @@ static void OpenLinkURL(const char *url)
     strcat(cmd, url);
     system(cmd);
 
-    memset(cmd, 0, 4096);
+    memset(cmd, 0, 512);
 }
 
 #if defined(ENABLE_PRO_FEATURES)
-// Export wave sample data to code (.h)
-static void ExportWaveAsCode(Wave wave, const char *fileName)
-{
-    #define BYTES_TEXT_PER_LINE     20
-    
-    FILE *txtFile = fopen(fileName, "wt");
-    
-    char outFileName[256] = "\0";
-    strcpy(outFileName, fileName);
-    outFileName[strlen(outFileName) - 2] = '\0';
-    
-    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
-    fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
-    fprintf(txtFile, "// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
-    
-    fprintf(txtFile, "// Wave data information\n");
-    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", outFileName, wave.sampleCount);
-    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", outFileName, wave.sampleRate);
-    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", outFileName, wave.sampleSize);
-    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", outFileName, wave.channels);
-
-    fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
-    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
-    fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
-
-    fclose(txtFile);
-}
-
 // Simple time wait in milliseconds
 static void WaitTime(int ms)
 {
