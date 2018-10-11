@@ -218,7 +218,7 @@ static const int paletteStyleCandy[14] = {
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void ShowUsageInfo(void);    // Show command line usage info
+static void ShowUsageInfo(void);            // Show command line usage info
 
 // Load/Save/Export data functions
 static WaveParams LoadWaveParams(const char *fileName);                 // Load wave parameters from file
@@ -770,12 +770,11 @@ static void ShowUsageInfo(void)
     
 #if defined(ENABLE_PRO_FEATURES)
     printf("USAGE:\n\n");
-    printf("    > rfxgen [--version] [--help] --input <filename.ext> [--output <filename.ext>]\n");
+    printf("    > rfxgen [--help] --input <filename.ext> [--output <filename.ext>]\n");
     printf("             [--format <sample_rate> <sample_size> <channels>] [--play <filename.ext>]\n");
     
     printf("\nOPTIONS:\n\n");
-    printf("    -v, --version                   : Show tool version and info\n");
-    printf("    -h, --help                      : Show command line usage help\n");
+    printf("    -h, --help                      : Show tool version and command line usage help\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
     printf("                                      Supported extensions: .rfx, .sfs, .wav\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
