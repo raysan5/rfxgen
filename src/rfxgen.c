@@ -312,8 +312,7 @@ int main(int argc, char *argv[])
                 }
                 else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
                 {                   
-                    // Verify a file is provided with a supported extension
-                    // Check that no "--" is comming after --input
+                    // Check for valid argumment and valid file extension
                     if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
                         (IsFileExtension(argv[i + 1], ".rfx") || 
                          IsFileExtension(argv[i + 1], ".sfs") || 
