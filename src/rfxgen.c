@@ -1340,10 +1340,6 @@ static void ExportWaveAsCode(Wave wave, const char *fileName)
     
     FILE *txtFile = fopen(fileName, "wt");
     
-    char outFileName[256] = { 0 };
-    strcpy(outFileName, fileName);
-    outFileName[strlen(outFileName) - 2] = '\0';
-    
     fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
     fprintf(txtFile, "//                                                                              //\n");
     fprintf(txtFile, "// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
@@ -1360,8 +1356,12 @@ static void ExportWaveAsCode(Wave wave, const char *fileName)
     fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", outFileName, wave.sampleSize);
     fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", outFileName, wave.channels);
 
+    // Write byte data as hexadecimal text
     fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
-    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) 
+    {
+        fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
+    }
     fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
 
     fclose(txtFile);
@@ -1393,11 +1393,14 @@ static void DialogSaveSound(void)
 
     if (fileName != NULL)
     {
-        char outFileName[64] = { 0 };
+        char outFileName[128] = { 0 };
         strcpy(outFileName, fileName);
         
-        if (GetExtension(outFileName) == NULL) strcat(outFileName, ".rfx\0");     // No extension provided
-        if (outFileName != NULL) SaveWaveParams(params, outFileName);
+        // Check for valid extension and make sure it is
+        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
+        
+        // Save wave parameters
+        SaveWaveParams(params, outFileName);
     }
 }
 
@@ -1410,12 +1413,13 @@ static void DialogExportWave(Wave wave)
 
     if (fileName != NULL)
     {
-        char outFileName[64] = { 0 };
+        char outFileName[128] = { 0 };
         strcpy(outFileName, fileName);
         
-        if (GetExtension(outFileName) == NULL) strcat(outFileName, ".wav\0");             // No extension provided
-        if (strcmp(GetExtension(outFileName), "wav") != 0) strcat(outFileName, ".wav\0"); // Add required extension
+        // Check for valid extension and make sure it is
+        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
         
+        // Export wave data
         Wave cwave = WaveCopy(wave);
         WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);    // Before exporting wave data, we format it as desired
         ExportWave(cwave, outFileName);                         // Export wave data to file
