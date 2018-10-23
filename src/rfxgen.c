@@ -218,7 +218,10 @@ static const int paletteStyleCandy[14] = {
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void ShowUsageInfo(void);            // Show command line usage info
+#if defined(ENABLE_PRO_FEATURES)
+static void ShowCommandLineInfo(void);                      // Show command line usage info
+static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
+#endif
 
 // Load/Save/Export data functions
 static WaveParams LoadWaveParams(const char *fileName);                 // Load wave parameters from file
@@ -264,168 +267,21 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------------
     if (argc > 1)
     {
-        // CLI required variables
-        bool showUsageInfo = false;     // Toggle command line usage info
-        
-        char outFileName[256] = { 0 };  // Output file name
-        char playFileName[256] = { 0 }; // Play file name
-        
-        int sampleRate = 44100;         // Default conversion sample rate
-        int sampleSize = 16;            // Default conversion sample size
-        int channels = 1;               // Default conversion channels number
-
-        if (argc == 2)  // One file dropped over the executable or just one argument
+        if ((argc == 2) &&  
+            (strcmp(argv[1], "-h") != 0) && 
+            (strcmp(argv[1], "--help") != 0))       // One argument (file dropped over executable?)
         {
-            if (IsFileExtension(argv[1], ".rfx") || IsFileExtension(argv[1], ".sfs"))
+            if (IsFileExtension(argv[1], ".rfx") || 
+                IsFileExtension(argv[1], ".sfs"))
             {
                 // Open file with graphic interface
                 strcpy(inFileName, argv[1]);        // Read input filename
             }
-#if defined(ENABLE_PRO_FEATURES)
-            else if (IsFileExtension(argv[1], ".wav") || 
-                     IsFileExtension(argv[1], ".ogg") ||
-                     IsFileExtension(argv[1], ".flac") || 
-                     IsFileExtension(argv[1], ".mp3"))
-            {
-                Wave wave = LoadWave(argv[1]);      // Load wave data
-                PlayWaveCLI(wave);                  // Play provided wave
-                UnloadWave(wave);                   // Unload wave data
-                return 0;
-            }
-#endif
-            else 
-            {
-                ShowUsageInfo();                    // Show command line usage info
-                return 0;
-            }
         }
 #if defined(ENABLE_PRO_FEATURES)
-        else
+        else 
         {
-            // Process command line arguments
-            for (int i = 1; i < argc; i++)
-            {
-                if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0))
-                {
-                    showUsageInfo = true;
-                }
-                else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
-                {                   
-                    // Check for valid argumment and valid file extension
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                        (IsFileExtension(argv[i + 1], ".rfx") || 
-                         IsFileExtension(argv[i + 1], ".sfs") || 
-                         IsFileExtension(argv[i + 1], ".wav")))
-                    {
-                        strcpy(inFileName, argv[i + 1]);    // Read input filename
-                        i++;
-                    }
-                    else printf("WARNING: Input file extension not recognized\n");
-                }
-                else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
-                {
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                        (IsFileExtension(argv[i + 1], ".wav") || 
-                         IsFileExtension(argv[i + 1], ".h"))) 
-                    {
-                        strcpy(outFileName, argv[i + 1]);   // Read output filename
-                        i++;
-                    }
-                    else printf("WARNING: Output file extension not recognized\n");
-                }
-                else if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--format") == 0))
-                {
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
-                    {
-                        int numValues = 0;
-                        char **values = SplitText(argv[i + 1], ',', &numValues);
-                        
-                        if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
-                        else
-                        {
-                            // Read values text and convert to integer values
-                            sampleRate = atoi(values[0]);
-                            sampleSize = atoi(values[1]);
-                            channels = atoi(values[2]);
-                            
-                            // Verify retrieved values are valid
-                            if ((sampleRate != 44100) && (sampleRate != 22050))
-                            {
-                                printf("WARNING: Sample rate not supported. Default: 44100 Hz\n");
-                                sampleRate = 44100;
-                            }
-                            
-                            if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
-                            {
-                                printf("WARNING: Sample size not supported. Default: 16 bit\n");
-                                sampleSize = 16;
-                            }
-                            
-                            if ((channels != 1) && (channels != 2))
-                            {
-                                printf("WARNING: Channels number not supported. Default: 1 (mono)\n");
-                                channels = 1;
-                            }
-                        }
-                        
-                        for (int i = 0; i < numValues; i++) free(values[i]);
-                        if (values != NULL) free(values);
-                    }
-                    else printf("WARNING: Format parameters provided not valid\n");
-                }
-                else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0)) 
-                {
-                    if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                        (IsFileExtension(argv[i + 1], ".wav") || 
-                         IsFileExtension(argv[i + 1], ".ogg") ||
-                         IsFileExtension(argv[i + 1], ".flac") || 
-                         IsFileExtension(argv[i + 1], ".mp3"))) 
-                    {
-                        strcpy(playFileName, argv[i + 1]);   // Read filename to play
-                        i++;
-                    }
-                    else printf("WARNING: Play file extension not supported\n");
-                }
-            }
-
-            // Process input file if provided
-            if (inFileName[0] != '\0')
-            {
-                if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");  // Set a default name for output in case not provided
-                
-                printf("\nInput file:       %s", inFileName);
-                printf("\nOutput file:      %s", outFileName);
-                printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
-                
-                Wave wave = { 0 };
-
-                if (IsFileExtension(inFileName, ".rfx") || IsFileExtension(inFileName, ".sfs"))
-                {
-                    params = LoadWaveParams(inFileName);
-                    wave = GenerateWave(params);
-                }
-                else if (IsFileExtension(inFileName, ".wav")) wave = LoadWave(inFileName);
-
-                // Format wave data to desired sampleRate, sampleSize and channels
-                WaveFormat(&wave, sampleRate, sampleSize, channels);
-                
-                // Export wave data as audio file (.wav) or code file (.h)
-                if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
-                else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
-                
-                UnloadWave(wave);
-            }
-            
-            // Play audio file if provided
-            if (playFileName[0] != '\0')
-            {
-                Wave wave = LoadWave(playFileName);
-                PlayWaveCLI(wave);
-                UnloadWave(wave);
-            }
-            
-            if (showUsageInfo) ShowUsageInfo();
-            
+            ProcessCommandLine(argc, argv);
             return 0;
         }
 #endif      // ENABLE_PRO_FEATURES
@@ -753,8 +609,9 @@ int main(int argc, char *argv[])
 // Module Functions Definitions (local)
 //--------------------------------------------------------------------------------------------
 
+#if defined(ENABLE_PRO_FEATURES)
 // Show command line usage info
-static void ShowUsageInfo(void)
+static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
@@ -766,7 +623,6 @@ static void ShowUsageInfo(void)
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
     
-#if defined(ENABLE_PRO_FEATURES)
     printf("USAGE:\n\n");
     printf("    > rfxgen [--help] --input <filename.ext> [--output <filename.ext>]\n");
     printf("             [--format <sample_rate> <sample_size> <channels>] [--play <filename.ext>]\n");
@@ -798,8 +654,147 @@ static void ShowUsageInfo(void)
     printf("    > rfxgen --input sound.wav --output jump.wav --format 22050,8,1 --play jump.wav\n");
     printf("        Process <sound.wav> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
     printf("        Plays generated sound <jump.wav>.\n");
-#endif
 }
+
+// Process command line input
+static void ProcessCommandLine(int argc, char *argv[])
+{
+    // CLI required variables
+    bool showUsageInfo = false;     // Toggle command line usage info
+
+    char inFileName[256] = { 0 };   // Input file name
+    char outFileName[256] = { 0 };  // Output file name
+    char playFileName[256] = { 0 }; // Play file name
+    
+    int sampleRate = 44100;         // Default conversion sample rate
+    int sampleSize = 16;            // Default conversion sample size
+    int channels = 1;               // Default conversion channels number
+
+    // Process command line arguments
+    for (int i = 1; i < argc; i++)
+    {
+        if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0))
+        {
+            showUsageInfo = true;
+        }
+        else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
+        {                   
+            // Check for valid argumment and valid file extension
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
+                (IsFileExtension(argv[i + 1], ".rfx") || 
+                 IsFileExtension(argv[i + 1], ".sfs") || 
+                 IsFileExtension(argv[i + 1], ".wav")))
+            {
+                strcpy(inFileName, argv[i + 1]);    // Read input filename
+                i++;
+            }
+            else printf("WARNING: Input file extension not recognized\n");
+        }
+        else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
+        {
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
+                (IsFileExtension(argv[i + 1], ".wav") || 
+                 IsFileExtension(argv[i + 1], ".h"))) 
+            {
+                strcpy(outFileName, argv[i + 1]);   // Read output filename
+                i++;
+            }
+            else printf("WARNING: Output file extension not recognized\n");
+        }
+        else if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--format") == 0))
+        {
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
+            {
+                int numValues = 0;
+                char **values = SplitText(argv[i + 1], ',', &numValues);
+                
+                if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
+                else
+                {
+                    // Read values text and convert to integer values
+                    sampleRate = atoi(values[0]);
+                    sampleSize = atoi(values[1]);
+                    channels = atoi(values[2]);
+                    
+                    // Verify retrieved values are valid
+                    if ((sampleRate != 44100) && (sampleRate != 22050))
+                    {
+                        printf("WARNING: Sample rate not supported. Default: 44100 Hz\n");
+                        sampleRate = 44100;
+                    }
+                    
+                    if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
+                    {
+                        printf("WARNING: Sample size not supported. Default: 16 bit\n");
+                        sampleSize = 16;
+                    }
+                    
+                    if ((channels != 1) && (channels != 2))
+                    {
+                        printf("WARNING: Channels number not supported. Default: 1 (mono)\n");
+                        channels = 1;
+                    }
+                }
+                
+                for (int i = 0; i < numValues; i++) free(values[i]);
+                if (values != NULL) free(values);
+            }
+            else printf("WARNING: Format parameters provided not valid\n");
+        }
+        else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0)) 
+        {
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
+                (IsFileExtension(argv[i + 1], ".wav") || 
+                 IsFileExtension(argv[i + 1], ".ogg") ||
+                 IsFileExtension(argv[i + 1], ".flac") || 
+                 IsFileExtension(argv[i + 1], ".mp3"))) 
+            {
+                strcpy(playFileName, argv[i + 1]);   // Read filename to play
+                i++;
+            }
+            else printf("WARNING: Play file extension not supported\n");
+        }
+    }
+
+    // Process input file if provided
+    if (inFileName[0] != '\0')
+    {
+        if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");  // Set a default name for output in case not provided
+        
+        printf("\nInput file:       %s", inFileName);
+        printf("\nOutput file:      %s", outFileName);
+        printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
+        
+        Wave wave = { 0 };
+
+        if (IsFileExtension(inFileName, ".rfx") || IsFileExtension(inFileName, ".sfs"))
+        {
+            params = LoadWaveParams(inFileName);
+            wave = GenerateWave(params);
+        }
+        else if (IsFileExtension(inFileName, ".wav")) wave = LoadWave(inFileName);
+
+        // Format wave data to desired sampleRate, sampleSize and channels
+        WaveFormat(&wave, sampleRate, sampleSize, channels);
+        
+        // Export wave data as audio file (.wav) or code file (.h)
+        if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
+        else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
+        
+        UnloadWave(wave);
+    }
+    
+    // Play audio file if provided
+    if (playFileName[0] != '\0')
+    {
+        Wave wave = LoadWave(playFileName);
+        PlayWaveCLI(wave);
+        UnloadWave(wave);
+    }
+    
+    if (showUsageInfo) ShowCommandLineInfo();
+}
+#endif      // ENABLE_PRO_FEATURES
 
 //--------------------------------------------------------------------------------------------
 // Load/Save/Export functions
