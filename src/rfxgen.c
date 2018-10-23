@@ -247,7 +247,6 @@ static void GenMutate(void);                // Mutate current sound
 // Auxiliar functions
 static void OpenLinkURL(const char *url);   // Open URL link
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);        // Draw wave data using lines
-static char **StringSplit(char *str, char delimiter, int *strCount);    // Split string into multiple strings
 
 #if defined(ENABLE_PRO_FEATURES)
 static void WaitTime(int ms);               // Simple time wait in milliseconds
@@ -339,7 +338,7 @@ int main(int argc, char *argv[])
                     if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
                     {
                         int numValues = 0;
-                        char **values = StringSplit(argv[i + 1], ',', &numValues);
+                        char **values = SplitText(argv[i + 1], ',', &numValues);
                         
                         if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
                         else
@@ -1349,15 +1348,15 @@ static void ExportWaveAsCode(Wave wave, const char *fileName)
     fprintf(txtFile, "// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
     fprintf(txtFile, "//                                                                              //\n");
     fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
-    
+
     fprintf(txtFile, "// Wave data information\n");
-    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", outFileName, wave.sampleCount);
-    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", outFileName, wave.sampleRate);
-    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", outFileName, wave.sampleSize);
-    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", outFileName, wave.channels);
+    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", fileName, wave.sampleCount);
+    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", fileName, wave.sampleRate);
+    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", fileName, wave.sampleSize);
+    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", fileName, wave.channels);
 
     // Write byte data as hexadecimal text
-    fprintf(txtFile, "static unsigned char %s_data[%i] = { ", outFileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
+    fprintf(txtFile, "static unsigned char %s_data[%i] = { ", fileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
     for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) 
     {
         fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
@@ -1771,42 +1770,6 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 
         currentSample += sampleIncrement;
     }
-}
-
-// Split string into multiple strings
-// NOTE: Files count is returned by parameters pointer
-// NOTE: Allocated memory should be manually freed
-static char **StringSplit(char *str, char delimiter, int *strCount)
-{
-    #define MAX_SUBSTRING_LENGTH 128
-
-    char **strings = NULL;
-    int len = strlen(str);
-    char *strDup = (char *)malloc(len + 1);
-    strcpy(strDup, str);
-    int counter = 1;
-    
-    // Count how many substrings we have on string
-    for (int i = 0; i < len; i++) if (str[i] == delimiter) counter++;
-    
-    // Memory allocation for substrings
-    strings = (char **)malloc(sizeof(char *)*counter);
-    for (int i = 0; i < counter; i++) strings[i] = (char *)malloc(sizeof(char)*MAX_SUBSTRING_LENGTH);
-    
-    char *substrPtr = NULL;
-    char delimiters[1] = { delimiter };         // Only caring for one delimiter
-    substrPtr = strtok(strDup, delimiters);
-    
-    for (int i = 0; (i < counter) && (substrPtr != NULL); i++)
-    {
-        strcpy(strings[i], substrPtr);
-        substrPtr = strtok(NULL, delimiters);
-    }
-    
-    *strCount = counter;
-    free(strDup);
-    
-    return strings;
 }
 
 #if defined(ENABLE_PRO_FEATURES)
