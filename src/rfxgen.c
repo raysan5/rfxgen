@@ -228,9 +228,6 @@ static WaveParams LoadWaveParams(const char *fileName);                 // Load 
 static void SaveWaveParams(WaveParams params, const char *fileName);    // Save wave parameters to file
 static void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
 static Wave GenerateWave(WaveParams params);                            // Generate wave data from parameters
-#if defined(ENABLE_PRO_FEATURES)
-static void ExportWaveAsCode(Wave wave, const char *fileName);          // Export wave sample data to code (.h)
-#endif
 
 static void DialogLoadSound(void);          // Show dialog: load sound parameters file
 static void DialogSaveSound(void);          // Show dialog: save sound parameters file
@@ -274,8 +271,7 @@ int main(int argc, char *argv[])
             if (IsFileExtension(argv[1], ".rfx") || 
                 IsFileExtension(argv[1], ".sfs"))
             {
-                // Open file with graphic interface
-                strcpy(inFileName, argv[1]);        // Read input filename
+                strcpy(inFileName, argv[1]);        // Read input filename to open with gui interface
             }
         }
 #if defined(ENABLE_PRO_FEATURES)
@@ -1159,7 +1155,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 {
     WaveParams params = { 0 };
 
-    if (strcmp(GetExtension(fileName),"sfs") == 0)
+    if (IsFileExtension(GetExtension(fileName), ".sfs"))
     {
         FILE *sfsFile = fopen(fileName, "rb");
         
@@ -1220,7 +1216,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 
         fclose(sfsFile);
     }
-    else if (strcmp(GetExtension(fileName),"rfx") == 0)
+    else if (IsFileExtension(GetExtension(fileName), ".rfx"))
     {
         FILE *rfxFile = fopen(fileName, "rb");
         
@@ -1253,7 +1249,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 // Save .rfx (rFXGen) or .sfs (sfxr) sound parameters file
 static void SaveWaveParams(WaveParams params, const char *fileName)
 {
-    if (strcmp(GetExtension(fileName),"sfs") == 0)
+    if (IsFileExtension(GetExtension(fileName), ".sfs"))
     {
         FILE *sfsFile = fopen(fileName, "wb");
         
@@ -1304,7 +1300,7 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
 
         fclose(sfsFile);
     }
-    else if (strcmp(GetExtension(fileName),"rfx") == 0)
+    else if (IsFileExtension(GetExtension(fileName), ".rfx"))
     {
         #define TOOL_VERSION_TEXT_BINARY     120
         
@@ -1325,42 +1321,6 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
         fclose(rfxFile);
     }
 }
-
-#if defined(ENABLE_PRO_FEATURES)
-// Export wave sample data to code (.h)
-static void ExportWaveAsCode(Wave wave, const char *fileName)
-{
-    #define BYTES_TEXT_PER_LINE     20
-    
-    FILE *txtFile = fopen(fileName, "wt");
-    
-    fprintf(txtFile, "\n//////////////////////////////////////////////////////////////////////////////////\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
-    fprintf(txtFile, "// WaveAsCode exporter v1.0 - Wave data exported as an array of bytes           //\n");
-    fprintf(txtFile, "// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
-    fprintf(txtFile, "//                                                                              //\n");
-    fprintf(txtFile, "//////////////////////////////////////////////////////////////////////////////////\n\n");
-
-    fprintf(txtFile, "// Wave data information\n");
-    fprintf(txtFile, "#define %s_SAMPLE_COUNT     %i\n", fileName, wave.sampleCount);
-    fprintf(txtFile, "#define %s_SAMPLE_RATE      %i\n", fileName, wave.sampleRate);
-    fprintf(txtFile, "#define %s_SAMPLE_SIZE      %i\n", fileName, wave.sampleSize);
-    fprintf(txtFile, "#define %s_CHANNELS         %i\n\n", fileName, wave.channels);
-
-    // Write byte data as hexadecimal text
-    fprintf(txtFile, "static unsigned char %s_data[%i] = { ", fileName, wave.sampleCount*wave.channels*wave.sampleSize/8);
-    for (int i = 0; i < wave.sampleCount*wave.channels*wave.sampleSize/8 - 1; i++) 
-    {
-        fprintf(txtFile, ((i%BYTES_TEXT_PER_LINE == 0) ? "0x%x,\n" : "0x%x, "), ((unsigned char *)wave.data)[i]);
-    }
-    fprintf(txtFile, "0x%x };\n", ((unsigned char *)wave.data)[wave.sampleCount*wave.channels*wave.sampleSize/8 - 1]);
-
-    fclose(txtFile);
-}
-#endif
 
 // Show dialog: load sound parameters file
 static void DialogLoadSound(void)
@@ -1736,6 +1696,72 @@ static void OpenLinkURL(const char *url)
     system(cmd);
 
     memset(cmd, 0, 512);
+}
+
+//--------------------------------------------------------------------------------------------
+// GUI custom functions
+//--------------------------------------------------------------------------------------------
+
+// Gui about window
+static bool GuiWindowAbout(Vector2 position, bool active)
+{
+    // NOTE: const string literals are most-probably stored in read-only data section
+    const char *lblNameVersionText = "rFXGen v1.0 ZERO";
+    const char *lblDateText = "(Dec. 2018)";
+    const char *lblDescriptionText = "A simple and easy-to-use sounds generator";
+    const char *lblUsedLibsText = "Used libraries:";
+    const char *linkraylibText = "www.raylib.com";
+    const char *linkGitraylibText = "github.com/raysan5/raylib";
+    const char *linkGitrayguiText = "github.com/raysan5/raygui";
+    const char *lblDevelopersText = "Developers:";
+    const char *lblDev01Text = "- Ramon Santamaria (              )";
+    const char *linkDev01Text = "@raysan5";
+    const char *lblCopyrightText = "Copyright (c) 2019 raylib technologies (                 )";
+    const char *linkraylibtech = "@raylibtech";
+    const char *lblMoreInfoText = "More info:";
+    const char *linkToolWebText = "www.raylibtech.com/rfxgen";
+    const char *lblSupportText = "Support:";
+    const char *linkMailText = "ray@raylibtech.com";
+
+    static bool chkLicenseChecked = false;
+    
+    if (active)
+    {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(style[DEFAULT_BACKGROUND_COLOR]), 0.85f)); 
+        
+        active = !GuiWindowBox((Rectangle){ position.x + 0, position.y + 0, 330, 380 }, "About rFxGen");
+
+        GuiDummyRec((Rectangle){ position.x + 10, position.y + 35, 65, 65 }, "logo_rtool");
+        GuiLabel((Rectangle){ position.x + 85, position.y + 35, 136, 25 }, lblNameVersionText);
+        GuiLabel((Rectangle){ position.x + 220, position.y + 35, 65, 25 }, lblDateText);
+        GuiLabel((Rectangle){ position.x + 85, position.y + 65, 225, 20 }, lblDescriptionText);
+        GuiLine((Rectangle){ position.x + 0, position.y + 100, 330, 20 }, 1);
+        GuiLabel((Rectangle){ position.x + 10, position.y + 110, 126, 25 }, lblUsedLibsText);
+        GuiDummyRec((Rectangle){ position.x + 10, position.y + 135, 65, 65 }, "logo_raylib");
+        GuiDummyRec((Rectangle){ position.x + 80, position.y + 135, 65, 65 }, "logo_raygui");
+        if (GuiLabelButton((Rectangle){ position.x + 155, position.y + 130, 126, 25 }, linkraylibText)) { OpenLinkURL(""); }
+        if (GuiLabelButton((Rectangle){ position.x + 155, position.y + 150, 165, 25 }, linkGitraylibText)) { OpenLinkURL(""); }
+        if (GuiLabelButton((Rectangle){ position.x + 155, position.y + 170, 165, 25 }, linkGitrayguiText)) { OpenLinkURL(""); }
+        GuiLine((Rectangle){ position.x + 10, position.y + 200, 310, 20 }, 1);
+        GuiLabel((Rectangle){ position.x + 10, position.y + 210, 80, 25 }, lblDevelopersText);
+        GuiLabel((Rectangle){ position.x + 20, position.y + 230, 180, 25 }, lblDev01Text);
+        if (GuiLabelButton((Rectangle){ position.x + 130, position.y + 230, 56, 25 }, linkDev01Text)) { OpenLinkURL(""); }
+        GuiLine((Rectangle){ position.x + 10, position.y + 250, 310, 20 }, 1);
+        GuiLabel((Rectangle){ position.x + 10, position.y + 265, 289, 25 }, lblCopyrightText);
+        if (GuiLabelButton((Rectangle){ position.x + 215, position.y + 265, 76, 25 }, linkraylibtech)) { OpenLinkURL(""); }
+        GuiLabel((Rectangle){ position.x + 10, position.y + 285, 80, 25 }, lblMoreInfoText);
+        GuiLabel((Rectangle){ position.x + 10, position.y + 305, 80, 25 }, lblSupportText);
+        if (GuiLabelButton((Rectangle){ position.x + 95, position.y + 285, 165, 25 }, linkToolWebText)) { OpenLinkURL(""); }
+        if (GuiLabelButton((Rectangle){ position.x + 95, position.y + 305, 165, 25 }, linkMailText)) { OpenLinkURL(""); }
+        GuiLine((Rectangle){ position.x + 0, position.y + 325, 330, 20 }, 1);
+        
+        chkLicenseChecked = GuiCheckBoxEx((Rectangle){ position.x + 10, position.y + 350, 15, 15 }, chkLicenseChecked, "License Agreement (EULA)");
+        
+        if (GuiButton((Rectangle){ position.x + 175, position.y + 345, 70, 25 }, "Be ONE!")) { /* OpenURL(); */ }
+        if (GuiButton((Rectangle){ position.x + 250, position.y + 345, 70, 25 }, "Close")) active = false;
+    }
+    
+    return active;
 }
 
 // Draw wave data
