@@ -403,7 +403,7 @@ RAYGUIDEF bool GuiMessageBox(Rectangle bounds, const char *windowTitle, const ch
 #if defined(RAYGUI_STYLE_SAVE_LOAD)
 RAYGUIDEF void GuiSaveStyle(const char *fileName, bool binary);         // Save style file (.rgs), text or binary
 RAYGUIDEF void GuiLoadStyle(const char *fileName);                      // Load style file (.rgs), text or binary
-RAYGUIDEF void GuiLoadStylePalette(int *palette);                       // Load style from a color palette array (14 values required)
+RAYGUIDEF void GuiLoadStylePalette(const int *palette);                 // Load style from a color palette array (14 values required)
 RAYGUIDEF void GuiLoadStylePaletteImage(const char *fileName);          // Load style from an image palette file (64x16)
 
 RAYGUIDEF void GuiUpdateStyleComplete(void);                            // Updates full style properties set with generic values
@@ -3233,7 +3233,7 @@ RAYGUIDEF void GuiLoadStyle(const char *fileName)
 }
 
 // Load style from a color palette array (14 values required)
-RAYGUIDEF void GuiLoadStylePalette(int *palette)
+RAYGUIDEF void GuiLoadStylePalette(const int *palette)
 {
     // Load generic style color palette
     style[DEFAULT_BACKGROUND_COLOR] = palette[0];
