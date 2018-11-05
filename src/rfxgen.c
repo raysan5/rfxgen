@@ -1848,6 +1848,9 @@ static void WaitTime(int ms)
         int currentTime = clock()*1000/CLOCKS_PER_SEC;  // Current time in milliseconds
         int totalTime = currentTime + ms;               // Total required time in ms to return from this timeout
 
+        int percent = 0;
+        int prevPercent = percent;
+        
         // Wait until current ms time matches total ms time
         while (currentTime <= totalTime) 
         {
@@ -1855,16 +1858,33 @@ static void WaitTime(int ms)
             if (kbhit()) 
             {
                 int key = getch(); 
-                if ((key == 13) || (key == 27)) break;   // KEY_ENTER || KEY_ESCAPE
+                if ((key == 13) || (key == 27))     // KEY_ENTER || KEY_ESCAPE
+                {
+                    printf("\n");
+                    break;
+                }
             }
             
             currentTime = clock()*1000/CLOCKS_PER_SEC;
-        
+
             // Print console time bar
-            printf("\r");
-            for (int j = 0; j < currentTime/1000; j++) printf("|");
-            printf(" [ %02i%% ]", currentTime);
+            percent = (int)(((float)currentTime/totalTime)*100.0f);
+            
+            if (percent != prevPercent)
+            {
+                printf("\r[");
+                for (int j = 0; j < 50; j++) 
+                {
+                    if (j < percent/2) printf("=");
+                    else printf(" ");
+                }
+                printf("] [%02i%%]", percent);
+            
+                prevPercent = percent;
+            }
         }
+        
+        printf("\n\n");
     }
 }
 
@@ -1873,11 +1893,10 @@ static void PlayWaveCLI(Wave wave)
 {
     float waveTimeMs = (float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels);
     
-    if (waveTimeMs > 3000) printf("WARNING: Playing a long sound (%.2f seconds). Press CTRL+C to stop playing.\n", waveTimeMs/1000.0f);
-    
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
-    printf("Playing sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
+    if (waveTimeMs > 3000) printf("WARNING: Playing a long sound (%.2f seconds).\n", waveTimeMs/1000.0f);
+    printf("\nPlaying sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
     PlaySound(fx);                      // Play sound
     WaitTime(waveTimeMs);               // Wait while audio is playing
     UnloadSound(fx);                    // Unload sound data
