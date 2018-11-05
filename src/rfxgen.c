@@ -77,6 +77,15 @@
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
+                                        
+#if defined(_WIN32)
+    #include <conio.h>          // Windows only, no stardard library
+#else
+    // Provide kbhit() function in non-Windows platforms
+    #include <termios.h>
+    #include <unistd.h>
+    #include <fcntl.h>
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -252,6 +261,11 @@ static bool GuiWindowAbout(bool active);    // Gui about window
 #if defined(ENABLE_PRO_FEATURES)
 static void WaitTime(int ms);               // Simple time wait in milliseconds
 static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
+
+#if !defined(_WIN32)
+static int kbhit(void);                         // Check if a key has been pressed
+static char getch(void) { return getchar(); }   // Get pressed character
+#endif
 #endif
 
 //------------------------------------------------------------------------------------
@@ -1835,7 +1849,22 @@ static void WaitTime(int ms)
         int totalTime = currentTime + ms;               // Total required time in ms to return from this timeout
 
         // Wait until current ms time matches total ms time
-        while (currentTime <= totalTime) currentTime = clock()*1000/CLOCKS_PER_SEC;
+        while (currentTime <= totalTime) 
+        {
+            // Check for key pressed to stop playing
+            if (kbhit()) 
+            {
+                int key = getch(); 
+                if ((key == 13) || (key == 27)) break;   // KEY_ENTER || KEY_ESCAPE
+            }
+            
+            currentTime = clock()*1000/CLOCKS_PER_SEC;
+        
+            // Print console time bar
+            printf("\r");
+            for (int j = 0; j < currentTime/1000; j++) printf("|");
+            printf(" [ %02i%% ]", currentTime);
+        }
     }
 }
 
@@ -1848,10 +1877,40 @@ static void PlayWaveCLI(Wave wave)
     
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
-    printf("Playing sound [%.2f sec.]...", waveTimeMs/1000.0f);
+    printf("Playing sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
     PlaySound(fx);                      // Play sound
     WaitTime(waveTimeMs);               // Wait while audio is playing
     UnloadSound(fx);                    // Unload sound data
     CloseAudioDevice();                 // Close audio device
 }
+
+#if !defined(__WIN32)
+// Check if a key has been pressed
+static int kbhit(void)
+{
+	struct termios oldt, newt;
+	int ch;
+	int oldf;
+
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	newt.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+	ch = getchar();
+
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+	if (ch != EOF)
+	{
+		ungetc(ch, stdin);
+		return 1;
+	}
+
+	return 0;
+}
+#endif
 #endif      // ENABLE_PRO_FEATURES
