@@ -1858,11 +1858,7 @@ static void WaitTime(int ms)
             if (kbhit()) 
             {
                 int key = getch(); 
-                if ((key == 13) || (key == 27))     // KEY_ENTER || KEY_ESCAPE
-                {
-                    printf("\n");
-                    break;
-                }
+                if ((key == 13) || (key == 27)) break;    // KEY_ENTER || KEY_ESCAPE
             }
             
             currentTime = clock()*1000/CLOCKS_PER_SEC;
@@ -1895,8 +1891,19 @@ static void PlayWaveCLI(Wave wave)
     
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
-    if (waveTimeMs > 3000) printf("WARNING: Playing a long sound (%.2f seconds).\n", waveTimeMs/1000.0f);
-    printf("\nPlaying sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
+    
+    printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
+    printf("//                                                                              //\n");
+    printf("// rFXGen v%s - CLI audio player                                               //\n", TOOL_VERSION_TEXT);
+    printf("//                                                                              //\n");
+    printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
+    printf("//                                                                              //\n");
+    printf("// Copyright (c) 2018 raylib technologies (@raylibtech)                         //\n");
+    printf("//                                                                              //\n");
+    printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
+
+    printf("Playing sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
+    
     PlaySound(fx);                      // Play sound
     WaitTime(waveTimeMs);               // Wait while audio is playing
     UnloadSound(fx);                    // Unload sound data
