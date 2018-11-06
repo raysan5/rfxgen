@@ -11,7 +11,8 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       2.0  (10-Oct-2018) Functions renaming, code reorganized, better consistency...
+*       2.0  (xx-Nov-2018) GUI redesigned, CLI improvements
+*       1.8  (10-Oct-2018) Functions renaming, code reorganized, better consistency...
 *       1.5  (23-Sep-2018) Support .wav export to code and sound playing on command line
 *       1.4  (15-Sep-2018) Redesigned command line and comments
 *       1.3  (15-May-2018) Reimplemented gui using rGuiLayout
@@ -32,9 +33,9 @@
 *       tinyfiledialogs 3.3.7   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
-*       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal / 
+*       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
 *           -lraylib -lopengl32 -lgdi32 -lcomdlg32 -lole32 -std=c99 -Wl,--subsystem,windows
-* 
+*
 *   COMPILATION (Linux - GCC):
 *       gcc -o rfxgen rfxgen.c external/tinyfiledialogs.c -s -Iexternal -no-pie -D_DEFAULT_SOURCE /
 *           -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
@@ -77,7 +78,7 @@
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
-                                        
+
 #if defined(_WIN32)
     #include <conio.h>          // Windows only, no stardard library
 #else
@@ -91,6 +92,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define ENABLE_PRO_FEATURES             // Enable PRO version features
+#define COMMAND_LINE_ONLY               // Compile tool oly for command line usage
 
 #define TOOL_VERSION_TEXT    "2.0"      // Tool version string
 
@@ -107,7 +109,7 @@ bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib
 
 // Wave parameters type (96 bytes)
 typedef struct WaveParams {
-    
+
     // Random seed used to generate the wave
     int randSeed;
 
@@ -168,7 +170,7 @@ static int wavSampleRate = 44100;   // Wave sample rate (frequency)
 static WaveParams params;           // Stores wave parameters for generation
 static bool regenerate = false;     // Wave regeneration required
 
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(ENABLE_PRO_FEATURES) && !defined(COMMAND_LINE_ONLY)
 // raygui color palette: Light
 static const int paletteStyleLight[14] = {
     0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
@@ -227,7 +229,7 @@ static const int paletteStyleCandy[14] = {
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
 static void ShowCommandLineInfo(void);                      // Show command line usage info
 static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
 #endif
@@ -253,12 +255,14 @@ static void GenBlipSelect(void);            // Generate sound: Blip/Select
 static void GenRandomize(void);             // Generate random sound
 static void GenMutate(void);                // Mutate current sound
 
+#if !defined(COMMAND_LINE_ONLY)
 // Auxiliar functions
 static void OpenLinkURL(const char *url);   // Open URL link
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
 static bool GuiWindowAbout(bool active);    // Gui about window
+#endif
 
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
 static void WaitTime(int ms);               // Simple time wait in milliseconds
 static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
 
@@ -266,7 +270,7 @@ static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
 static int kbhit(void);                         // Check if a key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
-#endif
+#endif  // defined(COMMAND_LINE_ONLY)
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -279,18 +283,18 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------------
     if (argc > 1)
     {
-        if ((argc == 2) &&  
-            (strcmp(argv[1], "-h") != 0) && 
+        if ((argc == 2) &&
+            (strcmp(argv[1], "-h") != 0) &&
             (strcmp(argv[1], "--help") != 0))       // One argument (file dropped over executable?)
         {
-            if (IsFileExtension(argv[1], ".rfx") || 
+            if (IsFileExtension(argv[1], ".rfx") ||
                 IsFileExtension(argv[1], ".sfs"))
             {
                 strcpy(inFileName, argv[1]);        // Read input filename to open with gui interface
             }
         }
 #if defined(ENABLE_PRO_FEATURES)
-        else 
+        else
         {
             ProcessCommandLine(argc, argv);
             return 0;
@@ -298,6 +302,7 @@ int main(int argc, char *argv[])
 #endif      // ENABLE_PRO_FEATURES
     }
 
+#if !defined(COMMAND_LINE_ONLY)
 #if (defined(ENABLE_PRO_FEATURES) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
@@ -309,14 +314,14 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------------
     const int screenWidth = 496;
     const int screenHeight = 500;
-    
+
     SetTraceLog(0);                             // Disable trace log messsages
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
     //SetExitKey(0);
-    
+
     InitAudioDevice();
-    
+
     Rectangle waveRec = { 10, 421, 475, 50 };       // Wave drawing rectangle box
     Vector2 paramsAnchor = { 115, 40 };             // Parameters box anchor point
 
@@ -330,42 +335,42 @@ int main(int argc, char *argv[])
     int comboxSampleSizeValue = 1;
 
     bool screenSizeToggle = false;
-    
+
     const char *tgroupWaveTypeText[4] = { "Square", "Sawtooth", "Sinewave", "Noise" };
-    
+
     bool windowAboutActive = false;
     //----------------------------------------------------------------------------------------
 
     Wave wave;
     Sound sound;
-    
+
     // Check if a wave parameters file has been provided on command line
-    if (inFileName[0] != '\0') 
+    if (inFileName[0] != '\0')
     {
-        params = LoadWaveParams(inFileName);    // Load wave parameters from .rfx 
+        params = LoadWaveParams(inFileName);    // Load wave parameters from .rfx
         wave = GenerateWave(params);            // Generate wave from parameters
         sound = LoadSoundFromWave(wave);        // Load sound from new wave
         PlaySound(sound);                       // Play generated sound
     }
-    else 
+    else
     {
         // Reset generation parameters
         // NOTE: Random seed for generation is set
         ResetWaveParams(&params);
-    
+
         // Default wave values
         wave.sampleRate = 44100;
         wave.sampleSize = 32;       // 32 bit -> float
         wave.channels = 1;
         wave.sampleCount = 10*wave.sampleRate*wave.channels;    // Max sampleCount for 10 seconds
         wave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
-   
+
         sound = LoadSoundFromWave(wave);
     }
-    
+
     // Set default sound volume
     SetSoundVolume(sound, volumeValue);
-    
+
 #define RENDER_WAVE_TO_TEXTURE
 #if defined(RENDER_WAVE_TO_TEXTURE)
     // To avoid enabling MSXAAx4, we will render wave to a texture x2
@@ -389,21 +394,21 @@ int main(int argc, char *argv[])
         {
             int dropsCount = 0;
             char **droppedFiles = GetDroppedFiles(&dropsCount);
-            
+
             // Support loading .rfx or .sfs files (wave parameters)
-            if (IsFileExtension(droppedFiles[0], ".rfx") || 
+            if (IsFileExtension(droppedFiles[0], ".rfx") ||
                 IsFileExtension(droppedFiles[0], ".sfs"))
             {
                 params = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
-                
+
                 //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(droppedFiles[0])));
             }
 
             ClearDroppedFiles();
         }
         //----------------------------------------------------------------------------------
-        
+
         // Keyboard shortcuts
         //------------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);                                  // Play current sound
@@ -422,14 +427,14 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
         // Change window size to x2
         if (screenSizeToggle)
-        {   
+        {
             if (GetScreenWidth() < screenWidth*2)
             {
                 SetWindowSize(screenWidth*2, screenHeight*2);
                 SetMouseScale(0.5f);
             }
         }
-        else 
+        else
         {
             if (screenWidth*2 >= GetScreenWidth())
             {
@@ -437,7 +442,7 @@ int main(int argc, char *argv[])
                 SetMouseScale(1.0f);
             }
         }
-        
+
         // Consider two possible cases to regenerate wave and update sound:
         // CASE1: regenerate flag is true (set by sound buttons functions)
         // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
@@ -445,13 +450,13 @@ int main(int argc, char *argv[])
         {
             UnloadWave(wave);
             wave = GenerateWave(params);        // Generate new wave from parameters
-            
+
             UnloadSound(sound);
             sound = LoadSoundFromWave(wave);    // Reload sound from new wave
             //UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
 
             if (regenerate || playOnChangeValue) PlaySound(sound);
-            
+
             regenerate = false;
         }
 
@@ -463,13 +468,13 @@ int main(int argc, char *argv[])
         else if (comboxSampleSizeValue == 1) wavSampleSize = 16;
         else if (comboxSampleSizeValue == 2) wavSampleSize = 32;
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(GetColor(GuiGetStyleProperty(DEFAULT_BACKGROUND_COLOR)));
-            
+
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
                 DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
@@ -477,7 +482,7 @@ int main(int argc, char *argv[])
 #endif
             // Render all screen to a texture (for scaling)
             BeginTextureMode(screenTarget);
-            
+
             DrawText("rFXGen", 29, 19, 20, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
             GuiLabel((Rectangle){ 89, 14, 10, 10 }, FormatText("v%s", TOOL_VERSION_TEXT));
 
@@ -532,7 +537,7 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 390, 307, 95, 20 }, "Save Sound")) DialogSaveSound();
             if (GuiButton((Rectangle){ 390, 389, 95, 20 }, "Export .Wav")) DialogExportWave(wave);
             //--------------------------------------------------------------------------------
-                       
+
             // Right side controls
             //--------------------------------------------------------------------------------
             float previousVolumeValue = volumeValue;
@@ -540,27 +545,27 @@ int main(int argc, char *argv[])
             if (volumeValue != previousVolumeValue) SetSoundVolume(sound, volumeValue);
             if (volumeValue < 1.0f) GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)));
             else GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)));
-            
+
             screenSizeToggle = GuiToggleButton((Rectangle){ 390, 15, 95, 20 }, "Screen Size x2", screenSizeToggle);
-            playOnChangeValue = GuiCheckBoxEx((Rectangle){ 390, 115, 10, 10 }, playOnChangeValue, "Play on change"); 
+            playOnChangeValue = GuiCheckBoxEx((Rectangle){ 390, 115, 10, 10 }, playOnChangeValue, "Play on change");
             comboxSampleRateValue = GuiComboBox((Rectangle){ 390, 340, 95, 20 }, comboxSampleRateText, 2, comboxSampleRateValue);
             comboxSampleSizeValue = GuiComboBox((Rectangle){ 390, 364, 95, 20 }, comboxSampleSizeText, 3, comboxSampleSizeValue);
 
             int previousWaveTypeValue = params.waveTypeValue;
             params.waveTypeValue = GuiToggleGroup((Rectangle){ 115, 15, 260, 20 }, tgroupWaveTypeText, 4, params.waveTypeValue);
             if (params.waveTypeValue != previousWaveTypeValue) regenerate = true;
-            
+
             // Draw status bar
             GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);
             GuiStatusBar((Rectangle){ 205, screenHeight - 20, 123, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
             GuiStatusBar((Rectangle){ 327, screenHeight - 20, screenWidth - 327, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
             //--------------------------------------------------------------------------------
-            
+
             // Advertising (links, logos...)
             //--------------------------------------------------------------------------------
             GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
             GuiLabel((Rectangle){ 13, 248, 10, 10 }, "Tomas Pettersson");
-           
+
             GuiLine((Rectangle){ 10, 268, 95, 1 }, 1);
             GuiLine((Rectangle){ 10, 225, 95, 1 }, 1);
             GuiLine((Rectangle){ 10, 358, 95, 1 }, 1);
@@ -575,7 +580,7 @@ int main(int argc, char *argv[])
             DrawRectangle(390, 153, 92, 92, BLACK);
             DrawRectangle(396, 159, 80, 80, RAYWHITE);
             DrawText("raylib", 415, 214, 20, BLACK);
-            
+
             if (GuiLabelButton((Rectangle){ 405, 250, MeasureText("www.raylib.com", 10), 10 }, "www.raylib.com")) OpenLinkURL("http://www.raylib.com");
             //--------------------------------------------------------------------------------
 
@@ -586,13 +591,13 @@ int main(int argc, char *argv[])
         #else
             DrawWave(&wave, waveRec, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
         #endif
-        
+
             // TODO: Draw playing progress rectangle
-            
+
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(style[DEFAULT_TEXT_COLOR_FOCUSED]), 0.6f));
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
             //--------------------------------------------------------------------------------
-            
+
             // GUI About window
             windowAboutActive = GuiWindowAbout(windowAboutActive);
 
@@ -600,7 +605,7 @@ int main(int argc, char *argv[])
 
             if (screenSizeToggle) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
- 
+
         EndDrawing();
         //------------------------------------------------------------------------------------
     }
@@ -609,7 +614,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
     UnloadSound(sound);
     UnloadWave(wave);
-    
+
     UnloadRenderTexture(screenTarget);
 #if defined(RENDER_WAVE_TO_TEXTURE)
     UnloadRenderTexture(waveTarget);
@@ -619,6 +624,8 @@ int main(int argc, char *argv[])
     CloseWindow();          // Close window and OpenGL context
     //----------------------------------------------------------------------------------------
 
+#endif  //!defined(COMMAND_LINE_ONLY)
+
     return 0;
 }
 
@@ -626,7 +633,7 @@ int main(int argc, char *argv[])
 // Module Functions Definitions (local)
 //--------------------------------------------------------------------------------------------
 
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
@@ -639,11 +646,11 @@ static void ShowCommandLineInfo(void)
     printf("// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
-    
+
     printf("USAGE:\n\n");
     printf("    > rfxgen [--help] --input <filename.ext> [--output <filename.ext>]\n");
     printf("             [--format <sample_rate> <sample_size> <channels>] [--play <filename.ext>]\n");
-    
+
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
@@ -660,7 +667,7 @@ static void ShowCommandLineInfo(void)
     printf("                                      NOTE: If not specified, defaults to: 44100, 16, 1\n\n");
     printf("    -p, --play <filename.ext>       : Play provided sound.\n");
     printf("                                      Supported extensions: .wav, .ogg, .flac, .mp3\n");
-    
+
     printf("\nEXAMPLES:\n\n");
     printf("    > rfxgen --input sound.rfx --output jump.wav\n");
     printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32 bit, Mono\n\n");
@@ -682,7 +689,7 @@ static void ProcessCommandLine(int argc, char *argv[])
     char inFileName[256] = { 0 };   // Input file name
     char outFileName[256] = { 0 };  // Output file name
     char playFileName[256] = { 0 }; // Play file name
-    
+
     int sampleRate = 44100;         // Default conversion sample rate
     int sampleSize = 16;            // Default conversion sample size
     int channels = 1;               // Default conversion channels number
@@ -695,11 +702,11 @@ static void ProcessCommandLine(int argc, char *argv[])
             showUsageInfo = true;
         }
         else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
-        {                   
+        {
             // Check for valid argumment and valid file extension
-            if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                (IsFileExtension(argv[i + 1], ".rfx") || 
-                 IsFileExtension(argv[i + 1], ".sfs") || 
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
+                (IsFileExtension(argv[i + 1], ".rfx") ||
+                 IsFileExtension(argv[i + 1], ".sfs") ||
                  IsFileExtension(argv[i + 1], ".wav")))
             {
                 strcpy(inFileName, argv[i + 1]);    // Read input filename
@@ -709,9 +716,9 @@ static void ProcessCommandLine(int argc, char *argv[])
         }
         else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
         {
-            if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                (IsFileExtension(argv[i + 1], ".wav") || 
-                 IsFileExtension(argv[i + 1], ".h"))) 
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
+                (IsFileExtension(argv[i + 1], ".wav") ||
+                 IsFileExtension(argv[i + 1], ".h")))
             {
                 strcpy(outFileName, argv[i + 1]);   // Read output filename
                 i++;
@@ -724,7 +731,7 @@ static void ProcessCommandLine(int argc, char *argv[])
             {
                 int numValues = 0;
                 char **values = SplitText(argv[i + 1], ',', &numValues);
-                
+
                 if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
                 else
                 {
@@ -732,39 +739,39 @@ static void ProcessCommandLine(int argc, char *argv[])
                     sampleRate = atoi(values[0]);
                     sampleSize = atoi(values[1]);
                     channels = atoi(values[2]);
-                    
+
                     // Verify retrieved values are valid
                     if ((sampleRate != 44100) && (sampleRate != 22050))
                     {
                         printf("WARNING: Sample rate not supported. Default: 44100 Hz\n");
                         sampleRate = 44100;
                     }
-                    
+
                     if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
                     {
                         printf("WARNING: Sample size not supported. Default: 16 bit\n");
                         sampleSize = 16;
                     }
-                    
+
                     if ((channels != 1) && (channels != 2))
                     {
                         printf("WARNING: Channels number not supported. Default: 1 (mono)\n");
                         channels = 1;
                     }
                 }
-                
+
                 for (int i = 0; i < numValues; i++) free(values[i]);
                 if (values != NULL) free(values);
             }
             else printf("WARNING: Format parameters provided not valid\n");
         }
-        else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0)) 
+        else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0))
         {
-            if (((i + 1) < argc) && (argv[i + 1][0] != '-') && 
-                (IsFileExtension(argv[i + 1], ".wav") || 
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
+                (IsFileExtension(argv[i + 1], ".wav") ||
                  IsFileExtension(argv[i + 1], ".ogg") ||
-                 IsFileExtension(argv[i + 1], ".flac") || 
-                 IsFileExtension(argv[i + 1], ".mp3"))) 
+                 IsFileExtension(argv[i + 1], ".flac") ||
+                 IsFileExtension(argv[i + 1], ".mp3")))
             {
                 strcpy(playFileName, argv[i + 1]);   // Read filename to play
                 i++;
@@ -777,11 +784,11 @@ static void ProcessCommandLine(int argc, char *argv[])
     if (inFileName[0] != '\0')
     {
         if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");  // Set a default name for output in case not provided
-        
+
         printf("\nInput file:       %s", inFileName);
         printf("\nOutput file:      %s", outFileName);
         printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
-        
+
         Wave wave = { 0 };
 
         if (IsFileExtension(inFileName, ".rfx") || IsFileExtension(inFileName, ".sfs"))
@@ -793,14 +800,14 @@ static void ProcessCommandLine(int argc, char *argv[])
 
         // Format wave data to desired sampleRate, sampleSize and channels
         WaveFormat(&wave, sampleRate, sampleSize, channels);
-        
+
         // Export wave data as audio file (.wav) or code file (.h)
         if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
         else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
-        
+
         UnloadWave(wave);
     }
-    
+
     // Play audio file if provided
     if (playFileName[0] != '\0')
     {
@@ -808,7 +815,7 @@ static void ProcessCommandLine(int argc, char *argv[])
         PlayWaveCLI(wave);
         UnloadWave(wave);
     }
-    
+
     if (showUsageInfo) ShowCommandLineInfo();
 }
 #endif      // ENABLE_PRO_FEATURES
@@ -823,7 +830,7 @@ static void ResetWaveParams(WaveParams *params)
     // NOTE: Random seed is set to a random value
     params->randSeed = GetRandomValue(0x1, 0xFFFE);
     srand(params->randSeed);
-    
+
     // Wave type
     params->waveTypeValue = 0;
 
@@ -874,7 +881,7 @@ static Wave GenerateWave(WaveParams params)
 
     // NOTE: GetRandomValue() is provided by raylib and seed is initialized at InitWindow()
     #define GetRandomFloat(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
-    
+
     if (params.randSeed != 0) srand(params.randSeed);   // Initialize seed if required
 
     // Configuration parameters for generation
@@ -913,7 +920,7 @@ static Wave GenerateWave(WaveParams params)
     int arpeggioTime = 0;
     int arpeggioLimit = 0;
     double arpeggioModulation = 0.0;
-    
+
     // HACK: Security check to avoid crash (why?)
     if (params.minFrequencyValue > params.startFrequencyValue) params.minFrequencyValue = params.startFrequencyValue;
     if (params.slideValue < params.deltaSlideValue) params.slideValue = params.deltaSlideValue;
@@ -1041,7 +1048,7 @@ static Wave GenerateWave(WaveParams params)
         squareDuty += squareSlide;
 
         if (squareDuty < 0.0f) squareDuty = 0.0f;
-        if (squareDuty > 0.5f) squareDuty = 0.5f;    
+        if (squareDuty > 0.5f) squareDuty = 0.5f;
 
         // Volume envelope
         envelopeTime++;
@@ -1101,7 +1108,7 @@ static Wave GenerateWave(WaveParams params)
                 {
                     if (fp < squareDuty) sample = 0.5f;
                     else sample = -0.5f;
-                    
+
                 } break;
                 case 1: sample = 1.0f - fp*2; break;    // Sawtooth wave
                 case 2: sample = sinf(fp*2*PI); break;  // Sine wave
@@ -1115,7 +1122,7 @@ static Wave GenerateWave(WaveParams params)
 
             if (fltw < 0.0f) fltw = 0.0f;
             if (fltw > 0.1f) fltw = 0.1f;
-            
+
             if (params.lpfCutoffValue != 1.0f)  // WATCH OUT!
             {
                 fltdp += (sample-fltp)*fltw;
@@ -1179,7 +1186,7 @@ static WaveParams LoadWaveParams(const char *fileName)
     if (IsFileExtension(GetExtension(fileName), ".sfs"))
     {
         FILE *sfsFile = fopen(fileName, "rb");
-        
+
         if (sfsFile == NULL) return params;
 
         // Load .sfs sound parameters
@@ -1240,7 +1247,7 @@ static WaveParams LoadWaveParams(const char *fileName)
     else if (IsFileExtension(GetExtension(fileName), ".rfx"))
     {
         FILE *rfxFile = fopen(fileName, "rb");
-        
+
         if (rfxFile == NULL) return params;
 
         // Load .rfx sound parameters
@@ -1254,7 +1261,7 @@ static WaveParams LoadWaveParams(const char *fileName)
         {
             int version;
             fread(&version, 1, sizeof(int), rfxFile);
-            
+
             // Load wave generation parameters
             if (version == 100) printf("[%s] Wrong rFX file version (%i)\n", fileName, version);
             else if (version == 120) fread(&params, 1, sizeof(WaveParams), rfxFile);
@@ -1273,7 +1280,7 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
     if (IsFileExtension(GetExtension(fileName), ".sfs"))
     {
         FILE *sfsFile = fopen(fileName, "wb");
-        
+
         if (sfsFile == NULL) return;
 
         // Save .sfs sound parameters
@@ -1324,9 +1331,9 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
     else if (IsFileExtension(GetExtension(fileName), ".rfx"))
     {
         #define TOOL_VERSION_TEXT_BINARY     120
-        
+
         FILE *rfxFile = fopen(fileName, "wb");
-        
+
         if (rfxFile == NULL) return;
 
         // Save .rfx sound parameters
@@ -1354,7 +1361,7 @@ static void DialogLoadSound(void)
     {
         params = LoadWaveParams(fileName);
         regenerate = true;
-        
+
         //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(fileName)));
     }
 }
@@ -1370,10 +1377,10 @@ static void DialogSaveSound(void)
     {
         char outFileName[128] = { 0 };
         strcpy(outFileName, fileName);
-        
+
         // Check for valid extension and make sure it is
         if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
-        
+
         // Save wave parameters
         SaveWaveParams(params, outFileName);
     }
@@ -1390,10 +1397,10 @@ static void DialogExportWave(Wave wave)
     {
         char outFileName[128] = { 0 };
         strcpy(outFileName, fileName);
-        
+
         // Check for valid extension and make sure it is
         if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
-        
+
         // Export wave data
         Wave cwave = WaveCopy(wave);
         WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);    // Before exporting wave data, we format it as desired
@@ -1619,7 +1626,7 @@ static void GenBlipSelect(void)
 static void GenRandomize(void)
 {
     params.randSeed = GetRandomValue(0, 0xFFFE);
-    
+
     params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 2.0f);
 
     if (GetRandomValue(0, 1)) params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
@@ -1698,6 +1705,7 @@ static void GenMutate(void)
 // Auxiliar functions
 //--------------------------------------------------------------------------------------------
 
+#if !defined(COMMAND_LINE_ONLY)
 // Open URL link
 static void OpenLinkURL(const char *url)
 {
@@ -1718,10 +1726,6 @@ static void OpenLinkURL(const char *url)
 
     memset(cmd, 0, 512);
 }
-
-//--------------------------------------------------------------------------------------------
-// GUI custom functions
-//--------------------------------------------------------------------------------------------
 
 // Draw rTool generated icon
 static void DrawIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color)
@@ -1762,24 +1766,24 @@ static bool GuiWindowAbout(bool active)
     const char *linkMailText = "ray@raylibtech.com";
 
     static bool chkLicenseChecked = true;
-    
+
     Vector2 position = { GetScreenWidth()/2 - 330/2, GetScreenHeight()/2 - 380/2 };
-    
+
     if (active)
     {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(style[DEFAULT_BACKGROUND_COLOR]), 0.85f)); 
-        
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(style[DEFAULT_BACKGROUND_COLOR]), 0.85f));
+
         active = !GuiWindowBox((Rectangle){ position.x + 0, position.y + 0, 330, 380 }, "About rFxGen");
 
         DrawIcon(position.x + 10, position.y + 35, 64, "rFX", 20, true, GetColor(0x5197d4ff));    // Draw raylib style icon
-        
+
         GuiLabel((Rectangle){ position.x + 85, position.y + 60, 136, 25 }, lblNameVersionText);
         GuiLabel((Rectangle){ position.x + 220, position.y + 60, 65, 25 }, lblDateText);
         GuiLabel((Rectangle){ position.x + 85, position.y + 80, 225, 20 }, lblDescriptionText);
-        
+
         GuiLine((Rectangle){ position.x + 0, position.y + 100, 330, 20 }, 1);
         GuiLabel((Rectangle){ position.x + 10, position.y + 110, 126, 25 }, lblUsedLibsText);
-        
+
         DrawIcon(position.x + 10, position.y + 135, 64, "raylib", 16, false, BLACK);    // Draw raylib style icon
         //GuiDummyRec((Rectangle){ position.x + 10, position.y + 135, 65, 65 }, "logo_raylib");
         GuiDummyRec((Rectangle){ position.x + 80, position.y + 135, 65, 65 }, "logo_raygui");
@@ -1798,17 +1802,15 @@ static bool GuiWindowAbout(bool active)
         if (GuiLabelButton((Rectangle){ position.x + 95, position.y + 285, 165, 25 }, linkToolWebText)) { OpenLinkURL(""); }
         if (GuiLabelButton((Rectangle){ position.x + 95, position.y + 305, 165, 25 }, linkMailText)) { OpenLinkURL(""); }
         GuiLine((Rectangle){ position.x + 0, position.y + 325, 330, 20 }, 1);
-        
+
         GuiDisable(); chkLicenseChecked = GuiCheckBoxEx((Rectangle){ position.x + 10, position.y + 350, 15, 15 }, chkLicenseChecked, "License Agreement (EULA)"); GuiEnable();
 
         if (GuiButton((Rectangle){ position.x + 175, position.y + 345, 70, 25 }, "Be ONE!")) { /* OpenURL(); */ }
         if (GuiButton((Rectangle){ position.x + 250, position.y + 345, 70, 25 }, "Close")) active = false;
     }
-    
+
     return active;
 }
-
-
 
 // Draw wave data
 // NOTE: For proper visualization, MSAA x4 is recommended, alternatively
@@ -1838,8 +1840,9 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
         currentSample += sampleIncrement;
     }
 }
+#endif // COMMAND_LINE_ONLY
 
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
 // Simple time wait in milliseconds
 static void WaitTime(int ms)
 {
@@ -1850,36 +1853,36 @@ static void WaitTime(int ms)
 
         int percent = 0;
         int prevPercent = percent;
-        
+
         // Wait until current ms time matches total ms time
-        while (currentTime <= totalTime) 
+        while (currentTime <= totalTime)
         {
             // Check for key pressed to stop playing
-            if (kbhit()) 
+            if (kbhit())
             {
-                int key = getch(); 
+                int key = getch();
                 if ((key == 13) || (key == 27)) break;    // KEY_ENTER || KEY_ESCAPE
             }
-            
+
             currentTime = clock()*1000/CLOCKS_PER_SEC;
 
             // Print console time bar
             percent = (int)(((float)currentTime/totalTime)*100.0f);
-            
+
             if (percent != prevPercent)
             {
                 printf("\r[");
-                for (int j = 0; j < 50; j++) 
+                for (int j = 0; j < 50; j++)
                 {
                     if (j < percent/2) printf("=");
                     else printf(" ");
                 }
                 printf("] [%02i%%]", percent);
-            
+
                 prevPercent = percent;
             }
         }
-        
+
         printf("\n\n");
     }
 }
@@ -1888,10 +1891,10 @@ static void WaitTime(int ms)
 static void PlayWaveCLI(Wave wave)
 {
     float waveTimeMs = (float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels);
-    
+
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
-    
+
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// rFXGen v%s - CLI audio player                                               //\n", TOOL_VERSION_TEXT);
@@ -1903,7 +1906,7 @@ static void PlayWaveCLI(Wave wave)
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("Playing sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
-    
+
     PlaySound(fx);                      // Play sound
     WaitTime(waveTimeMs);               // Wait while audio is playing
     UnloadSound(fx);                    // Unload sound data
