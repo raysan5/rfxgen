@@ -29,7 +29,7 @@
 *
 *   DEPENDENCIES:
 *       raylib 2.1-dev          - Windowing/input management and drawing.
-*       raygui 2.1              - IMGUI controls (based on raylib).
+*       raygui 2.0              - Immediate-mode GUI controls.
 *       tinyfiledialogs 3.3.7   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
@@ -66,6 +66,10 @@
 
 #include "raylib.h"
 
+#define GUI_WINDOW_ABOUT_IMPLEMENTATION
+#define RAYGUI_STYLE_SAVE_LOAD
+#include "gui_window_about.h"
+
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_STYLE_SAVE_LOAD
 #include "raygui.h"                     // Required for: IMGUI controls
@@ -78,6 +82,8 @@
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
+                                        
+
 
 #if defined(_WIN32)
     #include <conio.h>          // Windows only, no stardard library
@@ -92,7 +98,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define ENABLE_PRO_FEATURES             // Enable PRO version features
-#define COMMAND_LINE_ONLY               // Compile tool oly for command line usage
+//#define COMMAND_LINE_ONLY               // Compile tool oly for command line usage
 
 #define TOOL_VERSION_TEXT    "2.0"      // Tool version string
 
@@ -255,11 +261,14 @@ static void GenBlipSelect(void);            // Generate sound: Blip/Select
 static void GenRandomize(void);             // Generate random sound
 static void GenMutate(void);                // Mutate current sound
 
+// Draw rTool generated icon
+static void DrawIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color);
+
 #if !defined(COMMAND_LINE_ONLY)
 // Auxiliar functions
 static void OpenLinkURL(const char *url);   // Open URL link
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
-static bool GuiWindowAbout(bool active);    // Gui about window
+//static bool GuiWindowAbout(bool active);    // Gui about window
 #endif
 
 #if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
@@ -338,7 +347,7 @@ int main(int argc, char *argv[])
 
     const char *tgroupWaveTypeText[4] = { "Square", "Sawtooth", "Sinewave", "Noise" };
 
-    bool windowAboutActive = false;
+    GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //----------------------------------------------------------------------------------------
 
     Wave wave;
@@ -420,7 +429,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_TWO)) GuiLoadStylePalette(paletteStyleDark);               // Load style color palette: dark
         if (IsKeyPressed(KEY_THREE)) GuiLoadStylePalette(paletteStyleCandy);            // Load style color palette: candy
 #endif
-        if (IsKeyPressed(KEY_F1)) windowAboutActive = !windowAboutActive;
+        if (IsKeyPressed(KEY_F1)) windowAboutState.active = !windowAboutState.active;
         //----------------------------------------------------------------------------------
 
         // Basic program flow logic
@@ -598,8 +607,7 @@ int main(int argc, char *argv[])
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
             //--------------------------------------------------------------------------------
 
-            // GUI About window
-            windowAboutActive = GuiWindowAbout(windowAboutActive);
+            GuiWindowAbout(&windowAboutState);      // GUI About window
 
             EndTextureMode();
 
@@ -1742,74 +1750,6 @@ static void DrawIcon(int posX, int posY, int size, const char *text, int textSiz
     if (pro) DrawTriangle((Vector2){ posX + size - 2*borderSize - triSize, posY + 2*borderSize },
                           (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize + triSize },
                           (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize }, color);
-}
-
-// Gui about window
-static bool GuiWindowAbout(bool active)
-{
-    // NOTE: const string literals are most-probably stored in read-only data section
-    const char *lblNameVersionText = "rFXGen v1.0 ZERO";
-    const char *lblDateText = "(Dec. 2018)";
-    const char *lblDescriptionText = "A simple and easy-to-use sounds generator";
-    const char *lblUsedLibsText = "Used libraries:";
-    const char *linkraylibText = "www.raylib.com";
-    const char *linkGitraylibText = "github.com/raysan5/raylib";
-    const char *linkGitrayguiText = "github.com/raysan5/raygui";
-    const char *lblDevelopersText = "Developers:";
-    const char *lblDev01Text = "- Ramon Santamaria (              )";
-    const char *linkDev01Text = "@raysan5";
-    const char *lblCopyrightText = "Copyright (c) 2019 raylib technologies (                 )";
-    const char *linkraylibtech = "@raylibtech";
-    const char *lblMoreInfoText = "More info:";
-    const char *linkToolWebText = "www.raylibtech.com/rfxgen";
-    const char *lblSupportText = "Support:";
-    const char *linkMailText = "ray@raylibtech.com";
-
-    static bool chkLicenseChecked = true;
-
-    Vector2 position = { GetScreenWidth()/2 - 330/2, GetScreenHeight()/2 - 380/2 };
-
-    if (active)
-    {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(style[DEFAULT_BACKGROUND_COLOR]), 0.85f));
-
-        active = !GuiWindowBox((Rectangle){ position.x + 0, position.y + 0, 330, 380 }, "About rFxGen");
-
-        DrawIcon(position.x + 10, position.y + 35, 64, "rFX", 20, true, GetColor(0x5197d4ff));    // Draw raylib style icon
-
-        GuiLabel((Rectangle){ position.x + 85, position.y + 60, 136, 25 }, lblNameVersionText);
-        GuiLabel((Rectangle){ position.x + 220, position.y + 60, 65, 25 }, lblDateText);
-        GuiLabel((Rectangle){ position.x + 85, position.y + 80, 225, 20 }, lblDescriptionText);
-
-        GuiLine((Rectangle){ position.x + 0, position.y + 100, 330, 20 }, 1);
-        GuiLabel((Rectangle){ position.x + 10, position.y + 110, 126, 25 }, lblUsedLibsText);
-
-        DrawIcon(position.x + 10, position.y + 135, 64, "raylib", 16, false, BLACK);    // Draw raylib style icon
-        //GuiDummyRec((Rectangle){ position.x + 10, position.y + 135, 65, 65 }, "logo_raylib");
-        GuiDummyRec((Rectangle){ position.x + 80, position.y + 135, 65, 65 }, "logo_raygui");
-        if (GuiLabelButton((Rectangle){ position.x + 155, position.y + 130, 126, 25 }, linkraylibText)) { OpenLinkURL(""); }
-        if (GuiLabelButton((Rectangle){ position.x + 155, position.y + 150, 165, 25 }, linkGitraylibText)) { OpenLinkURL(""); }
-        if (GuiLabelButton((Rectangle){ position.x + 155, position.y + 170, 165, 25 }, linkGitrayguiText)) { OpenLinkURL(""); }
-        GuiLine((Rectangle){ position.x + 10, position.y + 200, 310, 20 }, 1);
-        GuiLabel((Rectangle){ position.x + 10, position.y + 210, 80, 25 }, lblDevelopersText);
-        GuiLabel((Rectangle){ position.x + 20, position.y + 230, 180, 25 }, lblDev01Text);
-        if (GuiLabelButton((Rectangle){ position.x + 130, position.y + 230, 56, 25 }, linkDev01Text)) { OpenLinkURL(""); }
-        GuiLine((Rectangle){ position.x + 10, position.y + 250, 310, 20 }, 1);
-        GuiLabel((Rectangle){ position.x + 10, position.y + 265, 289, 25 }, lblCopyrightText);
-        if (GuiLabelButton((Rectangle){ position.x + 215, position.y + 265, 76, 25 }, linkraylibtech)) { OpenLinkURL(""); }
-        GuiLabel((Rectangle){ position.x + 10, position.y + 285, 80, 25 }, lblMoreInfoText);
-        GuiLabel((Rectangle){ position.x + 10, position.y + 305, 80, 25 }, lblSupportText);
-        if (GuiLabelButton((Rectangle){ position.x + 95, position.y + 285, 165, 25 }, linkToolWebText)) { OpenLinkURL(""); }
-        if (GuiLabelButton((Rectangle){ position.x + 95, position.y + 305, 165, 25 }, linkMailText)) { OpenLinkURL(""); }
-        GuiLine((Rectangle){ position.x + 0, position.y + 325, 330, 20 }, 1);
-
-        GuiDisable(); chkLicenseChecked = GuiCheckBoxEx((Rectangle){ position.x + 10, position.y + 350, 15, 15 }, chkLicenseChecked, "License Agreement (EULA)"); GuiEnable();
-
-        if (GuiButton((Rectangle){ position.x + 175, position.y + 345, 70, 25 }, "Be ONE!")) { /* OpenURL(); */ }
-        if (GuiButton((Rectangle){ position.x + 250, position.y + 345, 70, 25 }, "Close")) active = false;
-    }
-
-    return active;
 }
 
 // Draw wave data
