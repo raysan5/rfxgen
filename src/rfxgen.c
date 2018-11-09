@@ -4,7 +4,7 @@
 *
 *   CONFIGURATION:
 *
-*   #define ENABLE_PRO_FEATURES
+*   #define VERSION_ONE
 *       Enable PRO features for the tool. Usually command-line and export options related.
 *
 *   #define RENDER_WAVE_TO_TEXTURE (defined by default)
@@ -82,11 +82,9 @@
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
-                                        
-
 
 #if defined(_WIN32)
-    #include <conio.h>          // Windows only, no stardard library
+    #include <conio.h>                  // Required for: kbhit() [Windows only, no stardard library]
 #else
     // Provide kbhit() function in non-Windows platforms
     #include <termios.h>
@@ -97,8 +95,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define ENABLE_PRO_FEATURES             // Enable PRO version features
-//#define COMMAND_LINE_ONLY               // Compile tool oly for command line usage
+//#define VERSION_ONE                   // Enable version ONE features
+                                        // NOTE: It should be passed to compilation
+//#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 
 #define TOOL_VERSION_TEXT    "2.0"      // Tool version string
 
@@ -176,7 +175,7 @@ static int wavSampleRate = 44100;   // Wave sample rate (frequency)
 static WaveParams params;           // Stores wave parameters for generation
 static bool regenerate = false;     // Wave regeneration required
 
-#if defined(ENABLE_PRO_FEATURES) && !defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
 // raygui color palette: Light
 static const int paletteStyleLight[14] = {
     0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
@@ -235,7 +234,7 @@ static const int paletteStyleCandy[14] = {
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 static void ShowCommandLineInfo(void);                      // Show command line usage info
 static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
 #endif
@@ -261,17 +260,12 @@ static void GenBlipSelect(void);            // Generate sound: Blip/Select
 static void GenRandomize(void);             // Generate random sound
 static void GenMutate(void);                // Mutate current sound
 
-// Draw rTool generated icon
-static void DrawIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color);
-
 #if !defined(COMMAND_LINE_ONLY)
 // Auxiliar functions
-static void OpenLinkURL(const char *url);   // Open URL link
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
-//static bool GuiWindowAbout(bool active);    // Gui about window
 #endif
 
-#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 static void WaitTime(int ms);               // Simple time wait in milliseconds
 static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
 
@@ -302,17 +296,17 @@ int main(int argc, char *argv[])
                 strcpy(inFileName, argv[1]);        // Read input filename to open with gui interface
             }
         }
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(VERSION_ONE)
         else
         {
             ProcessCommandLine(argc, argv);
             return 0;
         }
-#endif      // ENABLE_PRO_FEATURES
+#endif      // VERSION_ONE
     }
 
 #if !defined(COMMAND_LINE_ONLY)
-#if (defined(ENABLE_PRO_FEATURES) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
+#if (defined(VERSION_ONE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
     // and closing console (FreeConsole()) when changing to GUI interface
@@ -424,7 +418,7 @@ int main(int argc, char *argv[])
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound();      // Show dialog: save sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) DialogLoadSound();      // Show dialog: load sound (.rfx, .sfs)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave); // Show dialog: export wave (.wav)
-#if defined(ENABLE_PRO_FEATURES)
+#if defined(VERSION_ONE)
         if (IsKeyPressed(KEY_ONE)) GuiLoadStylePalette(paletteStyleLight);              // Load style color palette: light
         if (IsKeyPressed(KEY_TWO)) GuiLoadStylePalette(paletteStyleDark);               // Load style color palette: dark
         if (IsKeyPressed(KEY_THREE)) GuiLoadStylePalette(paletteStyleCandy);            // Load style color palette: candy
@@ -570,8 +564,9 @@ int main(int argc, char *argv[])
             GuiStatusBar((Rectangle){ 327, screenHeight - 20, screenWidth - 327, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
             //--------------------------------------------------------------------------------
 
-            // Advertising (links, logos...)
+            // Advertising (links, logos...) --> Moved to Window About
             //--------------------------------------------------------------------------------
+            /*
             GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
             GuiLabel((Rectangle){ 13, 248, 10, 10 }, "Tomas Pettersson");
 
@@ -591,6 +586,7 @@ int main(int argc, char *argv[])
             DrawText("raylib", 415, 214, 20, BLACK);
 
             if (GuiLabelButton((Rectangle){ 405, 250, MeasureText("www.raylib.com", 10), 10 }, "www.raylib.com")) OpenLinkURL("http://www.raylib.com");
+            */
             //--------------------------------------------------------------------------------
 
             // Wave form
@@ -641,7 +637,7 @@ int main(int argc, char *argv[])
 // Module Functions Definitions (local)
 //--------------------------------------------------------------------------------------------
 
-#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
@@ -826,7 +822,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
     if (showUsageInfo) ShowCommandLineInfo();
 }
-#endif      // ENABLE_PRO_FEATURES
+#endif      // VERSION_ONE
 
 //--------------------------------------------------------------------------------------------
 // Load/Save/Export functions
@@ -1714,44 +1710,6 @@ static void GenMutate(void)
 //--------------------------------------------------------------------------------------------
 
 #if !defined(COMMAND_LINE_ONLY)
-// Open URL link
-static void OpenLinkURL(const char *url)
-{
-    // Max length is "explorer ".length + url.maxlength (which is 2083),
-    // but we are not wasting that much memory here... let's set it up to 512
-    static char cmd[512] = { 0 };
-
-#if defined(_WIN32)
-    strcpy(cmd, "explorer ");
-#elif defined(__linux__)
-    strcpy(cmd, "xdg-open ");   // Alternatives: firefox, x-www-browser
-#elif defined(__APPLE__)
-    strcpy(cmd, "open ");
-#endif
-
-    strcat(cmd, url);
-    system(cmd);
-
-    memset(cmd, 0, 512);
-}
-
-// Draw rTool generated icon
-static void DrawIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color)
-{
-    int triSize = size/4;
-    int borderSize = (int)ceil((float)size/16.0f);
-
-    int textPosX = posX + size - 2*borderSize - MeasureText(text, textSize);
-    int textPosY = posY + size - 2*borderSize - textSize + 4;
-
-    DrawRectangle(posX, posY, size, size, RAYWHITE);
-    DrawRectangleLinesEx((Rectangle){ posX, posY, size, size }, borderSize, color);
-    DrawText(text, textPosX, textPosY, textSize, color);
-    if (pro) DrawTriangle((Vector2){ posX + size - 2*borderSize - triSize, posY + 2*borderSize },
-                          (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize + triSize },
-                          (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize }, color);
-}
-
 // Draw wave data
 // NOTE: For proper visualization, MSAA x4 is recommended, alternatively
 // it should be rendered to a bigger texture and then scaled down with
@@ -1782,7 +1740,7 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 }
 #endif // COMMAND_LINE_ONLY
 
-#if defined(ENABLE_PRO_FEATURES) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 // Simple time wait in milliseconds
 static void WaitTime(int ms)
 {
@@ -1882,4 +1840,4 @@ static int kbhit(void)
 	return 0;
 }
 #endif
-#endif      // ENABLE_PRO_FEATURES
+#endif      // VERSION_ONE
