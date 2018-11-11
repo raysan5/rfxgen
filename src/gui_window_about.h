@@ -72,6 +72,8 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 
 #include "raygui.h"
 
+#include <math.h>       // Required for: ceil()
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -97,7 +99,7 @@ static void DrawIcon(int posX, int posY, int size, const char *text, int textSiz
     int borderSize = (int)ceil((float)size/16.0f);
 
     int textPosX = posX + size - 2*borderSize - MeasureText(text, textSize);
-    int textPosY = posY + size - 2*borderSize - textSize + 4;
+    int textPosY = posY + size - 2*borderSize - textSize;
 
     DrawRectangle(posX, posY, size, size, RAYWHITE);
     DrawRectangleLinesEx((Rectangle){ posX, posY, size, size }, borderSize, color);
@@ -129,7 +131,7 @@ GuiWindowAboutState InitGuiWindowAbout(void)
 void GuiWindowAbout(GuiWindowAboutState *state)
 {
     // NOTE: const string literals are most-probably stored in read-only data section
-    const char *lblNameVersionText = "rFXGen v1.0 ZERO";
+    const char *lblNameVersionText = "rFXGen v1.0";
     const char *lblDateText = "(Dec. 2018)";
     const char *lblDescriptionText = "A simple and easy-to-use sounds generator";
     const char *lblUsedLibsText = "Used libraries:";
@@ -153,25 +155,30 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyleProperty(DEFAULT_BACKGROUND_COLOR)), 0.85f));
 
         state->active = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, state->width, state->height }, "About rFxGen");
-
+        
+        // TODO: Create a color rectangle or color-config panel...
+        DrawRectangle(state->position.x + 1, state->position.y + 5 + 20, 330 - 2, 90 - 5, GetColor(GuiGetStyleProperty(DEFAULT_BASE_COLOR_DISABLED)));
+        
 #if defined(VERSION_ONE)
         DrawIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 200, 25 }, FormatText("%s ONE %s", lblNameVersionText, lblDateText));
 #else
         DrawIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, false, GetColor(toolColor));
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 200, 25 }, FormatText("%s ZERO %s", lblNameVersionText, lblDateText));
 #endif
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 136, 25 }, lblNameVersionText);
-        GuiLabel((Rectangle){ state->position.x + 220, state->position.y + 60, 65, 25 }, lblDateText);
+
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 80, 225, 20 }, lblDescriptionText);
 
         GuiLine((Rectangle){ state->position.x + 0, state->position.y + 100, 330, 20 }, 1);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 110, 126, 25 }, lblUsedLibsText);
 
-        DrawIcon(state->position.x + 10, state->position.y + 135, 64, "raylib", 16, false, BLACK);
-        DrawIcon(state->position.x + 80, state->position.y + 135, 64, "raygui", 16, false, LIGHTGRAY);
+        DrawIcon(state->position.x + 10, state->position.y + 135, 64, "raylib", 10, false, BLACK);
+        DrawIcon(state->position.x + 80, state->position.y + 135, 64, "raygui", 10, false, LIGHTGRAY);
 
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 130, 126, 25 }, linkraylibText)) { OpenURL("https://www.raylib.com/"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 150, 165, 25 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 170, 165, 25 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
+
         GuiLine((Rectangle){ state->position.x + 10, state->position.y + 200, 310, 20 }, 1);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 210, 80, 25 }, lblDevelopersText);
         GuiLabel((Rectangle){ state->position.x + 20, state->position.y + 230, 180, 25 }, lblDev01Text);
