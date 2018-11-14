@@ -1187,39 +1187,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 {
     WaveParams params = { 0 };
 
-    if (IsFileExtension(GetExtension(fileName), ".rfx"))
-    {
-        FILE *rfxFile = fopen(fileName, "rb");
-
-        if (rfxFile != NULL)
-        {
-            // Read .rfx file header
-            unsigned char signature[5];
-            fread(signature, 4, sizeof(unsigned char), rfxFile);
-
-            // Check for valid .rfx file (FormatCC)
-            if ((signature[0] == 'r') &&
-                (signature[1] == 'F') &&
-                (signature[2] == 'X') &&
-                (signature[3] == ' '))
-            {
-                unsigned short version, length;
-                fread(&version, 1, sizeof(unsigned short), rfxFile);
-                fread(&length, 1, sizeof(unsigned short), rfxFile);
-
-                if (version != 200) printf("[%s] rFX file version not supported (%i)\n", fileName, version);
-                else
-                {
-                    if (length != sizeof(WaveParams)) printf("[%s] Wrong rFX wave parameters size\n", fileName);
-                    else fread(&params, 1, sizeof(WaveParams), rfxFile);   // Load wave generation parameters
-                }
-            }
-            else printf("[%s] rFX file does not seem to be valid\n", fileName);
-
-            fclose(rfxFile);
-        }
-    }
-    else if (IsFileExtension(GetExtension(fileName), ".sfs"))
+    if (IsFileExtension(GetExtension(fileName), ".sfs"))
     {
         FILE *sfsFile = fopen(fileName, "rb");
 
@@ -1280,6 +1248,37 @@ static WaveParams LoadWaveParams(const char *fileName)
 
         fclose(sfsFile);
     }
+    else if (IsFileExtension(GetExtension(fileName), ".rfx"))
+    {
+        FILE *rfxFile = fopen(fileName, "rb");
+
+        if (rfxFile != NULL)
+        {
+            // Read .rfx file header
+            unsigned char signature[5];
+            fread(signature, 4, sizeof(unsigned char), rfxFile);
+
+            // Check for valid .rfx file (FormatCC)
+            if ((signature[0] == 'r') &&
+                (signature[1] == 'F') &&
+                (signature[2] == 'X') &&
+                (signature[3] == ' '))
+            {
+                int version;
+                fread(&version, 1, sizeof(int), rfxFile);
+
+                if (version == 100) printf("[%s] Wrong rFX file version (%i)\n", fileName, version);
+                else if (version == 120) 
+                {
+                    // Load wave generation parameters
+                    fread(&params, 1, sizeof(WaveParams), rfxFile);
+                }
+            }
+            else printf("[%s] rFX file does not seem to be valid\n", fileName);
+
+            fclose(rfxFile);
+        }
+    }
 
     return params;
 }
@@ -1287,8 +1286,64 @@ static WaveParams LoadWaveParams(const char *fileName)
 // Save .rfx sound parameters file
 static void SaveWaveParams(WaveParams params, const char *fileName)
 {
+    /*
+    if (IsFileExtension(GetExtension(fileName), ".sfs"))
+    {
+        FILE *sfsFile = fopen(fileName, "wb");
+
+        if (sfsFile == NULL) return;
+
+        // Save .sfs sound parameters
+        int version = 102;
+        fwrite(&version, 1, sizeof(int), sfsFile);
+
+        fwrite(&params.waveTypeValue, 1, sizeof(int), sfsFile);
+
+        fwrite(&volumeValue, 1, sizeof(float), sfsFile);
+
+        fwrite(&params.startFrequencyValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.minFrequencyValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.slideValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.deltaSlideValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.squareDutyValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.dutySweepValue, 1, sizeof(float), sfsFile);
+
+        fwrite(&params.vibratoDepthValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.vibratoSpeedValue, 1, sizeof(float), sfsFile);
+
+        float vibratoPhaseDelay = 0.0f;
+        fwrite(&vibratoPhaseDelay, 1, sizeof(float), sfsFile); // Not used
+
+        fwrite(&params.attackTimeValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.sustainTimeValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.decayTimeValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.sustainPunchValue, 1, sizeof(float), sfsFile);
+
+        bool filterOn = false;
+        fwrite(&filterOn, 1, sizeof(bool), sfsFile); // Not used
+
+        fwrite(&params.lpfResonanceValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.lpfCutoffValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.lpfCutoffSweepValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.hpfCutoffValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.hpfCutoffSweepValue, 1, sizeof(float), sfsFile);
+
+        fwrite(&params.phaserOffsetValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.phaserSweepValue, 1, sizeof(float), sfsFile);
+
+        fwrite(&params.repeatSpeedValue, 1, sizeof(float), sfsFile);
+
+        fwrite(&params.changeSpeedValue, 1, sizeof(float), sfsFile);
+        fwrite(&params.changeAmountValue, 1, sizeof(float), sfsFile);
+
+        fclose(sfsFile);
+    }
+    else 
+    */
     if (IsFileExtension(GetExtension(fileName), ".rfx"))
     {
+        #define TOOL_VERSION_TEXT_BINARY     120
+        
         // Fx Sound File Structure (.rfx)
         // ------------------------------------------------------
         // Offset | Size  | Type       | Description
@@ -1304,13 +1359,11 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
         if (rfxFile != NULL)
         {
             unsigned char signature[5] = "rFX ";
-            unsigned short version = 200;
-            unsigned short length = sizeof(WaveParams);
+            unsigned int version = TOOL_VERSION_TEXT_BINARY;
             
             // Write .rfx file header
             fwrite(signature, 4, sizeof(unsigned char), rfxFile);
-            fwrite(&version, 1, sizeof(unsigned short), rfxFile);
-            fwrite(&length, 1, sizeof(unsigned short), rfxFile);
+            fwrite(&version, 1, sizeof(unsigned int), rfxFile);
 
             // Write wave generation parameters
             fwrite(&params, 1, sizeof(WaveParams), rfxFile);
