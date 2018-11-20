@@ -2957,7 +2957,7 @@ RAYGUIDEF void GuiUpdateStyleComplete(void)
     // NOTE: Extended style properties are ignored
     for (int i = 1; i < NUM_CONTROLS; i++)
     {
-        for (int j = 0; j < NUM_PROPS_DEFAULT; j++)GuiSetStyle(i, j, GuiGetStyle(DEFAULT, j));
+        for (int j = 0; j < NUM_PROPS_DEFAULT; j++) GuiSetStyle(i, j, GuiGetStyle(DEFAULT, j));
     }
 }
 #endif  // defined(RAYGUI_STYLE_LOADING)

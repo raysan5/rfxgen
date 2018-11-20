@@ -152,12 +152,12 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
     if (state->active)
     {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyleProperty(DEFAULT_BACKGROUND_COLOR)), 0.85f));
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
 
         state->active = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, state->width, state->height }, "About rFxGen");
         
         // TODO: Create a color rectangle or color-config panel...
-        DrawRectangle(state->position.x + 1, state->position.y + 5 + 20, 330 - 2, 90 - 5, GetColor(GuiGetStyleProperty(DEFAULT_BASE_COLOR_DISABLED)));
+        DrawRectangle(state->position.x + 1, state->position.y + 5 + 20, 330 - 2, 90 - 5, GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_DISABLED)));
         
 #if defined(VERSION_ONE)
         DrawIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));

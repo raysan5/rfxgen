@@ -66,13 +66,13 @@
 
 #include "raylib.h"
 
-#define GUI_WINDOW_ABOUT_IMPLEMENTATION
-#define RAYGUI_STYLE_SAVE_LOAD
-#include "gui_window_about.h"
-
 #define RAYGUI_IMPLEMENTATION
-#define RAYGUI_STYLE_SAVE_LOAD
+#define RAYGUI_STYLE_LOADING
 #include "raygui.h"                     // Required for: IMGUI controls
+
+#undef RAYGUI_IMPLEMENTATION
+#define GUI_WINDOW_ABOUT_IMPLEMENTATION
+#include "gui_window_about.h"
 
 #include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
 
@@ -476,17 +476,17 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(GetColor(GuiGetStyleProperty(DEFAULT_BACKGROUND_COLOR)));
+            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
-                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
+                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             EndTextureMode();
 #endif
             // Render all screen to a texture (for scaling)
             BeginTextureMode(screenTarget);
 
-            DrawText("rFXGen", 29, 19, 20, GetColor(style[DEFAULT_TEXT_COLOR_PRESSED]));
+            DrawText("rFXGen", 29, 19, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             GuiLabel((Rectangle){ 89, 14, 10, 10 }, FormatText("v%s", TOOL_VERSION_TEXT));
 
             // Parameters group boxes
@@ -549,7 +549,7 @@ int main(int argc, char *argv[])
             if (volumeValue < 1.0f) GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)));
             else GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)));
 
-            screenSizeToggle = GuiToggleButton((Rectangle){ 390, 15, 95, 20 }, "Screen Size x2", screenSizeToggle);
+            screenSizeToggle = GuiToggle((Rectangle){ 390, 15, 95, 20 }, "Screen Size x2", screenSizeToggle);
             playOnChangeValue = GuiCheckBoxEx((Rectangle){ 390, 115, 10, 10 }, playOnChangeValue, "Play on change");
             comboxSampleRateValue = GuiComboBox((Rectangle){ 390, 340, 95, 20 }, comboxSampleRateText, 2, comboxSampleRateValue);
             comboxSampleSizeValue = GuiComboBox((Rectangle){ 390, 364, 95, 20 }, comboxSampleSizeText, 3, comboxSampleSizeValue);
@@ -594,13 +594,13 @@ int main(int argc, char *argv[])
         #if defined(RENDER_WAVE_TO_TEXTURE)
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
         #else
-            DrawWave(&wave, waveRec, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawWave(&wave, waveRec, GetColor(GuiGetStyle(DEFAULT, LINES_COLOR)));
         #endif
 
             // TODO: Draw playing progress rectangle
 
-            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(style[DEFAULT_TEXT_COLOR_FOCUSED]), 0.6f));
-            DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyleProperty(DEFAULT_LINES_COLOR)));
+            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
+            DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINES_COLOR)));
             //--------------------------------------------------------------------------------
 
             GuiWindowAbout(&windowAboutState);      // GUI About window
