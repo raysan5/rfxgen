@@ -176,58 +176,77 @@ static WaveParams params;           // Stores wave parameters for generation
 static bool regenerate = false;     // Wave regeneration required
 
 #if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
-// raygui color palette: Light
-static const int paletteStyleLight[14] = {
-    0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
-    0x90abb5ff,     // DEFAULT_LINES_COLOR
-    0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
-    0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
-    0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
-    0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
-    0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
-    0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
-    0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
-    0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
-    0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
-    0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
-    0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
-    0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
-};
-
-// raygui color palette: Dark
-static const int paletteStyleDark[14] = {
-    0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
-    0x638465ff,     // DEFAULT_LINES_COLOR
-    0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
-    0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
-    0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
-    0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
-    0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
-    0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
-    0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
-    0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
-    0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
-    0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
-    0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
-    0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
-};
-
-// raygui color palette: Candy
-static const int paletteStyleCandy[14] = {
-    0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
-    0xd77575ff,     // DEFAULT_LINES_COLOR
-    0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
-    0xfeda96ff,     // DEFAULT_BASE_COLOR_NORMAL
-    0xe59b5fff,     // DEFAULT_TEXT_COLOR_NORMAL
-    0xee813fff,     // DEFAULT_BORDER_COLOR_FOCUSED
-    0xfcd85bff,     // DEFAULT_BASE_COLOR_FOCUSED
-    0xf49641ff,     // DEFAULT_TEXT_COLOR_FOCUSED
-    0xb34848ff,     // DEFAULT_BORDER_COLOR_PRESSED
-    0xeb7272ff,     // DEFAULT_BASE_COLOR_PRESSED
-    0xbd4a4aff,     // DEFAULT_TEXT_COLOR_PRESSED
-    0x94795dff,     // DEFAULT_BORDER_COLOR_DISABLED
-    0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
-    0x9c8369ff      // DEFAULT_TEXT_COLOR_DISABLED
+// raygui style palettes
+static const int paletteStyle[3][20] = {
+    {
+        // Style palette: Light
+        0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
+        0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
+        0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
+        0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+        0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
+        0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
+        0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
+        0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
+        0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
+        0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
+        0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
+        0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
+        1,              // DEFAULT_BORDER_WIDTH
+        1,              // DEFAULT_INNER_PADDING;
+        0,              // DEFAULT_RESERVED01
+        0,              // DEFAULT_RESERVED02
+        10,             // DEFAULT_TEXT_SIZE
+        1,              // DEFAULT_TEXT_SPACING
+        0x90abb5ff,     // DEFAULT_LINES_COLOR
+        0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
+    },
+    {
+        // Style palette: Dark
+        0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
+        0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
+        0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
+        0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
+        0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
+        0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+        0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
+        0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
+        0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
+        0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
+        0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
+        0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
+        1,              // DEFAULT_BORDER_WIDTH
+        1,              // DEFAULT_INNER_PADDING;
+        0,              // DEFAULT_RESERVED01
+        0,              // DEFAULT_RESERVED02
+        10,             // DEFAULT_TEXT_SIZE
+        1,              // DEFAULT_TEXT_SPACING
+        0x638465ff,     // DEFAULT_LINES_COLOR
+        0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
+    },
+    {
+        // Style palette: Candy
+        0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
+        0xfeda96ff,     // DEFAULT_BASE_COLOR_NORMAL
+        0xe59b5fff,     // DEFAULT_TEXT_COLOR_NORMAL
+        0xee813fff,     // DEFAULT_BORDER_COLOR_FOCUSED
+        0xfcd85bff,     // DEFAULT_BASE_COLOR_FOCUSED
+        0xf49641ff,     // DEFAULT_TEXT_COLOR_FOCUSED
+        0xb34848ff,     // DEFAULT_BORDER_COLOR_PRESSED
+        0xeb7272ff,     // DEFAULT_BASE_COLOR_PRESSED
+        0xbd4a4aff,     // DEFAULT_TEXT_COLOR_PRESSED
+        0x94795dff,     // DEFAULT_BORDER_COLOR_DISABLED
+        0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
+        0x9c8369ff,     // DEFAULT_TEXT_COLOR_DISABLED
+        1,              // DEFAULT_BORDER_WIDTH
+        1,              // DEFAULT_INNER_PADDING;
+        0,              // DEFAULT_RESERVED01
+        0,              // DEFAULT_RESERVED02
+        10,             // DEFAULT_TEXT_SIZE
+        1,              // DEFAULT_TEXT_SPACING
+        0xd77575ff,     // DEFAULT_LINES_COLOR
+        0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
+    }
 };
 #endif
 
@@ -349,14 +368,14 @@ int main(int argc, char *argv[])
     int sampleSizeActive = 1;
     const char *fileTypeTextList[3] = { "WAV", "RAW", "CODE" };
     int fileTypeActive = 0;
-    const char *visualStyleTextList[3] = { "LIGHT", "DARK", "CANDY" };
+    const char *visualStyleTextList[3] = { "Light", "Dark", "Candy" };
     int visualStyleActive = 0;
     
     bool screenSizeActive = false;
     
-    char *soundInfoText = "SOUND INFO: Num samples:";
-    char *durationText = "Duration";
-    char *waveSizeText = "Wave size";
+    char soundInfoText[64] = { 0 };
+    char durationText[64] = { 0 };
+    char waveSizeText[64] = { 0 };
     //----------------------------------------------------------------------------------------
 
     // About Window Layout: controls initialization
@@ -391,9 +410,10 @@ int main(int argc, char *argv[])
         sound = LoadSoundFromWave(wave);
     }
     
-    float previousVolumeValue = volumeValue;
-    int previousWaveTypeValue = params.waveTypeValue;
-    Rectangle waveRec = { 10, 415, 475, 50 };       // Wave drawing rectangle box
+    float prevVolumeValue = volumeValue;
+    int prevWaveTypeValue = params.waveTypeValue;
+    int prevVisualStyleActive = visualStyleActive;
+    Rectangle waveRec = { 10, 416, 475, 50 };   // Wave drawing rectangle box
     
     // Set default sound volume
     SetSoundVolume(sound, volumeValue);
@@ -442,11 +462,7 @@ int main(int argc, char *argv[])
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound();      // Show dialog: save sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) DialogLoadSound();      // Show dialog: load sound (.rfx, .sfs)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave); // Show dialog: export wave (.wav)
-#if defined(VERSION_ONE)
-        if (IsKeyPressed(KEY_ONE)) GuiLoadStylePalette(paletteStyleLight);              // Load style color palette: light
-        if (IsKeyPressed(KEY_TWO)) GuiLoadStylePalette(paletteStyleDark);               // Load style color palette: dark
-        if (IsKeyPressed(KEY_THREE)) GuiLoadStylePalette(paletteStyleCandy);            // Load style color palette: candy
-#endif
+
         if (IsKeyPressed(KEY_F1)) windowAboutState.active = !windowAboutState.active;
         //----------------------------------------------------------------------------------
 
@@ -454,11 +470,22 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
         
         // Check for changed gui values
-        if (volumeValue != previousVolumeValue) SetSoundVolume(sound, volumeValue);
-        previousVolumeValue = volumeValue;
+        if (volumeValue != prevVolumeValue) SetSoundVolume(sound, volumeValue);
+        prevVolumeValue = volumeValue;
 
-        if (params.waveTypeValue != previousWaveTypeValue) regenerate = true;
-        previousWaveTypeValue = params.waveTypeValue;
+        if (params.waveTypeValue != prevWaveTypeValue) regenerate = true;
+        prevWaveTypeValue = params.waveTypeValue;
+        
+#if defined(VERSION_ONE)
+        // Set new gui style if changed
+        if (visualStyleActive != prevVisualStyleActive) 
+        {
+            GuiLoadStylePalette(paletteStyle[visualStyleActive], 20);
+            GuiUpdateStyleComplete();
+            GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
+        }
+        prevVisualStyleActive = visualStyleActive;
+#endif
 
         // Consider two possible cases to regenerate wave and update sound:
         // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -473,6 +500,10 @@ int main(int argc, char *argv[])
             //UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
 
             if (regenerate || playOnChangeChecked) PlaySound(sound);
+            
+            strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount));
+            strcpy(durationText, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)));
+            strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8));
 
             regenerate = false;
         }
@@ -544,14 +575,14 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 10, 360, 95, 20 }, "Mutate")) GenMutate(); 
             if (GuiButton((Rectangle){ 10, 385, 95, 20 }, "Randomize")) GenRandomize(); 
 
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 0, 265, 26 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 25, 265, 66 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 90, 265, 96 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 185, 265, 36 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 220, 265, 36 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 255, 265, 21 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 275, 265, 36 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 310, 265, 85 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 2, 265, 24 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 25, 265, 66 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 90, 265, 96 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 185, 265, 36 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 220, 265, 36 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 255, 265, 21 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 275, 265, 36 }, "");
+            GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 310, 265, 85 }, "");
             
             // Parameters sliders
             //--------------------------------------------------------------------------------
@@ -606,7 +637,11 @@ int main(int argc, char *argv[])
             GuiLine((Rectangle){ 390, 275, 95, 20 }, 1);
             
             GuiLabel((Rectangle){ 390, 290, 96, 25 }, "Visual Style:");
+#if !defined(VERSION_ONE)
+            GuiDisable();
+#endif
             visualStyleActive = GuiComboBox((Rectangle){ 390, 315, 95, 20 }, visualStyleTextList, 3, visualStyleActive);
+            GuiEnable();
             screenSizeActive = GuiToggle((Rectangle){ 390, 340, 95, 20 }, "Screen Size x2", screenSizeActive);
             
             GuiLine((Rectangle){ 390, 360, 95, 20 }, 1);
@@ -614,12 +649,9 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 390, 380, 95, 25 }, "ABOUT")) windowAboutState.active = true; 
 
             // Draw status bar
-            GuiStatusBar((Rectangle){ 0, 475, 201, 20 }, soundInfoText, 10);
-            GuiStatusBar((Rectangle){ 200, 475, 126, 20 }, durationText, 10);
-            GuiStatusBar((Rectangle){ 325, 475, 170, 20 }, waveSizeText, 10);
-            //GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);
-            //GuiStatusBar((Rectangle){ 205, screenHeight - 20, 123, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
-            //GuiStatusBar((Rectangle){ 327, screenHeight - 20, screenWidth - 327, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
+            GuiStatusBar((Rectangle){ 0, 476, 201, 20 }, soundInfoText, 10);
+            GuiStatusBar((Rectangle){ 200, 476, 126, 20 }, durationText, 10);
+            GuiStatusBar((Rectangle){ 325, 476, 171, 20 }, waveSizeText, 10);
             //----------------------------------------------------------------------------------
 
             
@@ -681,9 +713,9 @@ int main(int argc, char *argv[])
 
             // Right side controls
             //--------------------------------------------------------------------------------
-            float previousVolumeValue = volumeValue;
+            float prevVolumeValue = volumeValue;
             volumeValue = GuiSliderBar((Rectangle){ 390, 65, 95, 10 }, volumeValue, 0, 1);
-            if (volumeValue != previousVolumeValue) SetSoundVolume(sound, volumeValue);
+            if (volumeValue != prevVolumeValue) SetSoundVolume(sound, volumeValue);
             if (volumeValue < 1.0f) GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)));
             else GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)));
 
@@ -692,9 +724,9 @@ int main(int argc, char *argv[])
             comboxSampleRateValue = GuiComboBox((Rectangle){ 390, 340, 95, 20 }, comboxSampleRateText, 2, comboxSampleRateValue);
             comboxSampleSizeValue = GuiComboBox((Rectangle){ 390, 364, 95, 20 }, comboxSampleSizeText, 3, comboxSampleSizeValue);
 
-            int previousWaveTypeValue = params.waveTypeValue;
+            int prevWaveTypeValue = params.waveTypeValue;
             params.waveTypeValue = GuiToggleGroup((Rectangle){ 115, 15, 260, 20 }, tgroupWaveTypeText, 4, params.waveTypeValue);
-            if (params.waveTypeValue != previousWaveTypeValue) regenerate = true;
+            if (params.waveTypeValue != prevWaveTypeValue) regenerate = true;
 
             // Draw status bar
             GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);

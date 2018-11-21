@@ -358,9 +358,9 @@ RAYGUIDEF Color GuiColorPicker(Rectangle bounds, Color color);                  
 RAYGUIDEF bool GuiMessageBox(Rectangle bounds, const char *windowTitle, const char *message);           // Message Box control, displays a message
 
 #if defined(RAYGUI_STYLE_LOADING)
-RAYGUIDEF void GuiLoadStyle(const char *fileName);              // Load style file (.rgs)
-RAYGUIDEF void GuiLoadStylePalette(const int *palette);         // Load style from a color palette array (14 values required)
-RAYGUIDEF void GuiLoadStylePaletteImage(const char *fileName);  // Load style from an image palette file (64x16)
+RAYGUIDEF void GuiLoadStyle(const char *fileName);                  // Load style file (.rgs)
+RAYGUIDEF void GuiLoadStylePalette(const int *palette, int count);  // Load style from a color palette array (14 values required)
+RAYGUIDEF void GuiLoadStylePaletteImage(const char *fileName);      // Load style from an image palette file (64x16)
 
 RAYGUIDEF void GuiUpdateStyleComplete(void);                    // Updates full style properties set with default values
 #endif
@@ -2910,14 +2910,20 @@ RAYGUIDEF void GuiLoadStyle(const char *fileName)
     }
 }
 
-// Load style from a palette array (DEFAULT - 24 values required)
-RAYGUIDEF void GuiLoadStylePalette(const int *palette)
+// Load style from a palette values array
+RAYGUIDEF void GuiLoadStylePalette(const int *palette, int count)
 {
-    // Load default style color palette
-    for (int i = 0; i < (NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED); i++) GuiSetStyle(DEFAULT, i, palette[i]);
-
-    // Update all controls style with default values
-    GuiUpdateStyleComplete();
+    int completeSets = count/(NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED);
+    int uncompleteSetProps = count%(NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED);
+    
+    // Load style palette values from array (complete property sets)
+    for (int i = 0; i < completeSets; i++)
+    {
+        for (int j = 0; j < (NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED); i++) GuiSetStyle(i, j, palette[i]);
+    }
+    
+    // Load style palette values from array (uncomplete property set)
+    for (int k = 0; k < uncompleteSetProps; k++) GuiSetStyle(completeSets, k, palette[completeSets*(NUM_PROPS_DEFAULT + NUM_PROPS_EXTENDED) + k]);
 }
 
 // Load GUI style from an image style file
@@ -2986,11 +2992,9 @@ static unsigned int *GetStyleDefault(void)
         GuiSetStyle(DEFAULT, BORDER_COLOR_DISABLED, 0xb5c1c2ff);
         GuiSetStyle(DEFAULT, BASE_COLOR_DISABLED, 0xe6e9e9ff);
         GuiSetStyle(DEFAULT, TEXT_COLOR_DISABLED, 0xaeb7b8ff);
-        GuiSetStyle(DEFAULT, TEXT_SIZE, 10);
-        GuiSetStyle(DEFAULT, TEXT_SPACING, 1);
         GuiSetStyle(DEFAULT, BORDER_WIDTH, 1);
         GuiSetStyle(DEFAULT, INNER_PADDING, 1);
-        
+               
         // Populate all controls with default style 
         for (int i = 1; i < NUM_CONTROLS; i++)
         {
@@ -2999,8 +3003,11 @@ static unsigned int *GetStyleDefault(void)
 
         // Initialize extended property values
         // NOTE: By default, extended property values are initialized to 0
+        GuiSetStyle(DEFAULT, TEXT_SIZE, 10);
+        GuiSetStyle(DEFAULT, TEXT_SPACING, 1);
         GuiSetStyle(DEFAULT, LINES_COLOR, 0x90abb5ff);          // DEFAULT specific property
         GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0xf5f5f5ff);     // DEFAULT specific property
+        
         GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
         GuiSetStyle(TOGGLE, GROUP_PADDING, 2);
         GuiSetStyle(SLIDER, SLIDER_WIDTH, 15);
