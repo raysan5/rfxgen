@@ -78,7 +78,7 @@
 
 #include <math.h>                       // Required for: sinf(), pow()
 #include <time.h>                       // Required for: clock()
-#include <stdlib.h>                     // Required for: malloc(), free()
+#include <stdlib.h>                     // Required for: calloc(), free()
 #include <string.h>                     // Required for: strcmp()
 #include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
                                         // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
@@ -100,6 +100,8 @@
 //#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 
 #define TOOL_VERSION_TEXT    "2.0"      // Tool version string
+
+#define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
@@ -165,15 +167,11 @@ typedef struct WaveParams {
 //----------------------------------------------------------------------------------
 
 // Volume parameters
-static float volumeValue = 0.6f;    // Volume
+static float volumeValue = 0.6f;        // Volume
 
 // Export WAV variables
-static int wavSampleSize = 16;      // Wave sample size in bits (bitrate)
-static int wavSampleRate = 44100;   // Wave sample rate (frequency)
-
-// Wave parameters
-static WaveParams params;           // Stores wave parameters for generation
-static bool regenerate = false;     // Wave regeneration required
+static int wavSampleSize = 16;          // Wave sample size in bits (bitrate)
+static int wavSampleRate = 44100;       // Wave sample rate (frequency)
 
 #if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
 // raygui style palettes
@@ -264,20 +262,20 @@ static void SaveWaveParams(WaveParams params, const char *fileName);    // Save 
 static void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
 static Wave GenerateWave(WaveParams params);                            // Generate wave data from parameters
 
-static void DialogLoadSound(void);          // Show dialog: load sound parameters file
-static void DialogSaveSound(void);          // Show dialog: save sound parameters file
-static void DialogExportWave(Wave wave);    // Show dialog: export current sound as .wav
+static WaveParams DialogLoadSound(void);        // Show dialog: load sound parameters file
+static void DialogSaveSound(WaveParams params); // Show dialog: save sound parameters file
+static void DialogExportWave(Wave wave);        // Show dialog: export current sound as .wav
 
 // Sound generation functions
-static void GenPickupCoin(void);            // Generate sound: Pickup/Coin
-static void GenLaserShoot(void);            // Generate sound: Laser shoot
-static void GenExplosion(void);             // Generate sound: Explosion
-static void GenPowerup(void);               // Generate sound: Powerup
-static void GenHitHurt(void);               // Generate sound: Hit/Hurt
-static void GenJump(void);                  // Generate sound: Jump
-static void GenBlipSelect(void);            // Generate sound: Blip/Select
-static void GenRandomize(void);             // Generate random sound
-static void GenMutate(void);                // Mutate current sound
+static WaveParams GenPickupCoin(void);      // Generate sound: Pickup/Coin
+static WaveParams GenLaserShoot(void);      // Generate sound: Laser shoot
+static WaveParams GenExplosion(void);       // Generate sound: Explosion
+static WaveParams GenPowerup(void);         // Generate sound: Powerup
+static WaveParams GenHitHurt(void);         // Generate sound: Hit/Hurt
+static WaveParams GenJump(void);            // Generate sound: Jump
+static WaveParams GenBlipSelect(void);      // Generate sound: Blip/Select
+static WaveParams GenRandomize(void);       // Generate random sound
+static void WaveMutate(WaveParams *params); // Mutate current sound
 
 #if !defined(COMMAND_LINE_ONLY)
 // Auxiliar functions
@@ -350,17 +348,8 @@ int main(int argc, char *argv[])
     
     bool playOnChangeChecked = true;
 
-    bool waveType01Active = true;
-    bool waveType02Active = true;
-    bool waveType03Active = true;
-    bool waveType04Active = true;
     const char *waveTypeTextList[4] = { "Square", "Sawtooth", "Sinewave", "Noise" };
-    int waveTypeActive = 2;
-
-    bool slot01Active = true;
-    bool slot02Active = true;
-    bool slot03Active = true;
-    bool slot04Active = true;
+    const char *slotTextList[4] = { "1", "2", "3", "4" };
     
     const char *sampleRateTextList[2] = { "22050 Hz", "44100 Hz" };
     int sampleRateActive = 1;
@@ -382,41 +371,49 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //----------------------------------------------------------------------------------------
-    
-    Wave wave = { 0 };
-    Sound sound = { 0 };
+
+    // Wave parameters
+    WaveParams params[MAX_WAVE_SLOTS] = { 0 }; // Wave parameters for generation
+    Wave wave[MAX_WAVE_SLOTS] = { 0 };
+    Sound sound[MAX_WAVE_SLOTS] = { 0 };
+
+    for (int i = 0; i < MAX_WAVE_SLOTS; i++)
+    {
+        // Reset generation parameters
+        // NOTE: Random seed for generation is set
+        ResetWaveParams(&params[i]);
+
+        // Default wave values
+        wave[i].sampleRate = 44100;
+        wave[i].sampleSize = 32;       // 32 bit -> float
+        wave[i].channels = 1;
+        wave[i].sampleCount = 10*wave[i].sampleRate*wave[i].channels;    // Max sampleCount for 10 seconds
+        wave[i].data = calloc(wave[i].sampleCount*wave[i].channels*wave[i].sampleSize/8, sizeof(char));
+
+        sound[i] = LoadSoundFromWave(wave[i]);
+    }
 
     // Check if a wave parameters file has been provided on command line
     if (inFileName[0] != '\0')
     {
-        params = LoadWaveParams(inFileName);    // Load wave parameters from .rfx
-        wave = GenerateWave(params);            // Generate wave from parameters
-        sound = LoadSoundFromWave(wave);        // Load sound from new wave
-        PlaySound(sound);                       // Play generated sound
-    }
-    else
-    {
-        // Reset generation parameters
-        // NOTE: Random seed for generation is set
-        ResetWaveParams(&params);
-
-        // Default wave values
-        wave.sampleRate = 44100;
-        wave.sampleSize = 32;       // 32 bit -> float
-        wave.channels = 1;
-        wave.sampleCount = 10*wave.sampleRate*wave.channels;    // Max sampleCount for 10 seconds
-        wave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
-
-        sound = LoadSoundFromWave(wave);
+        params[0] = LoadWaveParams(inFileName); // Load wave parameters from .rfx
+        UnloadWave(wave[0]);
+        wave[0] = GenerateWave(params[0]);      // Generate wave from parameters
+        UnloadSound(sound[0]);
+        sound[0] = LoadSoundFromWave(wave[0]);  // Load sound from new wave
+        PlaySound(sound[0]);                    // Play generated sound
     }
     
     float prevVolumeValue = volumeValue;
-    int prevWaveTypeValue = params.waveTypeValue;
+    int prevWaveTypeValue[MAX_WAVE_SLOTS] = { params[0].waveTypeValue };
     int prevVisualStyleActive = visualStyleActive;
+    bool regenerate = false;                    // Wave regeneration required
+    int prevSlotActive = 0, slotActive = 0;     // Wave slot tracking
+
     Rectangle waveRec = { 10, 416, 475, 50 };   // Wave drawing rectangle box
     
     // Set default sound volume
-    SetSoundVolume(sound, volumeValue);
+    for (int i = 0; i < MAX_WAVE_SLOTS; i++) SetSoundVolume(sound[i], volumeValue);
 
 #define RENDER_WAVE_TO_TEXTURE
 #if defined(RENDER_WAVE_TO_TEXTURE)
@@ -446,7 +443,7 @@ int main(int argc, char *argv[])
             if (IsFileExtension(droppedFiles[0], ".rfx") ||
                 IsFileExtension(droppedFiles[0], ".sfs"))
             {
-                params = LoadWaveParams(droppedFiles[0]);
+                params[slotActive] = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
 
                 //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(droppedFiles[0])));
@@ -458,10 +455,14 @@ int main(int argc, char *argv[])
 
         // Keyboard shortcuts
         //------------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound);                                  // Play current sound
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound();      // Show dialog: save sound (.rfx)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) DialogLoadSound();      // Show dialog: load sound (.rfx, .sfs)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave); // Show dialog: export wave (.wav)
+        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[slotActive]);  // Play current sound
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound(params[slotActive]);  // Show dialog: save sound (.rfx)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O))     // Show dialog: load sound (.rfx, .sfs)
+        {
+            params[slotActive] = DialogLoadSound();
+            regenerate = true;
+        }
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave[slotActive]); // Show dialog: export wave (.wav)
 
         if (IsKeyPressed(KEY_F1)) windowAboutState.active = !windowAboutState.active;
         //----------------------------------------------------------------------------------
@@ -470,11 +471,13 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
         
         // Check for changed gui values
-        if (volumeValue != prevVolumeValue) SetSoundVolume(sound, volumeValue);
+        if (volumeValue != prevVolumeValue) SetSoundVolume(sound[slotActive], volumeValue);
         prevVolumeValue = volumeValue;
 
-        if (params.waveTypeValue != prevWaveTypeValue) regenerate = true;
-        prevWaveTypeValue = params.waveTypeValue;
+        if (params[slotActive].waveTypeValue != prevWaveTypeValue[slotActive]) regenerate = true;
+        prevWaveTypeValue[slotActive] = params[slotActive].waveTypeValue;
+        
+        if (slotActive != prevSlotActive) { PlaySound(sound[slotActive]); prevSlotActive = slotActive; }
         
 #if defined(VERSION_ONE)
         // Set new gui style if changed
@@ -492,18 +495,18 @@ int main(int argc, char *argv[])
         // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
         if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), (Rectangle){ 243, 48, 102, 362 })) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
         {
-            UnloadWave(wave);
-            wave = GenerateWave(params);        // Generate new wave from parameters
+            UnloadWave(wave[slotActive]);
+            wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
 
-            UnloadSound(sound);
-            sound = LoadSoundFromWave(wave);    // Reload sound from new wave
-            //UpdateSound(sound, wave.data, wave.sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
+            UnloadSound(sound[slotActive]);
+            sound[slotActive] = LoadSoundFromWave(wave[slotActive]);    // Reload sound from new wave
+            //UpdateSound(sound[slotActive], wave[slotActive].data, wave[slotActive].sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
 
-            if (regenerate || playOnChangeChecked) PlaySound(sound);
+            if (regenerate || playOnChangeChecked) PlaySound(sound[slotActive]);
             
-            strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount));
-            strcpy(durationText, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)));
-            strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8));
+            strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
+            strcpy(durationText, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
+            strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
 
             regenerate = false;
         }
@@ -542,7 +545,7 @@ int main(int argc, char *argv[])
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
                 ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-                DrawWave(&wave, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+                DrawWave(&wave[slotActive], (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             EndTextureMode();
 #endif
             // Render all screen to a texture (for scaling)
@@ -554,26 +557,22 @@ int main(int argc, char *argv[])
             DrawText("rFXGen", 29, 19, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             GuiLabel((Rectangle){ 86, 14, 10, 10 }, FormatText("v%s", TOOL_VERSION_TEXT));
             
-            if (GuiButton((Rectangle){ 10, 45, 95, 20 }, "Pickup/Coin")) GenPickupCoin(); 
-            if (GuiButton((Rectangle){ 10, 70, 95, 20 }, "Laser/Shoot")) GenLaserShoot(); 
-            if (GuiButton((Rectangle){ 10, 95, 95, 20 }, "Explosion")) GenExplosion(); 
-            if (GuiButton((Rectangle){ 10, 120, 95, 20 }, "Powerup")) GenPowerup(); 
-            if (GuiButton((Rectangle){ 10, 145, 95, 20 }, "Hit/Hurt")) GenHitHurt(); 
-            if (GuiButton((Rectangle){ 10, 170, 95, 20 }, "Jump")) GenJump(); 
-            if (GuiButton((Rectangle){ 10, 195, 95, 20 }, "Blip/Select")) GenBlipSelect(); 
+            if (GuiButton((Rectangle){ 10, 45, 95, 20 }, "Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
+            if (GuiButton((Rectangle){ 10, 70, 95, 20 }, "Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
+            if (GuiButton((Rectangle){ 10, 95, 95, 20 }, "Explosion")) { params[slotActive] = GenExplosion(); regenerate = true; }
+            if (GuiButton((Rectangle){ 10, 120, 95, 20 }, "Powerup")) { params[slotActive] = GenPowerup(); regenerate = true; }
+            if (GuiButton((Rectangle){ 10, 145, 95, 20 }, "Hit/Hurt")) { params[slotActive] = GenHitHurt(); regenerate = true; }
+            if (GuiButton((Rectangle){ 10, 170, 95, 20 }, "Jump")) { params[slotActive] = GenJump(); regenerate = true; }
+            if (GuiButton((Rectangle){ 10, 195, 95, 20 }, "Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
 
             GuiLine((Rectangle){ 10, 220, 95, 20 }, 1);
             
-            // TODO: Convert into a custom? Toggle group
-            waveType01Active = GuiToggle((Rectangle){ 10, 240, 95, 20 }, "Square", waveType01Active);
-            waveType02Active = GuiToggle((Rectangle){ 10, 265, 95, 20 }, "Sawtooth", waveType02Active);
-            waveType03Active = GuiToggle((Rectangle){ 10, 290, 95, 20 }, "Sinewave", waveType03Active);
-            waveType04Active = GuiToggle((Rectangle){ 10, 315, 95, 20 }, "Noise", waveType04Active);
+            params[slotActive].waveTypeValue = GuiToggleGroupEx((Rectangle){ 10, 243, 95, 20 }, waveTypeTextList, 4, params[slotActive].waveTypeValue, 4, 1);
             
             GuiLine((Rectangle){ 10, 340, 95, 15 }, 1);
             
-            if (GuiButton((Rectangle){ 10, 360, 95, 20 }, "Mutate")) GenMutate(); 
-            if (GuiButton((Rectangle){ 10, 385, 95, 20 }, "Randomize")) GenRandomize(); 
+            if (GuiButton((Rectangle){ 10, 360, 95, 20 }, "Mutate")) { WaveMutate(&params[slotActive]); regenerate = true; } 
+            if (GuiButton((Rectangle){ 10, 385, 95, 20 }, "Randomize")) { params[slotActive] = GenRandomize(); regenerate = true; }
 
             GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 2, 265, 24 }, "");
             GuiGroupBox((Rectangle){ paramsAnchor.x, paramsAnchor.y + 25, 265, 66 }, "");
@@ -588,51 +587,48 @@ int main(int argc, char *argv[])
             //--------------------------------------------------------------------------------
             volumeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 10, 100, 10 }, volumeValue, 0, 1, "VOLUME", true);
             
-            params.attackTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 30, 100, 10 }, params.attackTimeValue, 0, 1, "ATTACK TIME", true);
-            params.sustainTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 45, 100, 10 }, params.sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
-            params.sustainPunchValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 60, 100, 10 }, params.sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
-            params.decayTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 75, 100, 10 }, params.decayTimeValue, 0, 1, "DECAY TIME", true);
-            params.startFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 95, 100, 10 }, params.startFrequencyValue, 0, 1, "START FREQUENCY", true);
-            params.minFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 110, 100, 10 }, params.minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
-            params.slideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 125, 100, 10 }, params.slideValue, -1, 1, "SLIDE", true);
-            params.deltaSlideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 140, 100, 10 }, params.deltaSlideValue, -1, 1, "DELTA SLIDE", true);
-            params.vibratoDepthValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 155, 100, 10 }, params.vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
-            params.vibratoSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 170, 100, 10 }, params.vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
-            params.changeAmountValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 190, 100, 10 }, params.changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
-            params.changeSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 205, 100, 10 }, params.changeSpeedValue, 0, 1, "CHANGE SPEED", true);
-            params.squareDutyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 225, 100, 10 }, params.squareDutyValue, 0, 1, "SQUARE DUTY", true);
-            params.dutySweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 240, 100, 10 }, params.dutySweepValue, -1, 1, "DUTY SWEEP", true);
-            params.repeatSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 260, 100, 10 }, params.repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
-            params.phaserOffsetValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 280, 100, 10 }, params.phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
-            params.phaserSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 295, 100, 10 }, params.phaserSweepValue, -1, 1, "PHASER SWEEP", true);
-            params.lpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 315, 100, 10 }, params.lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
-            params.lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 330, 100, 10 }, params.lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
-            params.lpfResonanceValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 345, 100, 10 }, params.lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
-            params.hpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 360, 100, 10 }, params.hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
-            params.hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 375, 100, 10 }, params.hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
+            params[slotActive].attackTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 30, 100, 10 }, params[slotActive].attackTimeValue, 0, 1, "ATTACK TIME", true);
+            params[slotActive].sustainTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 45, 100, 10 }, params[slotActive].sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
+            params[slotActive].sustainPunchValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 60, 100, 10 }, params[slotActive].sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
+            params[slotActive].decayTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 75, 100, 10 }, params[slotActive].decayTimeValue, 0, 1, "DECAY TIME", true);
+            params[slotActive].startFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 95, 100, 10 }, params[slotActive].startFrequencyValue, 0, 1, "START FREQUENCY", true);
+            params[slotActive].minFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 110, 100, 10 }, params[slotActive].minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
+            params[slotActive].slideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 125, 100, 10 }, params[slotActive].slideValue, -1, 1, "SLIDE", true);
+            params[slotActive].deltaSlideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 140, 100, 10 }, params[slotActive].deltaSlideValue, -1, 1, "DELTA SLIDE", true);
+            params[slotActive].vibratoDepthValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 155, 100, 10 }, params[slotActive].vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
+            params[slotActive].vibratoSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 170, 100, 10 }, params[slotActive].vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
+            params[slotActive].changeAmountValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 190, 100, 10 }, params[slotActive].changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
+            params[slotActive].changeSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 205, 100, 10 }, params[slotActive].changeSpeedValue, 0, 1, "CHANGE SPEED", true);
+            params[slotActive].squareDutyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 225, 100, 10 }, params[slotActive].squareDutyValue, 0, 1, "SQUARE DUTY", true);
+            params[slotActive].dutySweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 240, 100, 10 }, params[slotActive].dutySweepValue, -1, 1, "DUTY SWEEP", true);
+            params[slotActive].repeatSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 260, 100, 10 }, params[slotActive].repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
+            params[slotActive].phaserOffsetValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 280, 100, 10 }, params[slotActive].phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
+            params[slotActive].phaserSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 295, 100, 10 }, params[slotActive].phaserSweepValue, -1, 1, "PHASER SWEEP", true);
+            params[slotActive].lpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 315, 100, 10 }, params[slotActive].lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
+            params[slotActive].lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 330, 100, 10 }, params[slotActive].lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
+            params[slotActive].lpfResonanceValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 345, 100, 10 }, params[slotActive].lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
+            params[slotActive].hpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 360, 100, 10 }, params[slotActive].hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
+            params[slotActive].hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 375, 100, 10 }, params[slotActive].hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
             //--------------------------------------------------------------------------------
             
             playOnChangeChecked = GuiCheckBoxEx((Rectangle){ 390, 20, 10, 10 }, playOnChangeChecked, "Play on change");
-            if (GuiButton((Rectangle){ 390, 40, 95, 20 }, "Play Sound")) PlaySound(sound); 
+            if (GuiButton((Rectangle){ 390, 40, 95, 20 }, "Play Sound")) PlaySound(sound[slotActive]); 
 
             GuiLabel((Rectangle){ 390, 65, 25, 25 }, "Slot:");
-            // TODO: Convert into a custom? Toggle group
-            slot01Active = GuiToggle((Rectangle){ 416, 70, 15, 15 }, "1", slot01Active);
-            slot02Active = GuiToggle((Rectangle){ 416 + 18, 70, 15, 15 }, "2", slot02Active);
-            slot03Active = GuiToggle((Rectangle){ 416 + 18*2, 70, 15, 15 }, "3", slot03Active);
-            slot04Active = GuiToggle((Rectangle){ 416 + 18*3, 70, 15, 15 }, "4", slot04Active);
+            
+            slotActive = GuiToggleGroupEx((Rectangle){ 419, 70, 15, 15 }, slotTextList, 4, slotActive, 2, 4);
             
             GuiLine((Rectangle){ 390, 90, 95, 20 }, 1);
             
-            if (GuiButton((Rectangle){ 390, 110, 95, 20 }, "Load Sound")) DialogLoadSound();
-            if (GuiButton((Rectangle){ 390, 135, 95, 20 }, "Save Sound")) DialogSaveSound();
+            if (GuiButton((Rectangle){ 390, 110, 95, 20 }, "Load Sound")) { params[slotActive] = DialogLoadSound(); regenerate = true; }
+            if (GuiButton((Rectangle){ 390, 135, 95, 20 }, "Save Sound")) DialogSaveSound(params[slotActive]);
 
             GuiLine((Rectangle){ 390, 160, 95, 15 }, 1);
             
             sampleRateActive = GuiComboBox((Rectangle){ 390, 180, 95, 20 }, sampleRateTextList, 3, sampleRateActive);
             sampleSizeActive = GuiComboBox((Rectangle){ 390, 205, 95, 20 }, sampleSizeTextList, 3, sampleSizeActive);
             fileTypeActive = GuiComboBox((Rectangle){ 390, 230, 95, 20 }, fileTypeTextList, 3, fileTypeActive);
-            if (GuiButton((Rectangle){ 390, 255, 95, 20 }, "Export Wave")) DialogExportWave(wave);
+            if (GuiButton((Rectangle){ 390, 255, 95, 20 }, "Export Wave")) DialogExportWave(wave[slotActive]);
 
             GuiLine((Rectangle){ 390, 275, 95, 20 }, 1);
             
@@ -654,118 +650,12 @@ int main(int argc, char *argv[])
             GuiStatusBar((Rectangle){ 325, 476, 171, 20 }, waveSizeText, 10);
             //----------------------------------------------------------------------------------
 
-            
-            /*
-            DrawText("rFXGen", 29, 19, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 89, 14, 10, 10 }, FormatText("v%s", TOOL_VERSION_TEXT));
-
-            // Parameters group boxes
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 0, 264, 71 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 70, 264, 96 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 165, 264, 36 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 200, 264, 36 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 235, 264, 21 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 255, 264, 36 }, "");
-            GuiGroupBox((Rectangle){ paramsAnchor.x + 0, paramsAnchor.y + 290, 264, 85 }, "");
-
-            // Parameters sliders
-            //--------------------------------------------------------------------------------
-            params.attackTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 10, 100, 10 },  params.attackTimeValue, 0, 1, "ATTACK TIME", true);
-            params.sustainTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 25, 100, 10 },  params.sustainTimeValue, 0, 1, "SUSTAIN TIME", true);
-            params.sustainPunchValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 40, 100, 10 },  params.sustainPunchValue, 0, 1, "SUSTAIN PUNCH", true);
-            params.decayTimeValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 55, 100, 10 },  params.decayTimeValue, 0, 1, "DECAY TIME", true);
-            params.startFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 75, 100, 10 },  params.startFrequencyValue, 0, 1, "START FREQUENCY", true);
-            params.minFrequencyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 90, 100, 10 },  params.minFrequencyValue, 0, 1, "MIN FREQUENCY", true);
-            params.slideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 105, 100, 10 },  params.slideValue, -1, 1, "SLIDE", true);
-            params.deltaSlideValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 120, 100, 10 },  params.deltaSlideValue, -1, 1, "DELTA SLIDE", true);
-            params.vibratoDepthValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 135, 100, 10 },  params.vibratoDepthValue, 0, 1, "VIBRATO DEPTH", true);
-            params.vibratoSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 150, 100, 10 },  params.vibratoSpeedValue, 0, 1, "VIBRATO SPEED", true);
-            params.changeAmountValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 170, 100, 10 },  params.changeAmountValue, -1, 1, "CHANGE AMOUNT", true);
-            params.changeSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 185, 100, 10 },  params.changeSpeedValue, 0, 1, "CHANGE SPEED", true);
-            params.squareDutyValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 205, 100, 10 },  params.squareDutyValue, 0, 1, "SQUARE DUTY", true);
-            params.dutySweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 220, 100, 10 },  params.dutySweepValue, -1, 1, "DUTY SWEEP", true);
-            params.repeatSpeedValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 240, 100, 10 },  params.repeatSpeedValue, 0, 1, "REPEAT SPEED", true);
-            params.phaserOffsetValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 260, 100, 10 },  params.phaserOffsetValue, -1, 1, "PHASER OFFSET", true);
-            params.phaserSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 275, 100, 10 },  params.phaserSweepValue, -1, 1, "PHASER SWEEP", true);
-            params.lpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 295, 100, 10 },  params.lpfCutoffValue, 0, 1, "LPF CUTOFF", true);
-            params.lpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 310, 100, 10 },  params.lpfCutoffSweepValue, -1, 1, "LPF CUTOFF SWEEP", true);
-            params.lpfResonanceValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 325, 100, 10 },  params.lpfResonanceValue, 0, 1, "LPF RESONANCE", true);
-            params.hpfCutoffValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 340, 100, 10 },  params.hpfCutoffValue, 0, 1, "HPF CUTOFF", true);
-            params.hpfCutoffSweepValue = GuiSliderBarEx((Rectangle){ paramsAnchor.x + 125, paramsAnchor.y + 355, 100, 10 },  params.hpfCutoffSweepValue, -1, 1, "HPF CUTOFF SWEEP", true);
-            //--------------------------------------------------------------------------------
-
-            // Buttons
-            //--------------------------------------------------------------------------------
-            if (GuiButton((Rectangle){ 10, 45, 95, 20 },  "Pickup/Coin")) GenPickupCoin();
-            if (GuiButton((Rectangle){ 10, 70, 95, 20 },  "Laser/Shoot")) GenLaserShoot();
-            if (GuiButton((Rectangle){ 10, 95, 95, 20 },  "Explosion")) GenExplosion();
-            if (GuiButton((Rectangle){ 10, 120, 95, 20 }, "Powerup")) GenPowerup();
-            if (GuiButton((Rectangle){ 10, 145, 95, 20 }, "Hit/Hurt")) GenHitHurt();
-            if (GuiButton((Rectangle){ 10, 170, 95, 20 }, "Jump")) GenJump();
-            if (GuiButton((Rectangle){ 10, 195, 95, 20 }, "Blip/Select")) GenBlipSelect();
-            if (GuiButton((Rectangle){ 10, 364, 95, 20 }, "Mutate")) GenMutate();
-            if (GuiButton((Rectangle){ 10, 389, 95, 20 }, "Randomize")) GenRandomize();
-            if (GuiButton((Rectangle){ 390, 81, 95, 20 }, "Play Sound")) PlaySound(sound);
-            if (GuiButton((Rectangle){ 390, 283, 95, 20 }, "Load Sound")) DialogLoadSound();
-            if (GuiButton((Rectangle){ 390, 307, 95, 20 }, "Save Sound")) DialogSaveSound();
-            if (GuiButton((Rectangle){ 390, 389, 95, 20 }, "Export .Wav")) DialogExportWave(wave);
-            //--------------------------------------------------------------------------------
-
-            // Right side controls
-            //--------------------------------------------------------------------------------
-            float prevVolumeValue = volumeValue;
-            volumeValue = GuiSliderBar((Rectangle){ 390, 65, 95, 10 }, volumeValue, 0, 1);
-            if (volumeValue != prevVolumeValue) SetSoundVolume(sound, volumeValue);
-            if (volumeValue < 1.0f) GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:      %02i %%", (int)(volumeValue*100.0f)));
-            else GuiLabel((Rectangle){ 390, 49, 10, 10 }, FormatText("VOLUME:     %02i %%", (int)(volumeValue*100.0f)));
-
-            screenSizeToggle = GuiToggle((Rectangle){ 390, 15, 95, 20 }, "Screen Size x2", screenSizeToggle);
-            playOnChangeValue = GuiCheckBoxEx((Rectangle){ 390, 115, 10, 10 }, playOnChangeValue, "Play on change");
-            comboxSampleRateValue = GuiComboBox((Rectangle){ 390, 340, 95, 20 }, comboxSampleRateText, 2, comboxSampleRateValue);
-            comboxSampleSizeValue = GuiComboBox((Rectangle){ 390, 364, 95, 20 }, comboxSampleSizeText, 3, comboxSampleSizeValue);
-
-            int prevWaveTypeValue = params.waveTypeValue;
-            params.waveTypeValue = GuiToggleGroup((Rectangle){ 115, 15, 260, 20 }, tgroupWaveTypeText, 4, params.waveTypeValue);
-            if (params.waveTypeValue != prevWaveTypeValue) regenerate = true;
-
-            // Draw status bar
-            GuiStatusBar((Rectangle){ 0, screenHeight - 20, 206, 20 }, FormatText("SOUND INFO: Num samples: %i", wave.sampleCount), 14);
-            GuiStatusBar((Rectangle){ 205, screenHeight - 20, 123, 20 }, FormatText("Duration: %i ms", wave.sampleCount*1000/(wave.sampleRate*wave.channels)), 10);
-            GuiStatusBar((Rectangle){ 327, screenHeight - 20, screenWidth - 327, 20 }, FormatText("Wave size: %i bytes", wave.sampleCount*wavSampleSize/8), 10);
-            //--------------------------------------------------------------------------------
-            */
-            
-            // Advertising (links, logos...) --> Moved to Window About
-            //--------------------------------------------------------------------------------
-            /*
-            GuiLabel((Rectangle){ 16, 235, 10, 10 }, "based on sfxr by");
-            GuiLabel((Rectangle){ 13, 248, 10, 10 }, "Tomas Pettersson");
-
-            GuiLine((Rectangle){ 10, 268, 95, 1 }, 1);
-            GuiLine((Rectangle){ 10, 225, 95, 1 }, 1);
-            GuiLine((Rectangle){ 10, 358, 95, 1 }, 1);
-            GuiLine((Rectangle){ 390, 108, 95, 1 }, 1);
-            GuiLine((Rectangle){ 390, 277, 95, 1 }, 1);
-            GuiLine((Rectangle){ 390, 334, 95, 1 }, 1);
-
-            if (GuiLabelButton((Rectangle){ 18, 270, MeasureText("www.github.com/\nraysan5/raygui", 10)/2, 24 }, "www.github.com/\nraysan5/raygui")) OpenLinkURL("https://www.github.com/raysan5/raygui");
-            if (GuiLabelButton((Rectangle){ 18, 315, MeasureText("www.github.com/\nraysan5/raylib", 10)/2, 24 }, "www.github.com/\nraysan5/raylib")) OpenLinkURL("https://www.github.com/raysan5/raylib");
-
-            GuiLabel((Rectangle){ 390, 140, 10, 10 }, "powered by");
-            DrawRectangle(390, 153, 92, 92, BLACK);
-            DrawRectangle(396, 159, 80, 80, RAYWHITE);
-            DrawText("raylib", 415, 214, 20, BLACK);
-
-            if (GuiLabelButton((Rectangle){ 405, 250, MeasureText("www.raylib.com", 10), 10 }, "www.raylib.com")) OpenLinkURL("http://www.raylib.com");
-            */
-            //--------------------------------------------------------------------------------
-
             // Draw Wave form
             //--------------------------------------------------------------------------------
         #if defined(RENDER_WAVE_TO_TEXTURE)
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
         #else
-            DrawWave(&wave, waveRec, GetColor(GuiGetStyle(DEFAULT, LINES_COLOR)));
+            DrawWave(&wave[slotActive], waveRec, GetColor(GuiGetStyle(DEFAULT, LINES_COLOR)));
         #endif
 
             // TODO: Draw playing progress rectangle
@@ -791,8 +681,11 @@ int main(int argc, char *argv[])
 
     // De-Initialization
     //----------------------------------------------------------------------------------------
-    UnloadSound(sound);
-    UnloadWave(wave);
+    for (int i = 0; i < MAX_WAVE_SLOTS; i++)
+    {
+        UnloadSound(sound[i]);
+        UnloadWave(wave[i]);
+    }
 
     UnloadRenderTexture(screenTarget);
 #if defined(RENDER_WAVE_TO_TEXTURE)
@@ -1496,8 +1389,10 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
 }
 
 // Show dialog: load sound parameters file
-static void DialogLoadSound(void)
+static WaveParams DialogLoadSound(void)
 {
+    WaveParams params = { 0 };
+    
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
     const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
@@ -1505,14 +1400,14 @@ static void DialogLoadSound(void)
     if (fileName != NULL)
     {
         params = LoadWaveParams(fileName);
-        regenerate = true;
-
         //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(fileName)));
     }
+    
+    return params;
 }
 
 // Show dialog: save sound parameters file
-static void DialogSaveSound(void)
+static void DialogSaveSound(WaveParams params)
 {
     // Save file dialog
     const char *filters[] = { "*.rfx" };
@@ -1559,8 +1454,9 @@ static void DialogExportWave(Wave wave)
 //--------------------------------------------------------------------------------------------
 
 // Generate sound: Pickup/Coin
-static void GenPickupCoin(void)
+static WaveParams GenPickupCoin(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
 
     params.startFrequencyValue = 0.4f + frnd(0.5f);
@@ -1574,13 +1470,14 @@ static void GenPickupCoin(void)
         params.changeSpeedValue = 0.5f + frnd(0.2f);
         params.changeAmountValue = 0.2f + frnd(0.4f);
     }
-
-    regenerate = true;
+    
+    return params;
 }
 
 // Generate sound: Laser shoot
-static void GenLaserShoot(void)
+static WaveParams GenLaserShoot(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
 
     params.waveTypeValue = GetRandomValue(0, 2);
@@ -1626,12 +1523,13 @@ static void GenLaserShoot(void)
 
     if (GetRandomValue(0, 1)) params.hpfCutoffValue = frnd(0.3f);
 
-    regenerate = true;
+    return params;
 }
 
 // Generate sound: Explosion
-static void GenExplosion(void)
+static WaveParams GenExplosion(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
 
     params.waveTypeValue = 3;
@@ -1676,14 +1574,15 @@ static void GenExplosion(void)
         params.changeAmountValue = 0.8f - frnd(1.6f);
     }
 
-    regenerate = true;
+    return params;
 }
 
 // Generate sound: Powerup
-static void GenPowerup(void)
+static WaveParams GenPowerup(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
-
+    
     if (GetRandomValue(0, 1)) params.waveTypeValue = 1;
     else params.squareDutyValue = frnd(0.6f);
 
@@ -1709,12 +1608,13 @@ static void GenPowerup(void)
     params.sustainTimeValue = frnd(0.4f);
     params.decayTimeValue = 0.1f + frnd(0.4f);
 
-    regenerate = true;
+    return params;
 }
 
 // Generate sound: Hit/Hurt
-static void GenHitHurt(void)
+static WaveParams GenHitHurt(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
 
     params.waveTypeValue = GetRandomValue(0, 2);
@@ -1729,12 +1629,13 @@ static void GenHitHurt(void)
 
     if (GetRandomValue(0, 1)) params.hpfCutoffValue = frnd(0.3f);
 
-    regenerate = true;
+    return params;
 }
 
 // Generate sound: Jump
-static void GenJump(void)
+static WaveParams GenJump(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
 
     params.waveTypeValue = 0;
@@ -1748,12 +1649,13 @@ static void GenJump(void)
     if (GetRandomValue(0, 1)) params.hpfCutoffValue = frnd(0.3f);
     if (GetRandomValue(0, 1)) params.lpfCutoffValue = 1.0f - frnd(0.6f);
 
-    regenerate = true;
+    return params;
 }
 
 // Generate sound: Blip/Select
-static void GenBlipSelect(void)
+static WaveParams GenBlipSelect(void)
 {
+    WaveParams params = { 0 };
     ResetWaveParams(&params);
 
     params.waveTypeValue = GetRandomValue(0, 1);
@@ -1764,12 +1666,15 @@ static void GenBlipSelect(void)
     params.decayTimeValue = frnd(0.2f);
     params.hpfCutoffValue = 0.1f;
 
-    regenerate = true;
+    return params;
 }
 
 // Generate random sound
-static void GenRandomize(void)
+static WaveParams GenRandomize(void)
 {
+    WaveParams params = { 0 };
+    ResetWaveParams(&params);
+    
     params.randSeed = GetRandomValue(0, 0xFFFE);
 
     params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 2.0f);
@@ -1812,38 +1717,36 @@ static void GenRandomize(void)
     params.repeatSpeedValue = frnd(2.0f) - 1.0f;
     params.changeSpeedValue = frnd(2.0f) - 1.0f;
     params.changeAmountValue = frnd(2.0f) - 1.0f;
-
-    regenerate = true;
+    
+    return params;
 }
 
 // Mutate current sound
-static void GenMutate(void)
+static void WaveMutate(WaveParams *params)
 {
-    if (GetRandomValue(0, 1)) params.startFrequencyValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->startFrequencyValue += frnd(0.1f) - 0.05f;
     //if (GetRandomValue(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.slideValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.deltaSlideValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.squareDutyValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.dutySweepValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.vibratoDepthValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.vibratoSpeedValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->slideValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->deltaSlideValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->squareDutyValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->dutySweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->vibratoDepthValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->vibratoSpeedValue += frnd(0.1f) - 0.05f;
     //if (GetRandomValue(0, 1)) params.vibratoPhaseDelay += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.attackTimeValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.sustainTimeValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.decayTimeValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.sustainPunchValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.lpfResonanceValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.lpfCutoffValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.lpfCutoffSweepValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.hpfCutoffValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.hpfCutoffSweepValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.phaserOffsetValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.phaserSweepValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.repeatSpeedValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.changeSpeedValue += frnd(0.1f) - 0.05f;
-    if (GetRandomValue(0, 1)) params.changeAmountValue += frnd(0.1f) - 0.05f;
-
-    regenerate = true;
+    if (GetRandomValue(0, 1)) params->attackTimeValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->sustainTimeValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->decayTimeValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->sustainPunchValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->lpfResonanceValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->lpfCutoffValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->lpfCutoffSweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->hpfCutoffValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->hpfCutoffSweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->phaserOffsetValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->phaserSweepValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->repeatSpeedValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->changeSpeedValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->changeAmountValue += frnd(0.1f) - 0.05f;
 }
 
 //--------------------------------------------------------------------------------------------
