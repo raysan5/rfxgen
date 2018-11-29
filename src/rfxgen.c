@@ -95,7 +95,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//#define VERSION_ONE                   // Enable version ONE features
+#define VERSION_ONE                   // Enable version ONE features
                                         // NOTE: It should be passed to compilation
 //#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 
@@ -483,7 +483,7 @@ int main(int argc, char *argv[])
         // Set new gui style if changed
         if (visualStyleActive != prevVisualStyleActive) 
         {
-            GuiLoadStylePalette(paletteStyle[visualStyleActive], 20);
+            GuiLoadStyleProps(paletteStyle[visualStyleActive], 20);
             GuiUpdateStyleComplete();
             GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
         }
@@ -865,7 +865,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
         if (IsFileExtension(inFileName, ".rfx") || IsFileExtension(inFileName, ".sfs"))
         {
-            params = LoadWaveParams(inFileName);
+            WaveParams params = LoadWaveParams(inFileName);
             wave = GenerateWave(params);
         }
         else if (IsFileExtension(inFileName, ".wav")) wave = LoadWave(inFileName);
