@@ -2,17 +2,17 @@
 # rgl text file (v1.0) - raygui layout text file generated using rGuiLayout
 #
 # Total number of controls:     72
-# Anchor info:   a <id> <posx> <posy> <enabled>
+# Anchor info:   a <id> <name> <posx> <posy> <enabled>
 # Control info:  c <id> <type> <name> <rectangle> <anchor_id> <text>
 #
-a 000 0 0 1
-a 001 50 50 1
-a 002 165 60 1
-a 003 0 0 0
-a 004 0 0 0
-a 005 0 0 0
-a 006 0 0 0
-a 007 0 0 0
+a 000 anchor 0 0 1
+a 001 anchor 50 50 1
+a 002 anchor 165 60 1
+a 003 anchor 0 0 0
+a 004 anchor 0 0 0
+a 005 anchor 0 0 0
+a 006 anchor 0 0 0
+a 007 anchor 0 0 0
 c 000 20 version 25 10 80 25 1 Version
 c 001 5 PickupCoin 10 45 95 20 1 Pickup/Coin
 c 002 5 LaserShoot 10 70 95 20 1 Laser/Shoot
