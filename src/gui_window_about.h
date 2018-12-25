@@ -192,9 +192,9 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         if (GuiLabelButton((Rectangle){ state->position.x + 95, state->position.y + 305, 165, 25 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
         GuiLine((Rectangle){ state->position.x + 0, state->position.y + 325, 330, 20 }, 1);
 #if defined(VERSION_ONE)
-        state->chkLicenseChecked = GuiCheckBoxEx((Rectangle){ state->position.x + 10, state->position.y + 350, 15, 15 }, state->chkLicenseChecked, "License Agreement (EULA)");
+        state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 350, 15, 15 }, "License Agreement (EULA)", state->chkLicenseChecked);
 #else
-        GuiDisable();state->chkLicenseChecked = GuiCheckBoxEx((Rectangle){ state->position.x + 10, state->position.y + 350, 15, 15 }, state->chkLicenseChecked, "License Agreement (EULA)"); GuiEnable();
+        GuiDisable();state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 350, 15, 15 }, "License Agreement (EULA)", state->chkLicenseChecked); GuiEnable();
         if (GuiButton((Rectangle){ state->position.x + 175, state->position.y + 345, 70, 25 }, "Be ONE!")) { OpenURL("https://raylibtech.itch.io/rfxgen"); }
 #endif
         if (GuiButton((Rectangle){ state->position.x + 250, state->position.y + 345, 70, 25 }, "Close")) state->active = false;
