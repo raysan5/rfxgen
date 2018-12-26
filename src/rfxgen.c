@@ -793,7 +793,7 @@ static void ProcessCommandLine(int argc, char *argv[])
             if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
                 int numValues = 0;
-                char **values = SplitText(argv[i + 1], ',', &numValues);
+                char **values = TextSplit(argv[i + 1], ',', &numValues);
 
                 if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
                 else
