@@ -5,14 +5,15 @@
 # Anchor info:   a <id> <name> <posx> <posy> <enabled>
 # Control info:  c <id> <type> <name> <rectangle> <anchor_id> <text>
 #
-a 000 anchor 0 0 1
-a 001 anchor 50 50 1
-a 002 anchor 165 60 1
-a 003 anchor 0 0 0
-a 004 anchor 0 0 0
-a 005 anchor 0 0 0
-a 006 anchor 0 0 0
-a 007 anchor 0 0 0
+r 0 0 -1 -1
+a 000 anchor00 0 0 1
+a 001 anchor01 50 50 1
+a 002 anchor02 165 60 1
+a 003 anchor03 0 0 0
+a 004 anchor04 0 0 0
+a 005 anchor05 0 0 0
+a 006 anchor06 0 0 0
+a 007 anchor07 0 0 0
 c 000 20 version 25 10 80 25 1 Version
 c 001 5 PickupCoin 10 45 95 20 1 Pickup/Coin
 c 002 5 LaserShoot 10 70 95 20 1 Laser/Shoot
@@ -22,10 +23,10 @@ c 005 5 HitHurt 10 145 95 20 1 Hit/Hurt
 c 006 5 Jump 10 170 95 20 1 Jump
 c 007 5 BlipSelect 10 195 95 20 1 Blip/Select
 c 008 2 line01 10 220 95 20 1 
-c 009 6 waveType01 10 240 95 20 1 Square
-c 010 6 waveType02 10 265 95 20 1 Sawtooth
-c 011 6 waveType03 10 290 95 20 1 Sinewave
-c 012 6 waveType04 10 315 95 20 1 Noise
+c 009 9 waveType01 10 240 95 20 1 Square
+c 010 9 waveType02 10 265 95 20 1 Sawtooth
+c 011 9 waveType03 10 290 95 20 1 Sinewave
+c 012 9 waveType04 10 315 95 20 1 Noise
 c 013 2 line02 10 340 95 15 1 
 c 014 5 Mutate 10 360 95 20 1 Mutate
 c 015 5 Randomize 10 385 95 20 1 Randomize
@@ -37,51 +38,51 @@ c 020 1 group05 0 220 265 36 2
 c 021 1 group06 0 255 265 21 2 
 c 022 1 group07 0 275 265 36 2 
 c 023 1 group08 0 310 265 85 2 
-c 024 15 volume 125 10 100 10 2 VOLUME
-c 025 15 attackTime 125 30 100 10 2 ATTACK TIME
-c 026 15 sustainTime 125 45 100 10 2 SUSTAIN TIME
-c 027 15 sustainPunch 125 60 100 10 2 SUSTAIN PUNCH
-c 028 15 decayTime 125 75 100 10 2 DECAY TIME
-c 029 15 startFrequency 125 95 100 10 2 START FREQUENCY
-c 030 15 minFrequency 125 110 100 10 2 MIN FREQUENCY
-c 031 15 slide 125 125 100 10 2 SLIDE
-c 032 15 deltaSlide 125 140 100 10 2 DELTA SLIDE
-c 033 15 vibratoDepth 125 155 100 10 2 VIBRATO DEPTH
-c 034 15 vibratoSpeed 125 170 100 10 2 VIBRATO SPEED
-c 035 15 changeAmount 125 190 100 10 2 CHANGE AMOUNT
-c 036 15 changeSpeed 125 205 100 10 2 CHANGE SPEED
-c 037 15 squareDuty 125 225 100 10 2 SQUARE DUTY
-c 038 15 dutySweep 125 240 100 10 2 DUTY SWEEP
-c 039 15 repeatSpeed 125 260 100 10 2 REPEAT SPEED
-c 040 15 phaserOffset 125 280 100 10 2 PHASER OFFSET
-c 041 15 phaserSweep 125 295 100 10 2 PHASER SWEEP
-c 042 15 lpfCutoff 125 315 100 10 2 LPF CUTOFF
-c 043 15 lpfCutoffSweep 125 330 100 10 2 LPF CUTOFF SWEEP
-c 044 15 lpfResonance 125 345 100 10 2 LPF RESONANCE
-c 045 15 hpfCutoff 125 360 100 10 2 HPF CUTOFF
-c 046 15 hpfCutoffSweep 125 375 100 10 2 HPF CUTOFF SWEEP
+c 024 18 volume 125 10 100 10 2 VOLUME
+c 025 18 attackTime 125 30 100 10 2 ATTACK TIME
+c 026 18 sustainTime 125 45 100 10 2 SUSTAIN TIME
+c 027 18 sustainPunch 125 60 100 10 2 SUSTAIN PUNCH
+c 028 18 decayTime 125 75 100 10 2 DECAY TIME
+c 029 18 startFrequency 125 95 100 10 2 START FREQUENCY
+c 030 18 minFrequency 125 110 100 10 2 MIN FREQUENCY
+c 031 18 slide 125 125 100 10 2 SLIDE
+c 032 18 deltaSlide 125 140 100 10 2 DELTA SLIDE
+c 033 18 vibratoDepth 125 155 100 10 2 VIBRATO DEPTH
+c 034 18 vibratoSpeed 125 170 100 10 2 VIBRATO SPEED
+c 035 18 changeAmount 125 190 100 10 2 CHANGE AMOUNT
+c 036 18 changeSpeed 125 205 100 10 2 CHANGE SPEED
+c 037 18 squareDuty 125 225 100 10 2 SQUARE DUTY
+c 038 18 dutySweep 125 240 100 10 2 DUTY SWEEP
+c 039 18 repeatSpeed 125 260 100 10 2 REPEAT SPEED
+c 040 18 phaserOffset 125 280 100 10 2 PHASER OFFSET
+c 041 18 phaserSweep 125 295 100 10 2 PHASER SWEEP
+c 042 18 lpfCutoff 125 315 100 10 2 LPF CUTOFF
+c 043 18 lpfCutoffSweep 125 330 100 10 2 LPF CUTOFF SWEEP
+c 044 18 lpfResonance 125 345 100 10 2 LPF RESONANCE
+c 045 18 hpfCutoff 125 360 100 10 2 HPF CUTOFF
+c 046 18 hpfCutoffSweep 125 375 100 10 2 HPF CUTOFF SWEEP
 c 047 8 playOnChange 390 20 10 10 1 Play on change
 c 048 5 BtnPlaySound 390 40 95 20 1 Play Sound
 c 049 4 lblSlot 390 65 25 25 1 Slot:
-c 050 6 slot01 419 70 15 15 1 1
-c 051 6 slot02 436 70 15 15 1 2
-c 052 6 slot03 453 70 15 15 1 3
-c 053 6 slot04 470 70 15 15 1 4
+c 050 9 slot01 419 70 15 15 1 1
+c 051 9 slot02 436 70 15 15 1 2
+c 052 9 slot03 453 70 15 15 1 3
+c 053 9 slot04 470 70 15 15 1 4
 c 054 2 line03 390 90 95 20 1 
 c 055 5 BtnLoadSound 390 110 95 20 1 Load Sound
 c 056 5 BtnSaveSound 390 135 95 20 1 Save Sound
 c 057 2 line04 390 160 95 15 1 
-c 058 9 sampleRate 390 180 95 20 1 
-c 059 9 sampleSize 390 205 95 20 1 
-c 060 9 fileType 390 230 95 20 1 
+c 058 11 sampleRate 390 180 95 20 1 22050 Hz;44100 Hz
+c 059 11 sampleSize 390 205 95 20 1 8 bit;16 bit;32 bit
+c 060 11 fileType 390 230 95 20 1 WAV;RAW;CODE
 c 061 5 BtnExportWave 390 255 95 20 1 Export Wave
 c 062 2 line05 390 275 95 20 1 
 c 063 4 lblVisualStyle 390 290 96 25 1 Visual Style:
-c 064 9 visualStyle 390 315 95 20 1 
-c 065 6 screenSize 390 340 95 20 1 Screen Size x2
+c 064 11 visualStyle 390 315 95 20 1 Light;Dark;Candy
+c 065 9 screenSize 390 340 95 20 1 Screen Size x2
 c 066 2 line06 390 360 95 20 1 
 c 067 5 BtnAbout 390 380 95 25 1 ABOUT
-c 068 17 soundInfo 0 475 201 20 1 SOUND INFO: Num samples:
-c 069 17 duration 200 475 126 20 1 Duration
-c 070 17 waveSize 325 475 170 20 1 Wave size
-c 071 20 Wave 10 415 475 50 1 WAVE
+c 068 20 soundInfo 0 475 201 20 1 SOUND INFO: Num samples:
+c 069 20 duration 200 475 126 20 1 Duration
+c 070 20 waveSize 325 475 170 20 1 Wave size
+c 071 24 Wave 10 415 475 50 1 WAVE
