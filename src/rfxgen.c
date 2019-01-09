@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
             if (GetScreenWidth() < screenWidth*2)
             {
                 SetWindowSize(screenWidth*2, screenHeight*2);
-                SetMouseScale(0.5f);
+                SetMouseScale(0.5f, 0.5f);
             }
         }
         else
@@ -524,7 +524,7 @@ int main(int argc, char *argv[])
             if (screenWidth*2 >= GetScreenWidth())
             {
                 SetWindowSize(screenWidth, screenHeight);
-                SetMouseScale(1.0f);
+                SetMouseScale(1.0f, 1.0f);
             }
         }
         //----------------------------------------------------------------------------------
