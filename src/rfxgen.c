@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
     const int screenWidth = 496;
     const int screenHeight = 496;
 
-    SetTraceLog(0);                             // Disable trace log messsages
+    SetTraceLogLevel(LOG_INFO);                 // Disable trace log messsages
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
     //SetExitKey(0);
@@ -410,6 +410,7 @@ int main(int argc, char *argv[])
 #if defined(RENDER_WAVE_TO_TEXTURE)
     // To avoid enabling MSXAAx4, we will render wave to a texture x2
     RenderTexture2D waveTarget = LoadRenderTexture(waveRec.width*2, waveRec.height*2);
+    SetTextureFilter(waveTarget.texture, FILTER_BILINEAR);
 #endif
 
     // Render texture to draw full screen, enables screen scaling
