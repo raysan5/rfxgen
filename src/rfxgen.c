@@ -1247,7 +1247,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 {
     WaveParams params = { 0 };
 
-    if (IsFileExtension(GetExtension(fileName), ".rfx"))
+    if (IsFileExtension(fileName, ".rfx"))
     {
         FILE *rfxFile = fopen(fileName, "rb");
 
@@ -1279,7 +1279,7 @@ static WaveParams LoadWaveParams(const char *fileName)
             fclose(rfxFile);
         }
     }
-    else if (IsFileExtension(GetExtension(fileName), ".sfs"))
+    else if (IsFileExtension(fileName, ".sfs"))
     {
         FILE *sfsFile = fopen(fileName, "rb");
 
@@ -1347,7 +1347,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 // Save .rfx sound parameters file
 static void SaveWaveParams(WaveParams params, const char *fileName)
 {
-    if (IsFileExtension(GetExtension(fileName), ".rfx"))
+    if (IsFileExtension(fileName, ".rfx"))
     {
         // Fx Sound File Structure (.rfx)
         // ------------------------------------------------------
