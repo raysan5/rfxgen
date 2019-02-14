@@ -93,7 +93,7 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 // Internal Module Functions Definition
 //----------------------------------------------------------------------------------
 // Draw rTool generated icon
-static void DrawIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color)
+static void DrawTechIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color)
 {
     int triSize = size/4;
     int borderSize = (int)ceil((float)size/16.0f);
@@ -160,37 +160,37 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         DrawRectangle(state->position.x + 1, state->position.y + 5 + 20, 330 - 2, 90 - 5, GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_DISABLED)));
         
 #if defined(VERSION_ONE)
-        DrawIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
+        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 200, 25 }, FormatText("%s ONE %s", lblNameVersionText, lblDateText));
 #else
-        DrawIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, false, GetColor(toolColor));
+        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, false, GetColor(toolColor));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 200, 25 }, FormatText("%s ZERO %s", lblNameVersionText, lblDateText));
 #endif
 
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 80, 225, 20 }, lblDescriptionText);
 
-        GuiLine((Rectangle){ state->position.x + 0, state->position.y + 100, 330, 20 }, 1);
+        GuiLine((Rectangle){ state->position.x + 0, state->position.y + 100, 330, 20 }, NULL);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 110, 126, 25 }, lblUsedLibsText);
 
-        DrawIcon(state->position.x + 10, state->position.y + 135, 64, "raylib", 10, false, BLACK);
-        DrawIcon(state->position.x + 80, state->position.y + 135, 64, "raygui", 10, false, LIGHTGRAY);
+        DrawTechIcon(state->position.x + 10, state->position.y + 135, 64, "raylib", 10, false, BLACK);
+        DrawTechIcon(state->position.x + 80, state->position.y + 135, 64, "raygui", 10, false, LIGHTGRAY);
 
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 130, 126, 25 }, linkraylibText)) { OpenURL("https://www.raylib.com/"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 150, 165, 25 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 170, 165, 25 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
 
-        GuiLine((Rectangle){ state->position.x + 10, state->position.y + 200, 310, 20 }, 1);
+        GuiLine((Rectangle){ state->position.x + 10, state->position.y + 200, 310, 20 }, NULL);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 210, 80, 25 }, lblDevelopersText);
         GuiLabel((Rectangle){ state->position.x + 20, state->position.y + 230, 180, 25 }, lblDev01Text);
         if (GuiLabelButton((Rectangle){ state->position.x + 130, state->position.y + 230, 56, 25 }, linkDev01Text)) { OpenURL("https://twitter.com/raysan5"); }
-        GuiLine((Rectangle){ state->position.x + 10, state->position.y + 250, 310, 20 }, 1);
+        GuiLine((Rectangle){ state->position.x + 10, state->position.y + 250, 310, 20 }, NULL);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 265, 289, 25 }, lblCopyrightText);
         if (GuiLabelButton((Rectangle){ state->position.x + 215, state->position.y + 265, 76, 25 }, linkraylibtech)) { OpenURL("https://twitter.com/raylibtech"); }
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 285, 80, 25 }, lblMoreInfoText);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 305, 80, 25 }, lblSupportText);
         if (GuiLabelButton((Rectangle){ state->position.x + 95, state->position.y + 285, 165, 25 }, linkToolWebText)) { OpenURL("https://www.raylibtech.com/"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 95, state->position.y + 305, 165, 25 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
-        GuiLine((Rectangle){ state->position.x + 0, state->position.y + 325, 330, 20 }, 1);
+        GuiLine((Rectangle){ state->position.x + 0, state->position.y + 325, 330, 20 }, NULL);
 #if defined(VERSION_ONE)
         state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 350, 15, 15 }, "License Agreement (EULA)", state->chkLicenseChecked);
 #else
