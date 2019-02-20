@@ -1,5 +1,5 @@
 #
-# rgl text file (v2.0) - raygui layout text file generated using rGuiLayout
+# rgl text file (v1.0) - raygui layout text file generated using rGuiLayout
 #
 # Total number of controls:     22
 # Anchor info:   a <id> <name> <posx> <posy> <enabled>
@@ -7,13 +7,13 @@
 #
 r 0 0 -1 -1
 a 000 anchor00 100 100 1
-a 001 anchor01 0 0 1
-a 002 anchor02 0 0 0
-a 003 anchor03 0 0 0
-a 004 anchor04 0 0 0
-a 005 anchor05 0 0 0
-a 006 anchor06 0 0 0
-a 007 anchor07 0 0 0
+a 001 anchor01 100 100 1
+a 002 anchor02 100 100 0
+a 003 anchor03 100 100 0
+a 004 anchor04 100 100 0
+a 005 anchor05 100 100 0
+a 006 anchor06 100 100 0
+a 007 anchor07 100 100 0
 c 000 0 windowAbout 0 0 335 340 1 About rFXGen
 c 001 24 dummyLogo 10 35 65 65 1 logo_rtool
 c 002 4 lblDescription 85 80 245 20 1 A simple and easy-to-use fx sounds generator
@@ -22,12 +22,12 @@ c 004 2 lineTop 0 100 335 20 1
 c 005 4 lblUsedLibs 10 110 126 25 1 Used libraries:
 c 006 20 dummyraylib 10 135 65 65 1 logo_raylib
 c 007 20 dummyraygui 80 135 65 65 1 logo_raygui
-c 008 6 linkraylib 155 145 126 15 1 www.raylib.com
-c 009 6 linkGitraylib 155 165 165 15 1 github.com/raysan5/raylib
-c 010 6 linkGitraygui 155 185 165 15 1 github.com/raysan5/raygui
+c 008 6 linkraylib 155 140 80 15 1 www.raylib.com
+c 009 6 linkGitraylib 155 165 150 15 1 github.com/raysan5/raylib
+c 010 6 linkGitraygui 155 185 150 15 1 github.com/raysan5/raygui
 c 011 2 lineMid01 10 200 320 20 1 
-c 012 4 lblCopyright 10 225 289 15 1 Copyright (c) 2019 raylib technologies (                 )
-c 013 6 linkraylibtech 215 225 60 15 1 @raylibtech
+c 012 4 lblCopyright 10 225 289 20 1 Copyright (c) 2019 raylib technologies (                 )
+c 013 6 linkraylibtech 215 225 60 20 1 @raylibtech
 c 014 4 lblMoreInfo 10 250 65 15 1 More info:
 c 015 6 linkToolWeb 80 250 165 15 1 www.raylibtech.com/rtoolname
 c 016 6 linkMail 80 270 165 15 1 ray@raylibtech.com
