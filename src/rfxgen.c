@@ -28,9 +28,9 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 2.1-dev          - Windowing/input management and drawing.
+*       raylib 2.5-dev          - Windowing/input management and drawing.
 *       raygui 2.0              - Immediate-mode GUI controls.
-*       tinyfiledialogs 3.3.7   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       tinyfiledialogs 3.3.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
@@ -40,12 +40,14 @@
 *       gcc -o rfxgen rfxgen.c external/tinyfiledialogs.c -s -Iexternal -no-pie -D_DEFAULT_SOURCE /
 *           -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 *
+*   NOTE: On PLATFORM_ANDROID and PLATFORM_WEB file dialogs are not available
+*
 *   DEVELOPERS:
 *       Ramon Santamaria (@raysan5):   Developer, supervisor, updater and maintainer.
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2018 raylib technologies (@raylibtech).
+*   Copyright (c) 2014-2019 raylib technologies (@raylibtech).
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -73,7 +75,9 @@
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
 #include "gui_window_about.h"
 
-#include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
+    #include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
+#endif
 
 #include <math.h>                       // Required for: sinf(), pow()
 #include <time.h>                       // Required for: clock()
@@ -94,8 +98,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//#define VERSION_ONE                   // Enable version ONE features
-                                        // NOTE: It should be passed to compilation
 //#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 
 #define TOOL_VERSION_TEXT    "2.0"      // Tool version string
@@ -337,7 +339,7 @@ int main(int argc, char *argv[])
     SetTraceLogLevel(LOG_NONE);                 // Disable trace log messsages
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
-    //SetExitKey(0);
+    SetExitKey(0);
 
     InitAudioDevice();
 
@@ -401,6 +403,8 @@ int main(int argc, char *argv[])
 
     Rectangle waveRec = { 8, 428, 484, 58 };   // Wave drawing rectangle box
 
+    Rectangle slidersRec = { 238, 16, 104, 400 };   // Area defining sliders to allow sound replay when mouse-released
+
     // Set default sound volume
     for (int i = 0; i < MAX_WAVE_SLOTS; i++) SetSoundVolume(sound[i], volumeValue);
 
@@ -416,12 +420,18 @@ int main(int argc, char *argv[])
     RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
     SetTextureFilter(screenTarget.texture, FILTER_POINT);
 
+    bool exitWindow = false;
+
     SetTargetFPS(60);
     //----------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!exitWindow)    // Detect window close button or ESC key
     {
+        if (WindowShouldClose()) exitWindow = true;
+
+        if (!windowAboutState.chkLicenseChecked) exitWindow = true;
+
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
@@ -455,6 +465,13 @@ int main(int argc, char *argv[])
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave[slotActive], 0); // Show dialog: export wave (.wav)
 
         if (IsKeyPressed(KEY_F1)) windowAboutState.windowAboutActive = !windowAboutState.windowAboutActive;
+
+        // Close Window About on KEY_ESCAPE or exit program
+        if (IsKeyPressed(KEY_ESCAPE))
+        {
+            if (windowAboutState.windowAboutActive) windowAboutState.windowAboutActive = false;
+            else exitWindow = true;
+        }
         //----------------------------------------------------------------------------------
 
         // Basic program flow logic
@@ -478,36 +495,38 @@ int main(int argc, char *argv[])
         }
         prevVisualStyleActive = visualStyleActive;
 #endif
-
-        // Consider two possible cases to regenerate wave and update sound:
-        // CASE1: regenerate flag is true (set by sound buttons functions)
-        // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
-        if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), (Rectangle){ 243, 48, 102, 362 })) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
+        if (!windowAboutState.windowAboutActive)    // Avoid wave regeneration on Window About active
         {
-            UnloadWave(wave[slotActive]);
-            wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
+            // Consider two possible cases to regenerate wave and update sound:
+            // CASE1: regenerate flag is true (set by sound buttons functions)
+            // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
+            if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
+            {
+                UnloadWave(wave[slotActive]);
+                wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
 
-            UnloadSound(sound[slotActive]);
-            sound[slotActive] = LoadSoundFromWave(wave[slotActive]);    // Reload sound from new wave
-            //UpdateSound(sound[slotActive], wave[slotActive].data, wave[slotActive].sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
+                UnloadSound(sound[slotActive]);
+                sound[slotActive] = LoadSoundFromWave(wave[slotActive]);    // Reload sound from new wave
+                //UpdateSound(sound[slotActive], wave[slotActive].data, wave[slotActive].sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
 
-            if (regenerate || playOnChangeChecked) PlaySound(sound[slotActive]);
-            
-            strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
-            strcpy(durationText, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-            strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
-            
-            regenerate = false;
+                if (regenerate || playOnChangeChecked) PlaySound(sound[slotActive]);
+
+                strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
+                strcpy(durationText, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
+                strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
+
+                regenerate = false;
+            }
         }
 
-        if (slotActive != prevSlotActive) 
+        if (slotActive != prevSlotActive)
         {
             PlaySound(sound[slotActive]);
-            
+
             strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
             strcpy(durationText, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
             strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
-            
+
             prevSlotActive = slotActive;
         }
 
@@ -552,6 +571,9 @@ int main(int argc, char *argv[])
             BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
+            if (windowAboutState.windowAboutActive) GuiDisable();
+            else GuiEnable();
+
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
             DrawText("rFXGen", 31, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
@@ -566,7 +588,7 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 8, 154, 100, 24 }, "#152#Hit/Hurt")) { params[slotActive] = GenHitHurt(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 182, 100, 24 }, "#150#Jump")) { params[slotActive] = GenJump(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 210, 100, 24 }, "#144#Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
-            
+
             GuiLine((Rectangle){ 8, 234, 100, 12 }, NULL);
 
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, 0);
@@ -574,7 +596,7 @@ int main(int argc, char *argv[])
             params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 100, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, 1);
             GuiSetStyle(TOGGLE, INNER_PADDING, 1);
-            
+
             GuiLine((Rectangle){ 8, 356, 102, 12 }, NULL);
 
             if (GuiButton((Rectangle){ 8, 368, 100, 24 }, "#75#Mutate")) { WaveMutate(&params[slotActive]); regenerate = true; }
@@ -615,8 +637,8 @@ int main(int argc, char *argv[])
             params[slotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ 240, 372, 100, 10 }, "LPF RESONANCE", params[slotActive].lpfResonanceValue, 0, 1, true);
             params[slotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ 240, 388, 100, 10 }, "HPF CUTOFF", params[slotActive].hpfCutoffValue, 0, 1, true);
             params[slotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 404, 100, 10 }, "HPF CUTOFF SWEEP", params[slotActive].hpfCutoffSweepValue, -1, 1, true);
-            //--------------------------------------------------------------------------------     
-            
+            //--------------------------------------------------------------------------------
+
             playOnChangeChecked = GuiCheckBox((Rectangle){ 392, 16, 14, 14 }, "Play on change", playOnChangeChecked);
             if (GuiButton((Rectangle){ 392, 36, 100, 24 }, "#131#Play Sound")) PlaySound(sound[slotActive]);
 
@@ -637,6 +659,7 @@ int main(int argc, char *argv[])
             sampleRateActive = GuiComboBox((Rectangle){ 392, 178, 100, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
             sampleSizeActive = GuiComboBox((Rectangle){ 392, 206, 100, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
             fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV;RAW;CODE", fileTypeActive);
+
             if (GuiButton((Rectangle){ 392, 264, 100, 24 }, "#7#Export Wave")) DialogExportWave(wave[slotActive], fileTypeActive);
 
             GuiLine((Rectangle){ 392, 288, 100, 16 }, NULL);
@@ -646,7 +669,7 @@ int main(int argc, char *argv[])
             GuiDisable();
 #endif
             visualStyleActive = GuiComboBox((Rectangle){ 392, 320, 100, 24 }, "Light;Dark;Candy", visualStyleActive);
-            GuiEnable();
+            if (!windowAboutState.windowAboutActive) GuiEnable();
             screenSizeActive = GuiToggle((Rectangle){ 392, 348, 100, 24 }, "Screen Size x2", screenSizeActive);
 
             GuiLine((Rectangle){ 392, 372, 100, 20 }, NULL);
@@ -686,7 +709,9 @@ int main(int argc, char *argv[])
             // Draw render texture to screen
             if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
-
+#if defined(DEBUG)
+            DrawRectangleRec(slidersRec, Fade(RED, 0.5f));
+#endif
         EndDrawing();
         //------------------------------------------------------------------------------------
     }
@@ -802,6 +827,7 @@ static void ProcessCommandLine(int argc, char *argv[])
         {
             if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
                 (IsFileExtension(argv[i + 1], ".wav") ||
+                 IsFileExtension(argv[i + 1], ".raw") ||
                  IsFileExtension(argv[i + 1], ".h")))
             {
                 strcpy(outFileName, argv[i + 1]);   // Read output filename
@@ -885,6 +911,17 @@ static void ProcessCommandLine(int argc, char *argv[])
         // Export wave data as audio file (.wav) or code file (.h)
         if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
         else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
+        else if (IsFileExtension(outFileName, ".raw"))
+        {
+            // Export Wave as RAW data
+            FILE *rawFile = fopen(outFileName, "wb");
+
+            if (rawFile != NULL)
+            {
+                fwrite(wave.data, 1, wave.sampleCount*wave.sampleSize/8, rawFile);  // Write wave data
+                fclose(rawFile);
+            }
+        }
 
         UnloadWave(wave);
     }
@@ -1402,6 +1439,7 @@ static WaveParams DialogLoadSound(void)
 {
     WaveParams params = { 0 };
 
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
     const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
@@ -1411,6 +1449,7 @@ static WaveParams DialogLoadSound(void)
         params = LoadWaveParams(fileName);
         //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(fileName)));
     }
+#endif
 
     return params;
 }
@@ -1418,6 +1457,7 @@ static WaveParams DialogLoadSound(void)
 // Show dialog: save sound parameters file
 static void DialogSaveSound(WaveParams params)
 {
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Save file dialog
     const char *filters[] = { "*.rfx" };
     const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 1, filters, "Sound Param Files (*.rfx)");
@@ -1433,18 +1473,28 @@ static void DialogSaveSound(WaveParams params)
         // Save wave parameters
         SaveWaveParams(params, outFileName);
     }
+#endif
 }
 
 // Show dialog: export current sound as .wav
 static void DialogExportWave(Wave wave, int format)
 {
     const char *fileName = NULL;
-    
+
+#if !defined(VERSION_ONE)
+    format = 0;
+#endif
+
+#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Save file dialog
     if (format == 0)
     {
         const char *filters[] = { "*.wav" };
+#if !defined(VERSION_ONE)
+        fileName = tinyfd_saveFileDialog("rFXGen ZERO - Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
+#else
         fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
+#endif
     }
     else if (format == 1)
     {
@@ -1456,7 +1506,7 @@ static void DialogExportWave(Wave wave, int format)
         const char *filters[] = { "*.h" };
         fileName = tinyfd_saveFileDialog("Export wave file", "sound.h", 1, filters, "Wave As Code (*.h)");
     }
-
+#endif
     if (fileName != NULL)
     {
         char outFileName[128] = { 0 };
@@ -1465,21 +1515,21 @@ static void DialogExportWave(Wave wave, int format)
         // Export wave data
         Wave cwave = WaveCopy(wave);
         WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);        // Before exporting wave data, we format it as desired
-        
+
         if (format == 0) ExportWave(cwave, outFileName);            // Export wave data as WAV file
         else if (format == 2) ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
         else if (format == 1)
         {
             // Export Wave as RAW data
             FILE *rawFile = fopen(outFileName, "wb");
-            
+
             if (rawFile != NULL)
             {
                 fwrite(wave.data, 1, wave.sampleCount*wave.sampleSize/8, rawFile);  // Write wave data
                 fclose(rawFile);
             }
         }
-        
+
         UnloadWave(cwave);
     }
 }

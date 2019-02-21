@@ -35,15 +35,15 @@
 // Gui window structure declaration
 typedef struct {
     Vector2 position;
-    
+
     bool windowAboutActive;
     bool chkLicenseChecked;
-    
+
     // Custom state variables (depend on development software)
     // NOTE: This variables should be added manually if required
     int windowWidth;
     int windowHeight;
-    
+
 } GuiWindowAboutState;
 
 #ifdef __cplusplus
@@ -136,80 +136,88 @@ GuiWindowAboutState InitGuiWindowAbout(void)
 
 // Gui about window
 void GuiWindowAbout(GuiWindowAboutState *state)
-{   
-    const char *windowAboutText = "About rFXGen";
+{
+    const char *windowAboutText = "#191#About rFXGen";
     const char *lblDescriptionText = "A simple and easy-to-use fx sounds generator";
     const char *lblNameVersionText = "rFXGen v2.0";
     const char *lblDateText = "(Feb. 2019)";
     const char *lblUsedLibsText = "Powered by:";
-    const char *dummyraylibText = "logo_raylib";
-    const char *dummyrayguiText = "logo_raygui";
     const char *linkraylibText = "www.raylib.com";
     const char *linkGitraylibText = "github.com/raysan5/raylib";
     const char *linkGitrayguiText = "github.com/raysan5/raygui";
     const char *lblCopyrightText = "Copyright (c) 2019 raylib technologies (                 )";
     const char *linkraylibtechText = "@raylibtech";
     const char *lblMoreInfoText = "More info:";
-    const char *linkToolWebText = "www.raylibtech.com/rtoolname";
+    const char *linkToolWebText = "www.raylibtech.com/rfxgen";
     const char *linkMailText = "ray@raylibtech.com";
     const char *lblSupportText = "Support:";
     const char *chkLicenseText = "License Agreement (EULA)";
     const char *BtnBeONEText = "#186#Be ONE";
     const char *BtnCloseText = "#159#Close";
-    
+
     const int toolColor = 0x5197d4ff;
-    
+
     if (state->windowAboutActive)
     {
+        GuiEnable();
+
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-        
+
+        int defaultPadding = GuiGetStyle(DEFAULT, GROUP_PADDING);
+        GuiSetStyle(DEFAULT, INNER_PADDING, 8);
         state->windowAboutActive = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, 335, 340 }, windowAboutText);
-        
-        // TODO: Create a color rectangle or color-config panel...
-        DrawRectangle(state->position.x + 1, state->position.y + 4 + 20, state->windowWidth - 2, 90 - 4, GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_DISABLED)));
-        
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 80, 245, 20 }, lblDescriptionText);
+        GuiSetStyle(DEFAULT, INNER_PADDING, defaultPadding);
+
+        // Draw a background rectangle for convenience
+        DrawRectangle(state->position.x + 1, state->position.y + 4 + 20, state->windowWidth - 2, 90 - 4, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 74, 245, 20 }, lblDescriptionText);
 #if defined(VERSION_ONE)
-        DrawTechIcon(state->position.x + 10, state.position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 200, 30 }, FormatText("%s ONE %s", lblNameVersionText, lblDateText));
+        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 50, 200, 30 }, FormatText("%s ONE %s", lblNameVersionText, lblDateText));
 #else
         DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, false, GetColor(toolColor));
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 60, 200, 30 }, FormatText("%s ZERO %s", lblNameVersionText, lblDateText));
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 50, 200, 30 }, FormatText("%s ZERO %s", lblNameVersionText, lblDateText));
 #endif
 
         GuiLine((Rectangle){ state->position.x + 0, state->position.y + 100, 335, 20 }, NULL);
         GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 113, 126, 25 }, lblUsedLibsText);
-        
+
         DrawTechIcon(state->position.x + 10, state->position.y + 135, 64, "raylib", 10, false, BLACK);
         DrawTechIcon(state->position.x + 80, state->position.y + 135, 64, "raygui", 10, false, LIGHTGRAY);
-        
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 140, 80, 15 }, linkraylibText)) { OpenURL("https://www.raylib.com/"); }
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 165, 150, 15 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 185, 150, 15 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
-        
+
+        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 135, 80, 15 }, linkraylibText)) { OpenURL("https://www.raylib.com/"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 160, 150, 15 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 180, 150, 15 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
+
         GuiLine((Rectangle){ state->position.x + 10, state->position.y + 200, 320, 20 }, NULL);
-        GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 225, 289, 20 }, lblCopyrightText);
-        
-        if (GuiLabelButton((Rectangle){ state->position.x + 215, state->position.y + 225, 60, 20 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
-        
+
+        GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 220, 289, 20 }, lblCopyrightText);
+        if (GuiLabelButton((Rectangle){ state->position.x + 215, state->position.y + 220, 60, 20 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
+
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 250, 65, 15 }, lblMoreInfoText);
-        
+
         if (GuiLabelButton((Rectangle){ state->position.x + 80, state->position.y + 250, 165, 15 }, linkToolWebText)) { OpenURL("https://www.raylibtech.com/"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 80, state->position.y + 270, 165, 15 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
-        
+
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 270, 65, 15 }, lblSupportText);
         GuiLine((Rectangle){ state->position.x + 0, state->position.y + 285, 335, 20 }, NULL);
-        
+
+        DrawRectangle(state->position.x + 1, state->position.y + 285 + 11, state->windowWidth - 2, 43, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 1);
         GuiSetStyle(BUTTON, INNER_PADDING, 1);
 #if defined(VERSION_ONE)
-        state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 310, 16, 16 }, chkLicenseText, state->chkLicenseChecked);
+        // TODO: Define a proper EULA
+        //state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 310, 16, 16 }, chkLicenseText, state->chkLicenseChecked);
 #else
-        GuiDisable();state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 310, 16, 16 }, chkLicenseText, state->chkLicenseChecked); GuiEnable();
+        //GuiDisable();state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 310, 16, 16 }, chkLicenseText, state->chkLicenseChecked); GuiEnable();
         if (GuiButton((Rectangle){ state->position.x + 175, state->position.y + 305, 75, 25 }, BtnBeONEText)) { OpenURL("https://raylibtech.itch.io/rfxgen"); }
 #endif
         if (GuiButton((Rectangle){ state->position.x + 255, state->position.y + 305, 70, 25 }, BtnCloseText)) state->windowAboutActive = false;
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
+
+        GuiDisable();
     }
 }
 
