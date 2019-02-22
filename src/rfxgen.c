@@ -658,9 +658,9 @@ int main(int argc, char *argv[])
 
             sampleRateActive = GuiComboBox((Rectangle){ 392, 178, 100, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
             sampleSizeActive = GuiComboBox((Rectangle){ 392, 206, 100, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
-            
+
 #if !defined(VERSION_ONE)
-            GuiDisable(); 
+            GuiDisable();
             fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV", fileTypeActive);
             if (!windowAboutState.windowAboutActive) GuiEnable();
 #else
@@ -901,7 +901,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
         printf("\nInput file:       %s", inFileName);
         printf("\nOutput file:      %s", outFileName);
-        printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1) ? "Mono" : "Stereo");
+        printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1)? "Mono" : "Stereo");
 
         Wave wave = { 0 };
 
