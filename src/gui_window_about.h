@@ -163,10 +163,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
 
-        int defaultPadding = GuiGetStyle(DEFAULT, GROUP_PADDING);
-        GuiSetStyle(DEFAULT, INNER_PADDING, 8);
         state->windowAboutActive = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, 335, 340 }, windowAboutText);
-        GuiSetStyle(DEFAULT, INNER_PADDING, defaultPadding);
 
         // Draw a background rectangle for convenience
         DrawRectangle(state->position.x + 1, state->position.y + 4 + 20, state->windowWidth - 2, 90 - 4, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));

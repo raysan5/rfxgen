@@ -658,7 +658,14 @@ int main(int argc, char *argv[])
 
             sampleRateActive = GuiComboBox((Rectangle){ 392, 178, 100, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
             sampleSizeActive = GuiComboBox((Rectangle){ 392, 206, 100, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
+            
+#if !defined(VERSION_ONE)
+            GuiDisable(); 
+            fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV", fileTypeActive);
+            if (!windowAboutState.windowAboutActive) GuiEnable();
+#else
             fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV;RAW;CODE", fileTypeActive);
+#endif
 
             if (GuiButton((Rectangle){ 392, 264, 100, 24 }, "#7#Export Wave")) DialogExportWave(wave[slotActive], fileTypeActive);
 
@@ -1481,20 +1488,12 @@ static void DialogExportWave(Wave wave, int format)
 {
     const char *fileName = NULL;
 
-#if !defined(VERSION_ONE)
-    format = 0;
-#endif
-
 #if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Save file dialog
     if (format == 0)
     {
         const char *filters[] = { "*.wav" };
-#if !defined(VERSION_ONE)
-        fileName = tinyfd_saveFileDialog("rFXGen ZERO - Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
-#else
         fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
-#endif
     }
     else if (format == 1)
     {
@@ -1507,6 +1506,7 @@ static void DialogExportWave(Wave wave, int format)
         fileName = tinyfd_saveFileDialog("Export wave file", "sound.h", 1, filters, "Wave As Code (*.h)");
     }
 #endif
+
     if (fileName != NULL)
     {
         char outFileName[128] = { 0 };

@@ -730,10 +730,15 @@ RAYGUIDEF bool GuiWindowBox(Rectangle bounds, const char *text)
 
     // Draw window base
     DrawRectangleLinesEx(bounds, GuiGetStyle(DEFAULT, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(DEFAULT, BORDER + (state*3))), guiAlpha));
-    DrawRectangleRec((Rectangle){ bounds.x + GuiGetStyle(DEFAULT, BORDER_WIDTH), bounds.y + GuiGetStyle(DEFAULT, BORDER_WIDTH), bounds.width - GuiGetStyle(DEFAULT, BORDER_WIDTH)*2, bounds.height - GuiGetStyle(DEFAULT, BORDER_WIDTH)*2 }, Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), guiAlpha));
+    DrawRectangleRec((Rectangle){ bounds.x + GuiGetStyle(DEFAULT, BORDER_WIDTH), bounds.y + GuiGetStyle(DEFAULT, BORDER_WIDTH),
+                                  bounds.width - GuiGetStyle(DEFAULT, BORDER_WIDTH)*2, bounds.height - GuiGetStyle(DEFAULT, BORDER_WIDTH)*2 },
+                                  Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), guiAlpha));
 
     // Draw window header as status bar
+    int defaultPadding = GuiGetStyle(DEFAULT, GROUP_PADDING);
+    GuiSetStyle(DEFAULT, INNER_PADDING, 8);
     GuiStatusBar(statusBar, text);
+    GuiSetStyle(DEFAULT, INNER_PADDING, defaultPadding);
 
     // Draw window close button
     int buttonBorder = GuiGetStyle(BUTTON, BORDER_WIDTH);
@@ -1605,7 +1610,7 @@ RAYGUIDEF bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool 
 
     bool textHasChange = false;
     int currentLine = 0;
-    const char *numChars = "";
+    //const char *numChars = NULL;
 
     // Security check because font is used directly in this control
     if (guiFont.texture.id == 0) guiFont = GetFontDefault();
@@ -1626,7 +1631,7 @@ RAYGUIDEF bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool 
             int maxWidth = (bounds.width - (GuiGetStyle(TEXTBOX, INNER_PADDING)*2));
             int maxHeight = (bounds.height - (GuiGetStyle(TEXTBOX, INNER_PADDING)*2));
 
-            numChars = TextFormat("%i/%i", keyCount, textSize - 1);
+            //numChars = TextFormat("%i/%i", keyCount, textSize - 1);
 
             // Only allow keys in range [32..125]
             if (keyCount < (textSize - 1))
