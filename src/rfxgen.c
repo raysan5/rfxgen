@@ -421,6 +421,7 @@ int main(int argc, char *argv[])
     SetTextureFilter(screenTarget.texture, FILTER_POINT);
 
     bool exitWindow = false;
+    bool closingWindowActive = false;
 
     SetTargetFPS(60);
     //----------------------------------------------------------------------------------------
@@ -470,7 +471,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowAboutActive) windowAboutState.windowAboutActive = false;
-            else exitWindow = true;
+            else closingWindowActive = !closingWindowActive;
         }
         //----------------------------------------------------------------------------------
 
@@ -495,7 +496,7 @@ int main(int argc, char *argv[])
         }
         prevVisualStyleActive = visualStyleActive;
 #endif
-        if (!windowAboutState.windowAboutActive)    // Avoid wave regeneration on Window About active
+        if (!windowAboutState.windowAboutActive && !closingWindowActive)    // Avoid wave regeneration on Window About active
         {
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -571,7 +572,7 @@ int main(int argc, char *argv[])
             BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            if (windowAboutState.windowAboutActive) GuiDisable();
+            if (windowAboutState.windowAboutActive || closingWindowActive) GuiDisable();
             else GuiEnable();
 
             // rFXGen Layout: controls drawing
@@ -710,6 +711,18 @@ int main(int argc, char *argv[])
             //--------------------------------------------------------------------------------
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
+            
+            // Draw ending message window
+            //----------------------------------------------------------------------------------------
+            if (closingWindowActive)
+            {
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+                int message = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No"); 
+            
+                if ((message == 0) || (message == 2)) closingWindowActive = false;
+                else if (message == 1) exitWindow = true;
+            }
+            //----------------------------------------------------------------------------------------
 
             EndTextureMode();
 
