@@ -31,6 +31,3 @@
 # Debug files
 *.dSYM/
 *.su
-
-# Avoid release file
-!release/win32/rfxgen.exe
