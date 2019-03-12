@@ -106,6 +106,7 @@ static void DrawTechIcon(int posX, int posY, int size, const char *text, int tex
     int textPosX = posX + size - 2*borderSize - MeasureText(text, textSize);
     int textPosY = posY + size - 2*borderSize - textSize;
 
+    DrawRectangle(posX - 1, posY - 1, size + 2, size + 2, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
     DrawRectangle(posX, posY, size, size, RAYWHITE);
     DrawRectangleLinesEx((Rectangle){ posX, posY, size, size }, borderSize, color);
     DrawText(text, textPosX, textPosY, textSize, color);
@@ -187,7 +188,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 160, 150, 15 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 180, 150, 15 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
 
-        GuiLine((Rectangle){ state->position.x + 10, state->position.y + 200, 320, 20 }, NULL);
+        GuiLine((Rectangle){ state->position.x, state->position.y + 200, 335, 20 }, NULL);
 
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 220, 289, 20 }, lblCopyrightText);
         if (GuiLabelButton((Rectangle){ state->position.x + 215, state->position.y + 220, 60, 20 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
@@ -198,7 +199,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         if (GuiLabelButton((Rectangle){ state->position.x + 80, state->position.y + 270, 165, 15 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
 
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 270, 65, 15 }, lblSupportText);
-        GuiLine((Rectangle){ state->position.x + 0, state->position.y + 285, 335, 20 }, NULL);
+        GuiLine((Rectangle){ state->position.x, state->position.y + 285, 335, 20 }, NULL);
 
         DrawRectangle(state->position.x + 1, state->position.y + 285 + 11, state->windowWidth - 2, 43, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
 
