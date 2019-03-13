@@ -701,7 +701,7 @@ int main(int argc, char *argv[])
             DrawWave(&wave[slotActive], waveRec, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
         #endif
 
-            // TODO: Draw playing progress rectangle
+            // TODO: FEATURE: Draw playing progress rectangle
 
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
@@ -769,23 +769,23 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
-    printf("// powered by raylib v2.0 (www.raylib.com) and raygui v2.0                      //\n");
+    printf("// powered by raylib v2.5-dev (www.raylib.com) and raygui v2.0                  //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2016-2018 raylib technologies (@raylibtech)                    //\n");
+    printf("// Copyright (c) 2016-2019 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
     printf("USAGE:\n\n");
     printf("    > rfxgen [--help] --input <filename.ext> [--output <filename.ext>]\n");
-    printf("             [--format <sample_rate> <sample_size> <channels>] [--play <filename.ext>]\n");
+    printf("             [--format <sample_rate>,<sample_size>,<channels>] [--play <filename.ext>]\n");
 
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
-    printf("                                      Supported extensions: .rfx, .sfs, .wav\n");
+    printf("                                      Supported extensions: .rfx, .sfs, .wav, .off, .flac, .mp3\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
-    printf("                                      Supported extensions: .wav, .h\n");
+    printf("                                      Supported extensions: .wav, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
     printf("    -f, --format <sample_rate>,<sample_size>,<channels>\n");
     printf("                                    : Define output wave format. Comma separated values.\n");
@@ -800,12 +800,12 @@ static void ShowCommandLineInfo(void)
     printf("\nEXAMPLES:\n\n");
     printf("    > rfxgen --input sound.rfx --output jump.wav\n");
     printf("        Process <sound.rfx> to generate <sound.wav> at 44100 Hz, 32 bit, Mono\n\n");
-    printf("    > rfxgen --input sound.rfx --output jump.wav --format 22050 16 2\n");
-    printf("        Process <sound.rfx> to generate <jump.wav> at 22050 Hz, 16 bit, Stereo\n\n");
-    printf("    > rfxgen --input sound.rfx --play output.wav\n");
-    printf("        Process <sound.rfx> to generate <output.wav> and play <output.wav>\n\n");
-    printf("    > rfxgen --input sound.wav --output jump.wav --format 22050,8,1 --play jump.wav\n");
-    printf("        Process <sound.wav> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
+    printf("    > rfxgen --input sound.rfx --output jump.raw --format 22050,16,2\n");
+    printf("        Process <sound.rfx> to generate <jump.raw> at 22050 Hz, 16 bit, Stereo\n\n");
+    printf("    > rfxgen --input sound.ogg --play output.wav\n");
+    printf("        Process <sound.ogg> to generate <output.wav> and play <output.wav>\n\n");
+    printf("    > rfxgen --input sound.mp3 --output jump.wav --format 22050,8,1 --play jump.wav\n");
+    printf("        Process <sound.mp3> to generate <jump.wav> at 22050 Hz, 8 bit, Stereo.\n");
     printf("        Plays generated sound <jump.wav>.\n");
 }
 
@@ -836,7 +836,10 @@ static void ProcessCommandLine(int argc, char *argv[])
             if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
                 (IsFileExtension(argv[i + 1], ".rfx") ||
                  IsFileExtension(argv[i + 1], ".sfs") ||
-                 IsFileExtension(argv[i + 1], ".wav")))
+                 IsFileExtension(argv[i + 1], ".wav") || 
+                 IsFileExtension(argv[i + 1], ".ogg") || 
+                 IsFileExtension(argv[i + 1], ".flac") || 
+                 IsFileExtension(argv[i + 1], ".mp3")))
             {
                 strcpy(inFileName, argv[i + 1]);    // Read input filename
                 i++;
@@ -923,7 +926,13 @@ static void ProcessCommandLine(int argc, char *argv[])
             WaveParams params = LoadWaveParams(inFileName);
             wave = GenerateWave(params);
         }
-        else if (IsFileExtension(inFileName, ".wav")) wave = LoadWave(inFileName);
+        else if (IsFileExtension(inFileName, ".wav") || 
+                 IsFileExtension(inFileName, ".ogg") || 
+                 IsFileExtension(inFileName, ".flac") || 
+                 IsFileExtension(inFileName, ".mp3"))
+        {
+            wave = LoadWave(inFileName);
+        }
 
         // Format wave data to desired sampleRate, sampleSize and channels
         WaveFormat(&wave, sampleRate, sampleSize, channels);
@@ -949,7 +958,7 @@ static void ProcessCommandLine(int argc, char *argv[])
     // Play audio file if provided
     if (playFileName[0] != '\0')
     {
-        Wave wave = LoadWave(playFileName);
+        Wave wave = LoadWave(playFileName);     // Load audio (WAV, OGG, FLAC, MP3)
         PlayWaveCLI(wave);
         UnloadWave(wave);
     }
@@ -1933,7 +1942,7 @@ static void PlayWaveCLI(Wave wave)
     float waveTimeMs = (float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels);
 
     InitAudioDevice();                  // Init audio device
-    Sound fx = LoadSoundFromWave(wave); // Load WAV audio file
+    Sound fx = LoadSoundFromWave(wave); // Load audio wave
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
@@ -1941,7 +1950,7 @@ static void PlayWaveCLI(Wave wave)
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2018 raylib technologies (@raylibtech)                         //\n");
+    printf("// Copyright (c) 2019 raylib technologies (@raylibtech)                         //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
