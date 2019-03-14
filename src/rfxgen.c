@@ -457,14 +457,17 @@ int main(int argc, char *argv[])
         // Keyboard shortcuts
         //------------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[slotActive]);  // Play current sound
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound(params[slotActive]);  // Show dialog: save sound (.rfx)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O))     // Show dialog: load sound (.rfx, .sfs)
-        {
-            params[slotActive] = DialogLoadSound();
-            regenerate = true;
-        }
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave[slotActive], 0); // Show dialog: export wave (.wav)
+        
+        // Show dialog: save sound (.rfx)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound(params[slotActive]);
 
+        // Show dialog: load sound (.rfx, .sfs)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) { params[slotActive] = DialogLoadSound(); regenerate = true; }
+        
+        // Show dialog: export wave (.wav)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave[slotActive], 0);
+
+        // Toggle window about
         if (IsKeyPressed(KEY_F1)) windowAboutState.windowAboutActive = !windowAboutState.windowAboutActive;
 
         // Close Window About on KEY_ESCAPE or exit program
