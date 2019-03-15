@@ -772,7 +772,7 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
-    printf("// powered by raylib v2.5-dev (www.raylib.com) and raygui v2.0                  //\n");
+    printf("// powered by raylib v2.4-dev (www.raylib.com) and raygui v2.0                  //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2016-2019 raylib technologies (@raylibtech)                    //\n");
