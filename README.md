@@ -8,7 +8,6 @@ rFXGen comes in two flavours: **ZERO** (free version) and **ONE** (low-cost vers
 <br>
 <br>
 <br>
-<br>
 
 ## rFXGen ZERO features
 
@@ -27,7 +26,7 @@ rFXGen comes in two flavours: **ZERO** (free version) and **ONE** (low-cost vers
  - Export wave to **.raw** samples data and **code** bytes array (.h)
  - Three unique GUI themes: **Light, Dark, Candy**
  
-## Screenshots
+## rFXGen Screenshot
 
 ![rFXGen light interface](screenshots/rfxgen_v200_light_shot01.png)
  
