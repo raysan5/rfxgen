@@ -298,6 +298,8 @@ static char getch(void) { return getchar(); }   // Get pressed character
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
+    
     char inFileName[256] = { 0 };       // Input file name (required in case of drag & drop over executable)
 
     // Command-line usage mode
@@ -336,7 +338,6 @@ int main(int argc, char *argv[])
     const int screenWidth = 500;
     const int screenHeight = 512;
 
-    SetTraceLogLevel(LOG_NONE);                 // Disable trace log messsages
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
     SetExitKey(0);
@@ -771,7 +772,7 @@ static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// rFXGen v%s - A simple and easy-to-use fx sounds generator                   //\n", TOOL_VERSION_TEXT);
+    printf("// rFXGen v%s ONE - A simple and easy-to-use fx sounds generator               //\n", TOOL_VERSION_TEXT);
     printf("// powered by raylib v2.4-dev (www.raylib.com) and raygui v2.0                  //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
@@ -1949,7 +1950,7 @@ static void PlayWaveCLI(Wave wave)
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// rFXGen v%s - CLI audio player                                               //\n", TOOL_VERSION_TEXT);
+    printf("// rFXGen v%s ONE - CLI audio player                                               //\n", TOOL_VERSION_TEXT);
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
