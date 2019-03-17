@@ -47,12 +47,3 @@ rFXGen is **open source software**. rFXGen source code is licensed under an unmo
 rFXGen ZERO or rFXGen ONE are completely free for anyone willing to compile it directly from source. In case anyone prefers to directly [download distributed binary files](https://raylibtech.itch.io/), rFXGen ZERO is free and rFXGen ONE is low-cost. In any case, consider it as a small donation to help the author keep working on software for games development.
 
 *Copyright (c) 2016-2019 raylib technologies ([@raylibtech](https://twitter.com/raylibtech))*
- 
-
-## License
-
-rFXGen is **open source software**. rFXGen source code is licensed under an unmodified [zlib/libpng license](LICENSE).
-
-Despite being open source and free for everybody willing to compile it, [consider a small donation](https://www.paypal.com/donate/?token=Oo3h2bHS9ux4lNzahXhmH3oaAqQpBeeMy2zNoH1lxHuD5Vdi1-B6XlPRlEyEzLmBb7rGwG) for the development efforts or [contributing to raylib patreon](https://www.patreon.com/raylib) to help the author keep working on open source software for games development.
-
-*Copyright (c) 2016-2018 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))*
