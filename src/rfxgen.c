@@ -98,10 +98,12 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+// Basic information
+#define TOOL_NAME           "rFXGen"
+#define TOOL_VERSION        "2.0"
+#define TOOL_DESCRIPTION    "A simple and easy-to-use fx sounds generator"
+
 //#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
-
-#define TOOL_VERSION_TEXT    "2.0"      // Tool version string
-
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
 // Float random number generation
@@ -339,7 +341,7 @@ int main(int argc, char *argv[])
     const int screenHeight = 512;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
-    InitWindow(screenWidth, screenHeight, FormatText("rFXGen v%s - A simple and easy-to-use fx sounds generator", TOOL_VERSION_TEXT));
+    InitWindow(screenWidth, screenHeight, FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, TOOL_DESCRIPTION));
     SetExitKey(0);
 
     InitAudioDevice();
@@ -448,7 +450,7 @@ int main(int argc, char *argv[])
                 params[slotActive] = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
 
-                //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(droppedFiles[0])));
+                //SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(droppedFiles[0])));
             }
 
             ClearDroppedFiles();
@@ -483,8 +485,11 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
 
         // Check for changed gui values
-        if (volumeValue != prevVolumeValue) SetSoundVolume(sound[slotActive], volumeValue);
-        prevVolumeValue = volumeValue;
+        if (volumeValue != prevVolumeValue) 
+        {
+            SetSoundVolume(sound[slotActive], volumeValue);
+            prevVolumeValue = volumeValue;
+        }
 
         if (params[slotActive].waveTypeValue != prevWaveTypeValue[slotActive]) regenerate = true;
         prevWaveTypeValue[slotActive] = params[slotActive].waveTypeValue;
@@ -581,8 +586,8 @@ int main(int argc, char *argv[])
 
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
-            DrawText("rFXGen", 31, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 86, 13, 10, 10 }, FormatText("v%s", TOOL_VERSION_TEXT));
+            DrawText(FormatText("%s", TOOL_NAME), 31, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+            GuiLabel((Rectangle){ 86, 13, 10, 10 }, FormatText("v%s", TOOL_VERSION));
 
             GuiSetStyle(BUTTON, INNER_PADDING, 6);
             GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
@@ -772,7 +777,7 @@ static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// rFXGen v%s ONE - A simple and easy-to-use fx sounds generator               //\n", TOOL_VERSION_TEXT);
+    printf("// %s v%s ONE - %s               //\n", TOOL_NAME, TOOL_VERSION, TOOL_DESCRIPTION);
     printf("// powered by raylib v2.4-dev (www.raylib.com) and raygui v2.0                  //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
@@ -1480,7 +1485,7 @@ static WaveParams DialogLoadSound(void)
     if (fileName != NULL)
     {
         params = LoadWaveParams(fileName);
-        //SetWindowTitle(FormatText("rFXGen v%s - %s", TOOL_VERSION_TEXT, GetFileName(fileName)));
+        //SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(fileName)));
     }
 #endif
 
@@ -1950,7 +1955,7 @@ static void PlayWaveCLI(Wave wave)
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// rFXGen v%s ONE - CLI audio player                                               //\n", TOOL_VERSION_TEXT);
+    printf("// %s v%s ONE - CLI audio player                                               //\n", TOOL_NAME, TOOL_VERSION);
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
