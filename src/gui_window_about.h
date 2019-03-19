@@ -98,9 +98,8 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 // Internal Module Functions Definition
 //----------------------------------------------------------------------------------
 // Draw rTool generated icon
-static void DrawTechIcon(int posX, int posY, int size, const char *text, int textSize, bool pro, Color color)
+static void DrawTechIcon(int posX, int posY, int size, const char *text, int textSize, bool corner, Color color)
 {
-    int triSize = size/4;
     int borderSize = (int)ceil((float)size/16.0f);
 
     int textPosX = posX + size - 2*borderSize - MeasureText(text, textSize);
@@ -110,9 +109,14 @@ static void DrawTechIcon(int posX, int posY, int size, const char *text, int tex
     DrawRectangle(posX, posY, size, size, RAYWHITE);
     DrawRectangleLinesEx((Rectangle){ posX, posY, size, size }, borderSize, color);
     DrawText(text, textPosX, textPosY, textSize, color);
-    if (pro) DrawTriangle((Vector2){ posX + size - 2*borderSize - triSize, posY + 2*borderSize },
-                          (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize + triSize },
-                          (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize }, color);
+#if defined(VERSION_ONE)
+    if (corner)
+    {
+        DrawTriangle((Vector2){ posX + size/4 - 2*borderSize - triSize, posY + 2*borderSize },
+                 (Vector2){ posX + size/4 - 2*borderSize, posY + 2*borderSize + triSize },
+                 (Vector2){ posX + size/4 - 2*borderSize, posY + 2*borderSize }, color);
+    }
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -155,6 +159,11 @@ void GuiWindowAbout(GuiWindowAboutState *state)
     const char *chkLicenseText = "License Agreement (EULA)";
     const char *BtnBeONEText = "#186#Be ONE";
     const char *BtnCloseText = "#159#Close";
+#if defined(VERSION_ONE)
+    const char *mode = "ONE";
+#else
+    const char *mode = "ZERO";
+#endif
 
     const int toolColor = 0x5197d4ff;
 
@@ -164,19 +173,16 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
 
-        state->windowAboutActive = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, 335, 340 + 25 }, windowAboutText);
+        state->windowAboutActive = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, 335, 340 + 25 }, FormatText("%s %s", windowAboutText, mode));
 
         // Draw a background rectangle for convenience
         DrawRectangle(state->position.x + 1, state->position.y + 4 + 20, state->windowWidth - 2, 90 - 4, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
 
+        int labelTextAlign = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
+        GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rIP", 20, true, GetColor(toolColor));
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 50, 200, 30 }, FormatText("%s %s %s", lblNameVersionText, mode, lblDateText));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 74, 245, 20 }, lblDescriptionText);
-#if defined(VERSION_ONE)
-        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 50, 200, 30 }, FormatText("%s ONE %s", lblNameVersionText, lblDateText));
-#else
-        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, false, GetColor(toolColor));
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 50, 200, 30 }, FormatText("%s ZERO %s", lblNameVersionText, lblDateText));
-#endif
 
         GuiLine((Rectangle){ state->position.x + 0, state->position.y + 100, 335, 20 }, NULL);
         GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 113, 126, 25 }, lblUsedLibsText);
@@ -203,10 +209,13 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 270 + 25, 65, 15 }, lblSupportText);
         GuiLine((Rectangle){ state->position.x, state->position.y + 285 + 25, 335, 20 }, NULL);
+        GuiSetStyle(LABEL, TEXT_ALIGNMENT, labelTextAlign);
 
         DrawRectangle(state->position.x + 1, state->position.y + 285 + 11 + 25, state->windowWidth - 2, 43, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
 
-        GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 1);
+        int buttonTextAlign = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
+        GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+        int buttonInnerPadding = GuiGetStyle(BUTTON, INNER_PADDING);
         GuiSetStyle(BUTTON, INNER_PADDING, 1);
 #if defined(VERSION_ONE)
         // TODO: Define a proper EULA
@@ -216,7 +225,8 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         if (GuiButton((Rectangle){ state->position.x + 175, state->position.y + 305 + 25, 75, 25 }, BtnBeONEText)) { OpenURL("https://raylibtech.itch.io/rfxgen"); }
 #endif
         if (GuiButton((Rectangle){ state->position.x + 255, state->position.y + 305 + 25, 70, 25 }, BtnCloseText)) state->windowAboutActive = false;
-        GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
+        GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
+        GuiSetStyle(BUTTON, INNER_PADDING, buttonInnerPadding);
 
         GuiDisable();
     }
