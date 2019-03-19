@@ -112,9 +112,9 @@ static void DrawTechIcon(int posX, int posY, int size, const char *text, int tex
 #if defined(VERSION_ONE)
     if (corner)
     {
-        DrawTriangle((Vector2){ posX + size/4 - 2*borderSize - triSize, posY + 2*borderSize },
-                 (Vector2){ posX + size/4 - 2*borderSize, posY + 2*borderSize + triSize },
-                 (Vector2){ posX + size/4 - 2*borderSize, posY + 2*borderSize }, color);
+        DrawTriangle((Vector2){ posX + size - 2*borderSize - size/4, posY + 2*borderSize },
+                 (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize + size/4 },
+                 (Vector2){ posX + size - 2*borderSize, posY + 2*borderSize }, color);
     }
 #endif
 }
