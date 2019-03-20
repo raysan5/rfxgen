@@ -791,9 +791,9 @@ static void ShowCommandLineInfo(void)
     printf("             [--format <sample_rate>,<sample_size>,<channels>] [--play <filename.ext>]\n");
 
     printf("\nOPTIONS:\n\n");
-    printf("    -h, --help                      : Show tool version and command line usage help\n");
+    printf("    -h, --help                      : Show tool version and command line usage help\n\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
-    printf("                                      Supported extensions: .rfx, .sfs, .wav, .off, .flac, .mp3\n");
+    printf("                                      Supported extensions: .rfx, .sfs, .wav, .off, .flac, .mp3\n\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
@@ -842,31 +842,39 @@ static void ProcessCommandLine(int argc, char *argv[])
         }
         else if ((strcmp(argv[i], "-i") == 0) || (strcmp(argv[i], "--input") == 0))
         {
-            // Check for valid argumment and valid file extension
-            if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
-                (IsFileExtension(argv[i + 1], ".rfx") ||
-                 IsFileExtension(argv[i + 1], ".sfs") ||
-                 IsFileExtension(argv[i + 1], ".wav") || 
-                 IsFileExtension(argv[i + 1], ".ogg") || 
-                 IsFileExtension(argv[i + 1], ".flac") || 
-                 IsFileExtension(argv[i + 1], ".mp3")))
+            // Check for valid argument and valid file extension
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
-                strcpy(inFileName, argv[i + 1]);    // Read input filename
+                if (IsFileExtension(argv[i + 1], ".rfx") ||
+                    IsFileExtension(argv[i + 1], ".sfs") ||
+                    IsFileExtension(argv[i + 1], ".wav") || 
+                    IsFileExtension(argv[i + 1], ".ogg") || 
+                    IsFileExtension(argv[i + 1], ".flac") || 
+                    IsFileExtension(argv[i + 1], ".mp3"))
+                {
+                    strcpy(inFileName, argv[i + 1]);    // Read input filename
+                }
+                else printf("WARNING: Input file extension not recognized\n");
+
                 i++;
             }
-            else printf("WARNING: Input file extension not recognized\n");
+            else printf("WARNING: No input file provided\n");
         }
         else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
         {
-            if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
-                (IsFileExtension(argv[i + 1], ".wav") ||
-                 IsFileExtension(argv[i + 1], ".raw") ||
-                 IsFileExtension(argv[i + 1], ".h")))
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
-                strcpy(outFileName, argv[i + 1]);   // Read output filename
+                if (IsFileExtension(argv[i + 1], ".wav") ||
+                    IsFileExtension(argv[i + 1], ".raw") ||
+                    IsFileExtension(argv[i + 1], ".h"))
+                {
+                    strcpy(outFileName, argv[i + 1]);   // Read output filename
+                }
+                else printf("WARNING: Input file extension not recognized\n");
+                
                 i++;
             }
-            else printf("WARNING: Output file extension not recognized\n");
+            else printf("WARNING: No output file provided\n");
         }
         else if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--format") == 0))
         {
@@ -907,16 +915,21 @@ static void ProcessCommandLine(int argc, char *argv[])
         }
         else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0))
         {
-            if (((i + 1) < argc) && (argv[i + 1][0] != '-') &&
-                (IsFileExtension(argv[i + 1], ".wav") ||
-                 IsFileExtension(argv[i + 1], ".ogg") ||
-                 IsFileExtension(argv[i + 1], ".flac") ||
-                 IsFileExtension(argv[i + 1], ".mp3")))
+            if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
-                strcpy(playFileName, argv[i + 1]);   // Read filename to play
+                if (IsFileExtension(argv[i + 1], ".wav") ||
+                    IsFileExtension(argv[i + 1], ".ogg") ||
+                    IsFileExtension(argv[i + 1], ".flac") ||
+                    IsFileExtension(argv[i + 1], ".mp3"))
+                {
+                    strcpy(playFileName, argv[i + 1]);   // Read filename to play
+                    i++;
+                }
+                else printf("WARNING: Play file format not supported\n");
+            
                 i++;
             }
-            else printf("WARNING: Play file extension not supported\n");
+            else printf("WARNING: No file to play provided\n");
         }
     }
 
