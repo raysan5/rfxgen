@@ -487,7 +487,8 @@ int main(int argc, char *argv[])
         // Check for changed gui values
         if (volumeValue != prevVolumeValue) 
         {
-            SetSoundVolume(sound[slotActive], volumeValue);
+            SetMasterVolume(volumeValue);
+            //SetSoundVolume(sound[slotActive], volumeValue);   // TODO: Issue!
             prevVolumeValue = volumeValue;
         }
 
