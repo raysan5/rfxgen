@@ -101,9 +101,14 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 static void DrawTechIcon(int posX, int posY, int size, const char *text, int textSize, bool corner, Color color)
 {
     int borderSize = (int)ceil((float)size/16.0f);
+    
+    bool offsetY = true;
+    
+    // Make sure there is no character with pixels down the text baseline for a perfect y-aligned icon
+    for (int i = 0; text[i] != '\0'; i++) if ((text[i] == 'q') || (text[i] == 'y') || (text[i] == 'p') || (text[i] == 'j') || (text[i] == 'g')) { offsetY = false; break; }
 
     int textPosX = posX + size - 2*borderSize - MeasureText(text, textSize);
-    int textPosY = posY + size - 2*borderSize - textSize;
+    int textPosY = posY + size - 2*borderSize - textSize + (offsetY? (2*textSize/10) : 0);
 
     DrawRectangle(posX - 1, posY - 1, size + 2, size + 2, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
     DrawRectangle(posX, posY, size, size, RAYWHITE);
