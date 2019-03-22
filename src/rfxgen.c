@@ -71,9 +71,10 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"                     // Required for: IMGUI controls
 
-#undef RAYGUI_IMPLEMENTATION
+#undef RAYGUI_IMPLEMENTATION            // Avoid including raygui implementation again
+
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
-#include "gui_window_about.h"
+#include "gui_window_about.h"           // GUI: About Window
 
 #if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     #include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
@@ -346,8 +347,8 @@ int main(int argc, char *argv[])
 
     InitAudioDevice();
 
-    // rFXGen Layout: controls initialization
-    //----------------------------------------------------------------------------------------
+    // GUI: Main Layout
+    //-----------------------------------------------------------------------------------
     bool playOnChangeChecked = true;
     int sampleRateActive = 1;
     int sampleSizeActive = 1;
@@ -359,14 +360,21 @@ int main(int argc, char *argv[])
     char soundInfoText[64] = { 0 };
     char durationText[64] = { 0 };
     char waveSizeText[64] = { 0 };
-    //----------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------
 
-    // About Window Layout: controls initialization
-    //----------------------------------------------------------------------------------------
+    // GUI: About Window
+    //-----------------------------------------------------------------------------------
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
-    //----------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------
+    
+    // GUI: Exit Window
+    //-----------------------------------------------------------------------------------
+    bool exitWindow = false;
+    bool windowExitActive = false;
+    //-----------------------------------------------------------------------------------   
 
-    // Wave parameters
+    // Wave and Sound Initialization
+    //-----------------------------------------------------------------------------------  
     WaveParams params[MAX_WAVE_SLOTS] = { 0 }; // Wave parameters for generation
     Wave wave[MAX_WAVE_SLOTS] = { 0 };
     Sound sound[MAX_WAVE_SLOTS] = { 0 };
@@ -386,6 +394,7 @@ int main(int argc, char *argv[])
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
+    //-----------------------------------------------------------------------------------  
 
     // Check if a wave parameters file has been provided on command line
     if (inFileName[0] != '\0')
@@ -404,8 +413,7 @@ int main(int argc, char *argv[])
     bool regenerate = false;                    // Wave regeneration required
     int prevSlotActive = 0, slotActive = 0;     // Wave slot tracking
 
-    Rectangle waveRec = { 8, 428, 484, 58 };   // Wave drawing rectangle box
-
+    Rectangle waveRec = { 8, 428, 484, 58 };        // Wave drawing rectangle box
     Rectangle slidersRec = { 238, 16, 104, 400 };   // Area defining sliders to allow sound replay when mouse-released
 
     // Set default sound volume
@@ -422,9 +430,6 @@ int main(int argc, char *argv[])
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
     RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
     SetTextureFilter(screenTarget.texture, FILTER_POINT);
-
-    bool exitWindow = false;
-    bool closingWindowActive = false;
 
     SetTargetFPS(60);
     //----------------------------------------------------------------------------------------
@@ -477,7 +482,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowAboutActive) windowAboutState.windowAboutActive = false;
-            else closingWindowActive = !closingWindowActive;
+            else windowExitActive = !windowExitActive;
         }
         //----------------------------------------------------------------------------------
 
@@ -506,7 +511,7 @@ int main(int argc, char *argv[])
         }
         prevVisualStyleActive = visualStyleActive;
 #endif
-        if (!windowAboutState.windowAboutActive && !closingWindowActive)    // Avoid wave regeneration on Window About active
+        if (!windowAboutState.windowAboutActive && !windowExitActive)    // Avoid wave regeneration on Window About active
         {
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -582,7 +587,7 @@ int main(int argc, char *argv[])
             BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            if (windowAboutState.windowAboutActive || closingWindowActive) GuiDisable();
+            if (windowAboutState.windowAboutActive || windowExitActive) GuiDisable();
             else GuiEnable();
 
             // rFXGen Layout: controls drawing
@@ -717,19 +722,19 @@ int main(int argc, char *argv[])
             DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
 
-            // About Window Layout: controls drawing
+            // GUI: About Window
             //--------------------------------------------------------------------------------
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
             
-            // Draw ending message window
+            // GUI: Exit Window
             //----------------------------------------------------------------------------------------
-            if (closingWindowActive)
+            if (windowExitActive)
             {
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
                 int message = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No"); 
             
-                if ((message == 0) || (message == 2)) closingWindowActive = false;
+                if ((message == 0) || (message == 2)) windowExitActive = false;
                 else if (message == 1) exitWindow = true;
             }
             //----------------------------------------------------------------------------------------
@@ -779,7 +784,7 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s ONE - %s               //\n", TOOL_NAME, TOOL_VERSION, TOOL_DESCRIPTION);
-    printf("// powered by raylib v2.4-dev (www.raylib.com) and raygui v2.0                  //\n");
+    printf("// powered by raylib v2.4 (www.raylib.com) and raygui v2.0                      //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2016-2019 raylib technologies (@raylibtech)                    //\n");
