@@ -478,7 +478,7 @@ int main(int argc, char *argv[])
         // Toggle window about
         if (IsKeyPressed(KEY_F1)) windowAboutState.windowAboutActive = !windowAboutState.windowAboutActive;
 
-        // Close Window About on KEY_ESCAPE or exit program
+        // Show closing window on ESC
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowAboutActive) windowAboutState.windowAboutActive = false;
