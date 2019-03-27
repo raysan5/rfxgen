@@ -798,7 +798,7 @@ static void ShowCommandLineInfo(void)
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
-    printf("                                      Supported extensions: .rfx, .sfs, .wav, .off, .flac, .mp3\n\n");
+    printf("                                      Supported extensions: .rfx, .sfs, .wav, .ogg, .flac, .mp3\n\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
@@ -1974,7 +1974,7 @@ static void PlayWaveCLI(Wave wave)
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// %s v%s ONE - CLI audio player                                               //\n", TOOL_NAME, TOOL_VERSION);
+    printf("// %s v%s ONE - CLI audio player                                           //\n", TOOL_NAME, TOOL_VERSION);
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
