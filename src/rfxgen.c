@@ -1495,18 +1495,19 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
 static WaveParams DialogLoadSound(void)
 {
     WaveParams params = { 0 };
-
+    const char *fileName = NULL;
+    
 #if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
-    const char *fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+    fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+#endif
 
     if (fileName != NULL)
     {
         params = LoadWaveParams(fileName);
         //SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(fileName)));
     }
-#endif
 
     return params;
 }
@@ -1514,10 +1515,13 @@ static WaveParams DialogLoadSound(void)
 // Show dialog: save sound parameters file
 static void DialogSaveSound(WaveParams params)
 {
+    const char *fileName = NULL;
+    
 #if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Save file dialog
     const char *filters[] = { "*.rfx" };
-    const char *fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 1, filters, "Sound Param Files (*.rfx)");
+    fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 1, filters, "Sound Param Files (*.rfx)");
+#endif
 
     if (fileName != NULL)
     {
@@ -1530,7 +1534,7 @@ static void DialogSaveSound(WaveParams params)
         // Save wave parameters
         SaveWaveParams(params, outFileName);
     }
-#endif
+
 }
 
 // Show dialog: export current sound as .wav
