@@ -1534,7 +1534,6 @@ static void DialogSaveSound(WaveParams params)
         // Save wave parameters
         SaveWaveParams(params, outFileName);
     }
-
 }
 
 // Show dialog: export current sound as .wav
