@@ -784,7 +784,7 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s ONE - %s               //\n", TOOL_NAME, TOOL_VERSION, TOOL_DESCRIPTION);
-    printf("// powered by raylib v2.4 (www.raylib.com) and raygui v2.0                      //\n");
+    printf("// powered by raylib v2.5 (www.raylib.com) and raygui v2.0                      //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2016-2019 raylib technologies (@raylibtech)                    //\n");
@@ -1501,6 +1501,16 @@ static WaveParams DialogLoadSound(void)
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
     fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+#endif
+
+#if defined(PLATFORM_WEB)
+    // TODO: Show a message asking for file drag & drop (?)
+    // NOTE: GuiMessageBox() must be inside Begin/End draw, probably a flag is required
+    //GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Sound loading", "Just drag and drop your sound file for loading", "Ok");
+#endif
+
+#if defined(PLATFORM_ANDROID)
+    // TODO: Show a custom loading dialog showing virtual filesystem data
 #endif
 
     if (fileName != NULL)
