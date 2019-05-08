@@ -302,7 +302,7 @@ static char getch(void) { return getchar(); }   // Get pressed character
 int main(int argc, char *argv[])
 {
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
-    
+
     char inFileName[256] = { 0 };       // Input file name (required in case of drag & drop over executable)
 
     // Command-line usage mode
@@ -366,15 +366,15 @@ int main(int argc, char *argv[])
     //-----------------------------------------------------------------------------------
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //-----------------------------------------------------------------------------------
-    
+
     // GUI: Exit Window
     //-----------------------------------------------------------------------------------
     bool exitWindow = false;
     bool windowExitActive = false;
-    //-----------------------------------------------------------------------------------   
+    //-----------------------------------------------------------------------------------
 
     // Wave and Sound Initialization
-    //-----------------------------------------------------------------------------------  
+    //-----------------------------------------------------------------------------------
     WaveParams params[MAX_WAVE_SLOTS] = { 0 }; // Wave parameters for generation
     Wave wave[MAX_WAVE_SLOTS] = { 0 };
     Sound sound[MAX_WAVE_SLOTS] = { 0 };
@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
-    //-----------------------------------------------------------------------------------  
+    //-----------------------------------------------------------------------------------
 
     // Check if a wave parameters file has been provided on command line
     if (inFileName[0] != '\0')
@@ -465,13 +465,13 @@ int main(int argc, char *argv[])
         // Keyboard shortcuts
         //------------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[slotActive]);  // Play current sound
-        
+
         // Show dialog: save sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound(params[slotActive]);
 
         // Show dialog: load sound (.rfx, .sfs)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) { params[slotActive] = DialogLoadSound(); regenerate = true; }
-        
+
         // Show dialog: export wave (.wav)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave[slotActive], 0);
 
@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
 
         // Check for changed gui values
-        if (volumeValue != prevVolumeValue) 
+        if (volumeValue != prevVolumeValue)
         {
             SetMasterVolume(volumeValue);
             //SetSoundVolume(sound[slotActive], volumeValue);   // TODO: Issue!
@@ -726,14 +726,14 @@ int main(int argc, char *argv[])
             //--------------------------------------------------------------------------------
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
-            
+
             // GUI: Exit Window
             //----------------------------------------------------------------------------------------
             if (windowExitActive)
             {
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-                int message = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No"); 
-            
+                int message = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+
                 if ((message == 0) || (message == 2)) windowExitActive = false;
                 else if (message == 1) exitWindow = true;
             }
@@ -852,9 +852,9 @@ static void ProcessCommandLine(int argc, char *argv[])
             {
                 if (IsFileExtension(argv[i + 1], ".rfx") ||
                     IsFileExtension(argv[i + 1], ".sfs") ||
-                    IsFileExtension(argv[i + 1], ".wav") || 
-                    IsFileExtension(argv[i + 1], ".ogg") || 
-                    IsFileExtension(argv[i + 1], ".flac") || 
+                    IsFileExtension(argv[i + 1], ".wav") ||
+                    IsFileExtension(argv[i + 1], ".ogg") ||
+                    IsFileExtension(argv[i + 1], ".flac") ||
                     IsFileExtension(argv[i + 1], ".mp3"))
                 {
                     strcpy(inFileName, argv[i + 1]);    // Read input filename
@@ -876,7 +876,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                     strcpy(outFileName, argv[i + 1]);   // Read output filename
                 }
                 else printf("WARNING: Input file extension not recognized\n");
-                
+
                 i++;
             }
             else printf("WARNING: No output file provided\n");
@@ -931,7 +931,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                     i++;
                 }
                 else printf("WARNING: Play file format not supported\n");
-            
+
                 i++;
             }
             else printf("WARNING: No file to play provided\n");
@@ -954,9 +954,9 @@ static void ProcessCommandLine(int argc, char *argv[])
             WaveParams params = LoadWaveParams(inFileName);
             wave = GenerateWave(params);
         }
-        else if (IsFileExtension(inFileName, ".wav") || 
-                 IsFileExtension(inFileName, ".ogg") || 
-                 IsFileExtension(inFileName, ".flac") || 
+        else if (IsFileExtension(inFileName, ".wav") ||
+                 IsFileExtension(inFileName, ".ogg") ||
+                 IsFileExtension(inFileName, ".flac") ||
                  IsFileExtension(inFileName, ".mp3"))
         {
             wave = LoadWave(inFileName);
@@ -1496,7 +1496,7 @@ static WaveParams DialogLoadSound(void)
 {
     WaveParams params = { 0 };
     const char *fileName = NULL;
-    
+
 #if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Open file dialog
     const char *filters[] = { "*.rfx", "*.sfs" };
@@ -1526,7 +1526,7 @@ static WaveParams DialogLoadSound(void)
 static void DialogSaveSound(WaveParams params)
 {
     const char *fileName = NULL;
-    
+
 #if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
     // Save file dialog
     const char *filters[] = { "*.rfx" };
