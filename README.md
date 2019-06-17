@@ -3,7 +3,7 @@
 # rFXGen
 A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
-rFXGen comes in two flavours: **ZERO** (free version) and **ONE** (low-cost version). You can get them [here](https://raylibtech.itch.io/).
+rFXGen comes in two flavours: **ZERO** (free version) and **ONE** (low-cost version). You can get them [here](https://raylibtech.itch.io/rfxgen).
 
 <br>
 <br>
@@ -11,7 +11,7 @@ rFXGen comes in two flavours: **ZERO** (free version) and **ONE** (low-cost vers
 
 ## rFXGen ZERO features
 
- - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
+ - Predefined **sound presets** (Coin, Shoot, Explosion, PowerUp...)
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
  - Up to **four save slots** to store generate sound (temporary save)
  - Load **.rfx** sounds or import **.sfs** files (compatible with sfxr)
