@@ -1,7 +1,7 @@
 <img align="left" src="logo/rfxgen_256x256.png" width=256>
 
 # rFXGen
-A simple and easy-to-use fx sounds generator, ased on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
+A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
 rFXGen comes in two flavours: **ZERO** (free version) and **ONE** (low-cost version). You can get them [here](https://raylibtech.itch.io/).
 
