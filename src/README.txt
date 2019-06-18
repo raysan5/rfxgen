@@ -35,6 +35,7 @@ rFXGen ONE comes with a powerful command line for sounds generation and manipula
 
 rFXGen is open source software. rFXGen source code is licensed under an unmodified zlib/libpng license.
 
-rFXGen ZERO is free and rFXGen ONE is low-cost, with the addition of some useful features. In any case, consider it as a small donation to help the author keep working on software for games development.
+rFXGen ZERO is free and rFXGen ONE is low-cost, with the addition of some useful features. 
+In any case, consider it as a small donation to help the author keep working on software for games development.
 
 *Copyright (c) 2016-2019 raylib technologies (@raylibtech)*
