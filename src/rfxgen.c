@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
                 params[slotActive] = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
 
-                //SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(droppedFiles[0])));
+                SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(droppedFiles[0])));
             }
 
             ClearDroppedFiles();
@@ -1516,7 +1516,7 @@ static WaveParams DialogLoadSound(void)
     if (fileName != NULL)
     {
         params = LoadWaveParams(fileName);
-        //SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(fileName)));
+        SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(fileName)));
     }
 
     return params;
