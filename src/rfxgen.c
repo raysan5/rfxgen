@@ -875,7 +875,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                 {
                     strcpy(outFileName, argv[i + 1]);   // Read output filename
                 }
-                else printf("WARNING: Input file extension not recognized\n");
+                else printf("WARNING: Output file extension not recognized\n");
 
                 i++;
             }
