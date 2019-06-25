@@ -457,6 +457,9 @@ int main(int argc, char *argv[])
 
                 SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(droppedFiles[0])));
             }
+#if defined(VERSION_ONE)
+            else if (IsFileExtension(droppedFiles[0], ".rgs")) GuiLoadStyle(droppedFiles[0]);
+#endif
 
             ClearDroppedFiles();
         }
