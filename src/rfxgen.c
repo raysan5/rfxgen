@@ -69,6 +69,7 @@
 #include "raylib.h"
 
 #define RAYGUI_IMPLEMENTATION
+#define RAYGUI_SUPPORT_RICONS
 #include "raygui.h"                     // Required for: IMGUI controls
 
 #undef RAYGUI_IMPLEMENTATION            // Avoid including raygui implementation again
@@ -76,7 +77,7 @@
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
 #include "gui_window_about.h"           // GUI: About Window
 
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_DESKTOP) && !defined(CUSTOM_MODAL_DIALOGS)
     #include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
 #endif
 
@@ -110,7 +111,7 @@
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#if (!defined(DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
 bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib)
 #endif
 
@@ -266,9 +267,9 @@ static void SaveWaveParams(WaveParams params, const char *fileName);    // Save 
 static void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
 static Wave GenerateWave(WaveParams params);                            // Generate wave data from parameters
 
-static WaveParams DialogLoadSound(void);                // Show dialog: load sound parameters file
-static void DialogSaveSound(WaveParams params);         // Show dialog: save sound parameters file
-static void DialogExportWave(Wave wave, int format);    // Show dialog: export current sound as format
+//static WaveParams DialogLoadSound(void);                // Show dialog: load sound parameters file
+//static void DialogSaveSound(WaveParams params);         // Show dialog: save sound parameters file
+//static void DialogExportWave(Wave wave, int format);    // Show dialog: export current sound as format
 
 // Sound generation functions
 static WaveParams GenPickupCoin(void);      // Generate sound: Pickup/Coin
@@ -301,9 +302,11 @@ static char getch(void) { return getchar(); }   // Get pressed character
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+#if !defined(DEBUG)
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
-
-    char inFileName[256] = { 0 };       // Input file name (required in case of drag & drop over executable)
+#endif
+    char inFileName[512] = { 0 };       // Input file name (required in case of drag & drop over executable)
+    char outFileName[512] = { 0 };      // Output file name (required for file save/export)
 
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
@@ -329,7 +332,7 @@ int main(int argc, char *argv[])
     }
 
 #if !defined(COMMAND_LINE_ONLY)
-#if (defined(VERSION_ONE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
+#if (!defined(DEBUG) && defined(VERSION_ONE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
     // and closing console (FreeConsole()) when changing to GUI interface
@@ -372,6 +375,17 @@ int main(int argc, char *argv[])
     bool exitWindow = false;
     bool windowExitActive = false;
     //-----------------------------------------------------------------------------------
+    
+    // GUI: Custom dialogs
+    //-----------------------------------------------------------------------------------
+    bool showLoadSoundDialog = false;
+    bool showSaveSoundDialog = false;
+    bool showExportWaveDialog = false;
+    
+    int loadSoundDialogResult = 0;
+    int saveSoundDialogResult = 0;
+    int exportWaveDialogResult = 0;
+    //-----------------------------------------------------------------------------------  
 
     // Wave and Sound Initialization
     //-----------------------------------------------------------------------------------
@@ -399,11 +413,14 @@ int main(int argc, char *argv[])
     // Check if a wave parameters file has been provided on command line
     if (inFileName[0] != '\0')
     {
-        params[0] = LoadWaveParams(inFileName); // Load wave parameters from .rfx
+        // Clean everything (just in case)
         UnloadWave(wave[0]);
-        wave[0] = GenerateWave(params[0]);      // Generate wave from parameters
         UnloadSound(sound[0]);
+        
+        params[0] = LoadWaveParams(inFileName); // Load wave parameters from .rfx
+        wave[0] = GenerateWave(params[0]);      // Generate wave from parameters
         sound[0] = LoadSoundFromWave(wave[0]);  // Load sound from new wave
+        
         PlaySound(sound[0]);                    // Play generated sound
     }
 
@@ -470,13 +487,13 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[slotActive]);  // Play current sound
 
         // Show dialog: save sound (.rfx)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) DialogSaveSound(params[slotActive]);
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) showSaveSoundDialog = true;
 
         // Show dialog: load sound (.rfx, .sfs)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) { params[slotActive] = DialogLoadSound(); regenerate = true; }
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) showLoadSoundDialog = true;
 
-        // Show dialog: export wave (.wav)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) DialogExportWave(wave[slotActive], 0);
+        // Show dialog: export wave (.wav, .raw, .h)
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) showExportWaveDialog = true;
 
         // Toggle window about
         if (IsKeyPressed(KEY_F1)) windowAboutState.windowAboutActive = !windowAboutState.windowAboutActive;
@@ -574,6 +591,118 @@ int main(int argc, char *argv[])
                 SetMouseScale(1.0f, 1.0f);
             }
         }
+        
+#if defined(PLATFORM_DESKTOP) && !defined(CUSTOM_MODAL_DIALOGS)
+        if (showLoadSoundDialog)
+        {
+            const char *fileName = NULL;
+            const char *filters[] = { "*.rfx", "*.sfs" };
+            fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
+    
+            if (fileName != NULL) 
+            {
+                strcpy(inFileName, fileName);
+                loadSoundDialogResult = 1;
+            }
+            
+            showLoadSoundDialog = false;
+        }
+        
+        if (showSaveSoundDialog)
+        {
+            const char *fileName = NULL;
+            const char *filters[] = { "*.rfx" };
+            fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 1, filters, "Sound Param Files (*.rfx)");
+
+            if (fileName != NULL) 
+            {
+                strcpy(outFileName, fileName);
+                saveSoundDialogResult = 1;
+            }
+            
+            showSaveSoundDialog = false;
+        }
+        
+        if (showExportWaveDialog)
+        {
+            const char *fileName = NULL;
+            if (fileTypeActive == 0)
+            {
+                const char *filters[] = { "*.wav" };
+                fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
+            }
+            else if (fileTypeActive == 1)
+            {
+                const char *filters[] = { "*.raw" };
+                fileName = tinyfd_saveFileDialog("Export wave file", "sound.raw", 1, filters, "Raw Wave Data (*.raw)");
+            }
+            else if (fileTypeActive == 2)
+            {
+                const char *filters[] = { "*.h" };
+                fileName = tinyfd_saveFileDialog("Export wave file", "sound.h", 1, filters, "Wave As Code (*.h)");
+            }
+
+            if (fileName != NULL) 
+            {
+                strcpy(outFileName, fileName);
+                exportWaveDialogResult = 1;
+            }
+            
+            showExportWaveDialog = false;
+        }
+#endif
+        if (!showLoadSoundDialog && (loadSoundDialogResult == 1))
+        {
+            params[slotActive] = LoadWaveParams(inFileName);
+            SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(inFileName)));
+            regenerate = true;
+        
+            loadSoundDialogResult = 0;
+        }
+        
+        if (!showSaveSoundDialog && (saveSoundDialogResult == 1))
+        {
+            // Check for valid extension and make sure it is
+            if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
+            SaveWaveParams(params[slotActive], outFileName);    // Save wave parameters
+            saveSoundDialogResult = 0;
+            
+#if defined(PLATFORM_WEB)
+            // Download file from MEMFS (emscripten memory filesystem)
+            // NOTE: Second argument must be a simple filename (we can't use directories)
+            emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
+#endif
+        }
+
+        if (!showExportWaveDialog && (exportWaveDialogResult == 1))
+        {
+            // Export wave data
+            Wave cwave = WaveCopy(wave[slotActive]);
+            WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);        // Before exporting wave data, we format it as desired
+
+            if (fileTypeActive == 0) ExportWave(cwave, outFileName);            // Export wave data as WAV file
+            else if (fileTypeActive == 2) ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
+            else if (fileTypeActive == 1)
+            {
+                // Export Wave as RAW data
+                FILE *rawFile = fopen(outFileName, "wb");
+
+                if (rawFile != NULL)
+                {
+                    fwrite(wave[slotActive].data, 1, wave[slotActive].sampleCount*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
+                    fclose(rawFile);
+                }
+            }
+
+            UnloadWave(cwave);
+            exportWaveDialogResult = 0;
+
+#if defined(PLATFORM_WEB)
+            // Download file from MEMFS (emscripten memory filesystem)
+            // NOTE: Second argument must be a simple filename (we can't use directories)
+            emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
+#endif
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -595,6 +724,8 @@ int main(int argc, char *argv[])
 
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
+            if (showSaveSoundDialog || showExportWaveDialog) GuiLock();
+            
             DrawText(FormatText("%s", TOOL_NAME), 31, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             GuiLabel((Rectangle){ 86, 13, 10, 10 }, FormatText("v%s", TOOL_VERSION));
 
@@ -670,8 +801,8 @@ int main(int argc, char *argv[])
 
             GuiLine((Rectangle){ 392, 93, 100, 16 }, NULL);
 
-            if (GuiButton((Rectangle){ 392, 110, 100, 24 }, "#1#Load Sound")) { params[slotActive] = DialogLoadSound(); regenerate = true; }
-            if (GuiButton((Rectangle){ 392, 138, 100, 24 }, "#2#Save Sound")) DialogSaveSound(params[slotActive]);
+            if (GuiButton((Rectangle){ 392, 110, 100, 24 }, "#1#Load Sound")) showLoadSoundDialog = true;
+            if (GuiButton((Rectangle){ 392, 138, 100, 24 }, "#2#Save Sound")) showSaveSoundDialog = true;
 
             GuiLine((Rectangle){ 392, 162, 100, 16 }, NULL);
 
@@ -686,7 +817,7 @@ int main(int argc, char *argv[])
             fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV;RAW;CODE", fileTypeActive);
 #endif
 
-            if (GuiButton((Rectangle){ 392, 264, 100, 24 }, "#7#Export Wave")) DialogExportWave(wave[slotActive], fileTypeActive);
+            if (GuiButton((Rectangle){ 392, 264, 100, 24 }, "#7#Export Wave")) showExportWaveDialog = true;
 
             GuiLine((Rectangle){ 392, 288, 100, 16 }, NULL);
 
@@ -713,12 +844,11 @@ int main(int argc, char *argv[])
 
             // Draw Wave form
             //--------------------------------------------------------------------------------
-        #if defined(RENDER_WAVE_TO_TEXTURE)
+#if defined(RENDER_WAVE_TO_TEXTURE)
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
-        #else
+#else
             DrawWave(&wave[slotActive], waveRec, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
-        #endif
-
+#endif
             // TODO: FEATURE: Draw playing progress rectangle
 
             DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
@@ -735,12 +865,57 @@ int main(int argc, char *argv[])
             if (windowExitActive)
             {
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-                int message = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+                int result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
-                if ((message == 0) || (message == 2)) windowExitActive = false;
-                else if (message == 1) exitWindow = true;
+                if ((result == 0) || (result == 2)) windowExitActive = false;
+                else if (result == 1) exitWindow = true;
             }
             //----------------------------------------------------------------------------------------
+            
+            GuiUnlock();
+            
+#if !defined(PLATFORM_DESKTOP) || defined(CUSTOM_MODAL_DIALOGS)
+            // GUI: Load Sound Dialog (async)
+            //----------------------------------------------------------------------------------------
+            if (showLoadSoundDialog)
+            {
+                char fileName[256] = { 0 };
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+                
+                // TODO: Load file dialog
+                loadSoundDialogResult = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, "Load sound file ..."), "Just drag and drop your sound file!", "Ok");
+                
+                if ((loadSoundDialogResult == 0) || (loadSoundDialogResult == 1)) showLoadSoundDialog = false;
+                //else if ((loadSoundDialogResult == 1) && (fileName[0] != '\0')) strcpy(inFileName, fileName);
+            }
+            //----------------------------------------------------------------------------------------
+            
+            // GUI: Save Sound Dialog (async)
+            //----------------------------------------------------------------------------------------
+            if (showSaveSoundDialog)
+            {
+                char fileName[256] = { 0 };
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+                saveSoundDialogResult = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, "Save sound file as ..."), fileName, "Ok;Cancel");
+                
+                if ((saveSoundDialogResult == 0) || (saveSoundDialogResult == 2)) showSaveSoundDialog = false;
+                else if ((saveSoundDialogResult == 1) && (fileName[0] != '\0')) strcpy(outFileName, fileName);
+            }
+            //----------------------------------------------------------------------------------------
+            
+            // GUI: Export Wave Dialog (async)
+            //----------------------------------------------------------------------------------------
+            if (showExportWaveDialog)
+            {
+                char fileName[256] = { 0 };
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+                exportWaveDialogResult = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, "Export wave file as ..."), fileName, "Ok;Cancel");
+                
+                if ((exportWaveDialogResult == 0) || (exportWaveDialogResult == 2)) showExportWaveDialog = false;
+                else if ((exportWaveDialogResult == 1) && (fileName[0] != '\0')) strcpy(outFileName, fileName);
+            }
+            //----------------------------------------------------------------------------------------
+#endif
 
             EndTextureMode();
 
@@ -748,7 +923,7 @@ int main(int argc, char *argv[])
             if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
 #if defined(DEBUG)
-            DrawRectangleRec(slidersRec, Fade(RED, 0.5f));
+            //DrawRectangleRec(slidersRec, Fade(RED, 0.5f));
 #endif
         EndDrawing();
         //------------------------------------------------------------------------------------
@@ -833,9 +1008,9 @@ static void ProcessCommandLine(int argc, char *argv[])
     // CLI required variables
     bool showUsageInfo = false;     // Toggle command line usage info
 
-    char inFileName[256] = { 0 };   // Input file name
-    char outFileName[256] = { 0 };  // Output file name
-    char playFileName[256] = { 0 }; // Play file name
+    char inFileName[512] = { 0 };   // Input file name
+    char outFileName[512] = { 0 };  // Output file name
+    char playFileName[512] = { 0 }; // Play file name
 
     int sampleRate = 44100;         // Default conversion sample rate
     int sampleSize = 16;            // Default conversion sample size
@@ -1494,6 +1669,7 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
     }
 }
 
+/*
 // Show dialog: load sound parameters file
 static WaveParams DialogLoadSound(void)
 {
@@ -1524,7 +1700,8 @@ static WaveParams DialogLoadSound(void)
 
     return params;
 }
-
+*/
+/*
 // Show dialog: save sound parameters file
 static void DialogSaveSound(WaveParams params)
 {
@@ -1548,7 +1725,8 @@ static void DialogSaveSound(WaveParams params)
         SaveWaveParams(params, outFileName);
     }
 }
-
+*/
+/*
 // Show dialog: export current sound as .wav
 static void DialogExportWave(Wave wave, int format)
 {
@@ -1599,6 +1777,7 @@ static void DialogExportWave(Wave wave, int format)
         UnloadWave(cwave);
     }
 }
+*/
 
 //--------------------------------------------------------------------------------------------
 // Sound generation functions
