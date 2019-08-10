@@ -267,10 +267,6 @@ static void SaveWaveParams(WaveParams params, const char *fileName);    // Save 
 static void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
 static Wave GenerateWave(WaveParams params);                            // Generate wave data from parameters
 
-//static WaveParams DialogLoadSound(void);                // Show dialog: load sound parameters file
-//static void DialogSaveSound(WaveParams params);         // Show dialog: save sound parameters file
-//static void DialogExportWave(Wave wave, int format);    // Show dialog: export current sound as format
-
 // Sound generation functions
 static WaveParams GenPickupCoin(void);      // Generate sound: Pickup/Coin
 static WaveParams GenLaserShoot(void);      // Generate sound: Laser shoot
@@ -883,7 +879,7 @@ int main(int argc, char *argv[])
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
                 
                 // TODO: Load file dialog
-                loadSoundDialogResult = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, "Load sound file ..."), "Just drag and drop your sound file!", "Ok");
+                loadSoundDialogResult = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, "Load sound file ..."), "Just drag and drop your .rfx sound file!", "Ok");
                 
                 if ((loadSoundDialogResult == 0) || (loadSoundDialogResult == 1)) showLoadSoundDialog = false;
                 //else if ((loadSoundDialogResult == 1) && (fileName[0] != '\0')) strcpy(inFileName, fileName);
@@ -1668,116 +1664,6 @@ static void SaveWaveParams(WaveParams params, const char *fileName)
         }
     }
 }
-
-/*
-// Show dialog: load sound parameters file
-static WaveParams DialogLoadSound(void)
-{
-    WaveParams params = { 0 };
-    const char *fileName = NULL;
-
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
-    // Open file dialog
-    const char *filters[] = { "*.rfx", "*.sfs" };
-    fileName = tinyfd_openFileDialog("Load sound parameters file", "", 2, filters, "Sound Param Files (*.rfx, *.sfs)", 0);
-#endif
-
-#if defined(PLATFORM_WEB)
-    // TODO: Show a message asking for file drag & drop (?)
-    // NOTE: GuiMessageBox() must be inside Begin/End draw, probably a flag is required
-    //GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Sound loading", "Just drag and drop your sound file for loading", "Ok");
-#endif
-
-#if defined(PLATFORM_ANDROID)
-    // TODO: Show a custom loading dialog showing virtual filesystem data
-#endif
-
-    if (fileName != NULL)
-    {
-        params = LoadWaveParams(fileName);
-        SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(fileName)));
-    }
-
-    return params;
-}
-*/
-/*
-// Show dialog: save sound parameters file
-static void DialogSaveSound(WaveParams params)
-{
-    const char *fileName = NULL;
-
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
-    // Save file dialog
-    const char *filters[] = { "*.rfx" };
-    fileName = tinyfd_saveFileDialog("Save sound parameters file", "sound.rfx", 1, filters, "Sound Param Files (*.rfx)");
-#endif
-
-    if (fileName != NULL)
-    {
-        char outFileName[128] = { 0 };
-        strcpy(outFileName, fileName);
-
-        // Check for valid extension and make sure it is
-        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
-
-        // Save wave parameters
-        SaveWaveParams(params, outFileName);
-    }
-}
-*/
-/*
-// Show dialog: export current sound as .wav
-static void DialogExportWave(Wave wave, int format)
-{
-    const char *fileName = NULL;
-
-#if !defined(PLATFORM_WEB) && !defined(PLATFORM_ANDROID)
-    // Save file dialog
-    if (format == 0)
-    {
-        const char *filters[] = { "*.wav" };
-        fileName = tinyfd_saveFileDialog("Export wave file", "sound.wav", 1, filters, "Wave File (*.wav)");
-    }
-    else if (format == 1)
-    {
-        const char *filters[] = { "*.raw" };
-        fileName = tinyfd_saveFileDialog("Export wave file", "sound.raw", 1, filters, "Raw Wave Data (*.raw)");
-    }
-    else if (format == 2)
-    {
-        const char *filters[] = { "*.h" };
-        fileName = tinyfd_saveFileDialog("Export wave file", "sound.h", 1, filters, "Wave As Code (*.h)");
-    }
-#endif
-
-    if (fileName != NULL)
-    {
-        char outFileName[128] = { 0 };
-        strcpy(outFileName, fileName);
-
-        // Export wave data
-        Wave cwave = WaveCopy(wave);
-        WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);        // Before exporting wave data, we format it as desired
-
-        if (format == 0) ExportWave(cwave, outFileName);            // Export wave data as WAV file
-        else if (format == 2) ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
-        else if (format == 1)
-        {
-            // Export Wave as RAW data
-            FILE *rawFile = fopen(outFileName, "wb");
-
-            if (rawFile != NULL)
-            {
-                fwrite(wave.data, 1, wave.sampleCount*wave.sampleSize/8, rawFile);  // Write wave data
-                fclose(rawFile);
-            }
-        }
-
-        UnloadWave(cwave);
-    }
-}
-*/
 
 //--------------------------------------------------------------------------------------------
 // Sound generation functions
