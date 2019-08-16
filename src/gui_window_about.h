@@ -196,7 +196,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         int labelTextAlign = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
         GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
-        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rIP", 20, true, GetColor(toolColor));
+        DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 50, 200, 30 }, FormatText("%s %s %s", lblNameVersionText, mode, lblDateText));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 74, 245, 20 }, lblDescriptionText);
 

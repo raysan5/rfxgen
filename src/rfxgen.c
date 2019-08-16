@@ -174,10 +174,6 @@ typedef struct WaveParams {
 // Volume parameters
 static float volumeValue = 0.6f;        // Volume
 
-// Export WAV variables
-static int wavSampleSize = 16;          // Wave sample size in bits (bitrate)
-static int wavSampleRate = 44100;       // Wave sample rate (frequency)
-
 #if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
 // raygui style palettes
 static const int paletteStyle[3][20] = {
@@ -345,7 +341,7 @@ int main(int argc, char *argv[])
     SetExitKey(0);
 
     InitAudioDevice();
-
+    
     // GUI: Main Layout
     //-----------------------------------------------------------------------------------
     bool playOnChangeChecked = true;
@@ -355,10 +351,6 @@ int main(int argc, char *argv[])
     int visualStyleActive = 0;
 
     bool screenSizeActive = false;
-
-    char soundInfoText[64] = { 0 };
-    char durationText[64] = { 0 };
-    char waveSizeText[64] = { 0 };
     //-----------------------------------------------------------------------------------
 
     // GUI: About Window
@@ -397,13 +389,16 @@ int main(int argc, char *argv[])
 
         // Default wave values
         wave[i].sampleRate = 44100;
-        wave[i].sampleSize = 32;       // 32 bit -> float
+        wave[i].sampleSize = 32;    // 32 bit -> float
         wave[i].channels = 1;
         wave[i].sampleCount = 10*wave[i].sampleRate*wave[i].channels;    // Max sampleCount for 10 seconds
         wave[i].data = calloc(wave[i].sampleCount*wave[i].sampleSize/8, sizeof(char));
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
+    
+    int wavSampleSize = 16;         // Wave sample size in bits (bitrate)
+    int wavSampleRate = 44100;      // Wave sample rate (frequency)
     //-----------------------------------------------------------------------------------
 
     // Check if a wave parameters file has been provided on command line
@@ -509,10 +504,17 @@ int main(int argc, char *argv[])
         if (volumeValue != prevVolumeValue)
         {
             SetMasterVolume(volumeValue);
-            //SetSoundVolume(sound[slotActive], volumeValue);   // TODO: Issue!
             prevVolumeValue = volumeValue;
         }
+        
+        // Check gui combo box selected options
+        if (sampleRateActive == 0) wavSampleRate = 22050;
+        else if (sampleRateActive == 1) wavSampleRate = 44100;
 
+        if (sampleSizeActive == 0) wavSampleSize = 8;
+        else if (sampleSizeActive == 1) wavSampleSize = 16;
+        else if (sampleSizeActive == 2) wavSampleSize = 32;
+        
         if (params[slotActive].waveTypeValue != prevWaveTypeValue[slotActive]) regenerate = true;
         prevWaveTypeValue[slotActive] = params[slotActive].waveTypeValue;
 
@@ -543,10 +545,6 @@ int main(int argc, char *argv[])
 
                 if (regenerate || playOnChangeChecked) PlaySound(sound[slotActive]);
 
-                strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
-                strcpy(durationText, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-                strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
-
                 regenerate = false;
             }
         }
@@ -554,21 +552,8 @@ int main(int argc, char *argv[])
         if (slotActive != prevSlotActive)
         {
             PlaySound(sound[slotActive]);
-
-            strcpy(soundInfoText, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
-            strcpy(durationText, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-            strcpy(waveSizeText, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
-
             prevSlotActive = slotActive;
         }
-
-        // Check gui combo box selected options
-        if (sampleRateActive == 0) wavSampleRate = 22050;
-        else if (sampleRateActive == 1) wavSampleRate = 44100;
-
-        if (sampleSizeActive == 0) wavSampleSize = 8;
-        else if (sampleSizeActive == 1) wavSampleSize = 16;
-        else if (sampleSizeActive == 2) wavSampleSize = 32;
 
         // Change window size to x2
         if (screenSizeActive)
@@ -832,9 +817,9 @@ int main(int argc, char *argv[])
             // Draw status bar
             int defaultPadding = GuiGetStyle(DEFAULT, GROUP_PADDING);
             GuiSetStyle(DEFAULT, INNER_PADDING, 8);
-            GuiStatusBar((Rectangle){ 0, 492, 201, 20 }, soundInfoText);
-            GuiStatusBar((Rectangle){ 200, 492, 126, 20 }, durationText);
-            GuiStatusBar((Rectangle){ 324, 492, 176, 20 }, waveSizeText);
+            GuiStatusBar((Rectangle){ 0, 492, 201, 20 }, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
+            GuiStatusBar((Rectangle){ 200, 492, 126, 20 }, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
+            GuiStatusBar((Rectangle){ 324, 492, 176, 20 }, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
             GuiSetStyle(DEFAULT, INNER_PADDING, defaultPadding);
             //----------------------------------------------------------------------------------
 
