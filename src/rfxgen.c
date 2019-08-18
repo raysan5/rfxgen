@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v2.0 - A simple and easy to use fx sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v2.1 - A simple and easy to use fx sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -11,6 +11,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
+*       2.1  (18-Aug-2019) Ported to latest raygui 2.6
 *       2.0  (xx-Nov-2018) GUI redesigned, CLI improvements
 *       1.8  (10-Oct-2018) Functions renaming, code reorganized, better consistency...
 *       1.5  (23-Sep-2018) Support .wav export to code and sound playing on command line
@@ -28,8 +29,8 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 2.5-dev          - Windowing/input management and drawing.
-*       raygui 2.0              - Immediate-mode GUI controls.
+*       raylib 2.6-dev          - Windowing/input management and drawing.
+*       raygui 2.6-dev          - Immediate-mode GUI controls.
 *       tinyfiledialogs 3.3.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
@@ -101,9 +102,9 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 // Basic information
-#define TOOL_NAME           "rFXGen"
-#define TOOL_VERSION        "2.0"
-#define TOOL_DESCRIPTION    "A simple and easy-to-use fx sounds generator"
+static const char *TOOL_NAME = "rFXGen";
+static const char *TOOL_VERSION = "2.1";
+static const char *TOOL_DESCRIPTION = "A simple and easy-to-use fx sounds generator";
 
 //#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
@@ -333,7 +334,7 @@ int main(int argc, char *argv[])
 
     // GUI usage mode - Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 500;
+    const int screenWidth = 512;
     const int screenHeight = 512;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
@@ -744,30 +745,30 @@ int main(int argc, char *argv[])
 
             // Parameters sliders
             //--------------------------------------------------------------------------------
-            volumeValue = GuiSliderBar((Rectangle){ 240, 18, 100, 10 }, "VOLUME", volumeValue, 0, 1, true);
+            volumeValue = GuiSliderBar((Rectangle){ 240, 18, 100, 10 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), volumeValue, 0, 1);
 
-            params[slotActive].attackTimeValue = GuiSliderBar((Rectangle){ 240, 38, 100, 10 }, "ATTACK TIME", params[slotActive].attackTimeValue, 0, 1, true);
-            params[slotActive].sustainTimeValue = GuiSliderBar((Rectangle){ 240, 54, 100, 10 }, "SUSTAIN TIME", params[slotActive].sustainTimeValue, 0, 1, true);
-            params[slotActive].sustainPunchValue = GuiSliderBar((Rectangle){ 240, 70, 100, 10 }, "SUSTAIN PUNCH", params[slotActive].sustainPunchValue, 0, 1, true);
-            params[slotActive].decayTimeValue = GuiSliderBar((Rectangle){ 240, 87, 100, 10 }, "DECAY TIME", params[slotActive].decayTimeValue, 0, 1, true);
-            params[slotActive].startFrequencyValue = GuiSliderBar((Rectangle){ 240, 107, 100, 10 }, "START FREQUENCY", params[slotActive].startFrequencyValue, 0, 1, true);
-            params[slotActive].minFrequencyValue = GuiSliderBar((Rectangle){ 240, 124, 100, 10 }, "MIN FREQUENCY", params[slotActive].minFrequencyValue, 0, 1, true);
-            params[slotActive].slideValue = GuiSliderBar((Rectangle){ 240, 140, 100, 10 }, "SLIDE", params[slotActive].slideValue, -1, 1, true);
-            params[slotActive].deltaSlideValue = GuiSliderBar((Rectangle){ 240, 157, 100, 10 }, "DELTA SLIDE", params[slotActive].deltaSlideValue, -1, 1, true);
-            params[slotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ 240, 173, 100, 10 }, "VIBRATO DEPTH", params[slotActive].vibratoDepthValue, 0, 1, true);
-            params[slotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ 240, 189, 100, 10 }, "VIBRATO SPEED", params[slotActive].vibratoSpeedValue, 0, 1, true);
-            params[slotActive].changeAmountValue = GuiSliderBar((Rectangle){ 240, 209, 100, 10 }, "CHANGE AMOUNT", params[slotActive].changeAmountValue, -1, 1, true);
-            params[slotActive].changeSpeedValue = GuiSliderBar((Rectangle){ 240, 225, 100, 10 }, "CHANGE SPEED", params[slotActive].changeSpeedValue, 0, 1, true);
-            params[slotActive].squareDutyValue = GuiSliderBar((Rectangle){ 240, 245, 100, 10 }, "SQUARE DUTY", params[slotActive].squareDutyValue, 0, 1, true);
-            params[slotActive].dutySweepValue = GuiSliderBar((Rectangle){ 240, 261, 100, 10 }, "DUTY SWEEP", params[slotActive].dutySweepValue, -1, 1, true);
-            params[slotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ 240, 281, 100, 10 }, "REPEAT SPEED", params[slotActive].repeatSpeedValue, 0, 1, true);
-            params[slotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ 240, 304, 100, 10 }, "PHASER OFFSET", params[slotActive].phaserOffsetValue, -1, 1, true);
-            params[slotActive].phaserSweepValue = GuiSliderBar((Rectangle){ 240, 320, 100, 10 }, "PHASER SWEEP", params[slotActive].phaserSweepValue, -1, 1, true);
-            params[slotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ 240, 340, 100, 10 }, "LPF CUTOFF", params[slotActive].lpfCutoffValue, 0, 1, true);
-            params[slotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 356, 100, 10 }, "LPF CUTOFF SWEEP", params[slotActive].lpfCutoffSweepValue, -1, 1, true);
-            params[slotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ 240, 372, 100, 10 }, "LPF RESONANCE", params[slotActive].lpfResonanceValue, 0, 1, true);
-            params[slotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ 240, 388, 100, 10 }, "HPF CUTOFF", params[slotActive].hpfCutoffValue, 0, 1, true);
-            params[slotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 404, 100, 10 }, "HPF CUTOFF SWEEP", params[slotActive].hpfCutoffSweepValue, -1, 1, true);
+            params[slotActive].attackTimeValue = GuiSliderBar((Rectangle){ 240, 38, 100, 10 }, "ATTACK TIME", TextFormat("%.2f", params[slotActive].attackTimeValue), params[slotActive].attackTimeValue, 0, 1);
+            params[slotActive].sustainTimeValue = GuiSliderBar((Rectangle){ 240, 54, 100, 10 }, "SUSTAIN TIME", TextFormat("%.2f", params[slotActive].sustainTimeValue), params[slotActive].sustainTimeValue, 0, 1);
+            params[slotActive].sustainPunchValue = GuiSliderBar((Rectangle){ 240, 70, 100, 10 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[slotActive].sustainPunchValue), params[slotActive].sustainPunchValue, 0, 1);
+            params[slotActive].decayTimeValue = GuiSliderBar((Rectangle){ 240, 87, 100, 10 }, "DECAY TIME", TextFormat("%.2f", params[slotActive].decayTimeValue), params[slotActive].decayTimeValue, 0, 1);
+            params[slotActive].startFrequencyValue = GuiSliderBar((Rectangle){ 240, 107, 100, 10 }, "START FREQUENCY", TextFormat("%.2f", params[slotActive].startFrequencyValue), params[slotActive].startFrequencyValue, 0, 1);
+            params[slotActive].minFrequencyValue = GuiSliderBar((Rectangle){ 240, 124, 100, 10 }, "MIN FREQUENCY", TextFormat("%.2f", params[slotActive].minFrequencyValue), params[slotActive].minFrequencyValue, 0, 1);
+            params[slotActive].slideValue = GuiSliderBar((Rectangle){ 240, 140, 100, 10 }, "SLIDE", TextFormat("%.2f", params[slotActive].slideValue), params[slotActive].slideValue, -1, 1);
+            params[slotActive].deltaSlideValue = GuiSliderBar((Rectangle){ 240, 157, 100, 10 }, "DELTA SLIDE", TextFormat("%.2f", params[slotActive].deltaSlideValue), params[slotActive].deltaSlideValue, -1, 1);
+            params[slotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ 240, 173, 100, 10 }, "VIBRATO DEPTH", TextFormat("%.2f", params[slotActive].vibratoDepthValue), params[slotActive].vibratoDepthValue, 0, 1);
+            params[slotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ 240, 189, 100, 10 }, "VIBRATO SPEED", TextFormat("%.2f", params[slotActive].vibratoSpeedValue), params[slotActive].vibratoSpeedValue, 0, 1);
+            params[slotActive].changeAmountValue = GuiSliderBar((Rectangle){ 240, 209, 100, 10 }, "CHANGE AMOUNT", TextFormat("%.2f", params[slotActive].changeAmountValue), params[slotActive].changeAmountValue, -1, 1);
+            params[slotActive].changeSpeedValue = GuiSliderBar((Rectangle){ 240, 225, 100, 10 }, "CHANGE SPEED", TextFormat("%.2f", params[slotActive].changeSpeedValue), params[slotActive].changeSpeedValue, 0, 1);
+            params[slotActive].squareDutyValue = GuiSliderBar((Rectangle){ 240, 245, 100, 10 }, "SQUARE DUTY", TextFormat("%.2f", params[slotActive].squareDutyValue), params[slotActive].squareDutyValue, 0, 1);
+            params[slotActive].dutySweepValue = GuiSliderBar((Rectangle){ 240, 261, 100, 10 }, "DUTY SWEEP", TextFormat("%.2f", params[slotActive].dutySweepValue), params[slotActive].dutySweepValue, -1, 1);
+            params[slotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ 240, 281, 100, 10 }, "REPEAT SPEED", TextFormat("%.2f", params[slotActive].repeatSpeedValue), params[slotActive].repeatSpeedValue, 0, 1);
+            params[slotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ 240, 304, 100, 10 }, "PHASER OFFSET", TextFormat("%.2f", params[slotActive].phaserOffsetValue), params[slotActive].phaserOffsetValue, -1, 1);
+            params[slotActive].phaserSweepValue = GuiSliderBar((Rectangle){ 240, 320, 100, 10 }, "PHASER SWEEP", TextFormat("%.2f", params[slotActive].phaserSweepValue), params[slotActive].phaserSweepValue, -1, 1);
+            params[slotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ 240, 340, 100, 10 }, "LPF CUTOFF", TextFormat("%.2f", params[slotActive].lpfCutoffValue), params[slotActive].lpfCutoffValue, 0, 1);
+            params[slotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 356, 100, 10 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].lpfCutoffSweepValue), params[slotActive].lpfCutoffSweepValue, -1, 1);
+            params[slotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ 240, 372, 100, 10 }, "LPF RESONANCE", TextFormat("%.2f", params[slotActive].lpfResonanceValue), params[slotActive].lpfResonanceValue, 0, 1);
+            params[slotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ 240, 388, 100, 10 }, "HPF CUTOFF", TextFormat("%.2f", params[slotActive].hpfCutoffValue), params[slotActive].hpfCutoffValue, 0, 1);
+            params[slotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 404, 100, 10 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].hpfCutoffSweepValue), params[slotActive].hpfCutoffSweepValue, -1, 1);
             //--------------------------------------------------------------------------------
 
             playOnChangeChecked = GuiCheckBox((Rectangle){ 392, 16, 14, 14 }, "Play on change", playOnChangeChecked);
