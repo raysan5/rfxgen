@@ -291,8 +291,8 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave
 // Multiplatform file dialogs
 // NOTE 1: fileName parameters is used to display and store selected file name
 // NOTE 2: Value returned is the operation result, on custom dialogs represents button option pressed
-// NOTE 3: filters and filtersDesc are used for buttons and dialog messages on DIALOG_MESSAGE and DIALOG_TEXTINPUT
-static int GuiFileDialog(int dialogType, const char *title, char *fileName, const char *filters, const char *filtersDesc);
+// NOTE 3: filters and message are used for buttons and dialog messages on DIALOG_MESSAGE and DIALOG_TEXTINPUT
+static int GuiFileDialog(int dialogType, const char *title, char *fileName, const char *filters, const char *message);
 #endif
 
 #if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
@@ -1941,21 +1941,37 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 }
 
 // Multiplatform file dialogs
-static int GuiFileDialog(int dialogType, const char *title, char *fileName, const char *filters, const char *filtersDesc)
+static int GuiFileDialog(int dialogType, const char *title, char *fileName, const char *filters, const char *message)
 {
     int result = -1;
+
+#if defined(CUSTOM_MODAL_DIALOGS)
+    static char tempFileName[256] = { 0 };
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+
+    switch (dialogType)
+    {
+        case DIALOG_OPEN: /* TODO: Load file modal dialog */ break;
+        case DIALOG_SAVE: /* TODO: Load file modal dialog */ break;
+        case DIALOG_MESSAGE: result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_OPEN, title), message, filters); break;
+        case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, title), message, tempFileName, filters); break;
+        default: break;
+    }
     
-#if defined(PLATFORM_DESKTOP) && !defined(CUSTOM_MODAL_DIALOGS)
+    if ((result == 1) && (tempFileName[0] != '\0')) strcpy(fileName, tempFileName);
+
+#else   // Use native OS dialogs (tinyfiledialogs)
+
     const char *tempFileName = NULL;
     int filterCount = 0;
     const char **filterSplit = TextSplit(filters, ';', &filterCount);
     
     switch (dialogType)
     {
-        case DIALOG_OPEN: tempFileName = tinyfd_openFileDialog(title, fileName, filterCount, filterSplit, filtersDesc, 0); break;
-        case DIALOG_SAVE: tempFileName = tinyfd_saveFileDialog(title, fileName, filterCount, filterSplit, filtersDesc); break;
-        case DIALOG_MESSAGE: result = tinyfd_messageBox(title, filtersDesc, "ok", "info", 0); break;
-        case DIALOG_TEXTINPUT: tempFileName = tinyfd_inputBox(title, filtersDesc, ""); break;
+        case DIALOG_OPEN: tempFileName = tinyfd_openFileDialog(title, fileName, filterCount, filterSplit, message, 0); break;
+        case DIALOG_SAVE: tempFileName = tinyfd_saveFileDialog(title, fileName, filterCount, filterSplit, message); break;
+        case DIALOG_MESSAGE: result = tinyfd_messageBox(title, message, "ok", "info", 0); break;
+        case DIALOG_TEXTINPUT: tempFileName = tinyfd_inputBox(title, message, ""); break;
         default: break;
     }
 
@@ -1965,21 +1981,6 @@ static int GuiFileDialog(int dialogType, const char *title, char *fileName, cons
         result = 1;
     }
     else result = 0;
-#endif
-#if !defined(PLATFORM_DESKTOP) || defined(CUSTOM_MODAL_DIALOGS)
-    static char tempFileName[256] = { 0 };
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-
-    switch (dialogType)
-    {
-        case DIALOG_OPEN: /* TODO: Load file modal dialog */ break;
-        case DIALOG_SAVE: /* TODO: Load file modal dialog */ break;
-        case DIALOG_MESSAGE: result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_OPEN, title), filtersDesc, filters); break;
-        case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, title), filtersDesc, tempFileName, filters); break;
-        default: break;
-    }
-    
-    if ((result == 1) && (tempFileName[0] != '\0')) strcpy(fileName, tempFileName);
 #endif
 
     return result;
