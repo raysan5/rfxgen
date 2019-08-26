@@ -1,5 +1,5 @@
 /*_________
- /         \ tinyfiledialogs.c v3.3.8 [Nov 4, 2018] zlib licence
+ /         \ tinyfiledialogs.c v3.3.9 [Apr 14, 2019] zlib licence
  |tiny file| Unique code file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2018 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
@@ -132,7 +132,7 @@ misrepresented as being the original software.
 #define MAX_PATH_OR_CMD 1024 /* _MAX_PATH or MAX_PATH */
 #define MAX_MULTIPLE_FILES 32
 
-char const tinyfd_version [8] = "3.3.8";
+char const tinyfd_version [8] = "3.3.9";
 
 int tinyfd_verbose = 0 ; /* on unix: prints the command line calls */
 int tinyfd_silent = 1 ; /* 1 (default) or 0 : on unix,
@@ -799,6 +799,36 @@ static int fileExists(char const * const aFilePathAndName)
         }
 }
 
+static int replaceWchar(wchar_t * const aString,
+	wchar_t const aOldChr,
+	wchar_t const aNewChr)
+{
+	wchar_t * p;
+	int lRes = 0;
+
+	if (!aString)
+	{
+		return 0;
+	}
+
+	if (aOldChr == aNewChr)
+	{
+		return 0;
+	}
+
+	p = aString;
+	while ((p = wcsrchr(p, aOldChr)))
+	{
+		*p = aNewChr;
+#ifdef TINYFD_NOCCSUNICODE
+		p++;
+#endif
+		p++;
+		lRes = 1;
+	}
+	return lRes;
+}
+
 #endif /* TINYFD_NOLIB */
 #endif /* _WIN32 */
 
@@ -1143,12 +1173,16 @@ wchar_t const * tinyfd_inputBoxW(
                 wcscpy(lDialogString, L"Dim result:result=InputBox(\"");
                 if (aMessage && wcslen(aMessage))
                 {
-                        wcscat(lDialogString, aMessage);
+					wcscpy(lBuff, aMessage);
+					replaceWchar(lBuff, L'\n', L' ');
+					wcscat(lDialogString, lBuff);
                 }
                 wcscat(lDialogString, L"\",\"tinyfiledialogsTopWindow\",\"");
                 if (aDefaultInput && wcslen(aDefaultInput))
                 {
-                        wcscat(lDialogString, aDefaultInput);
+					wcscpy(lBuff, aDefaultInput);
+					replaceWchar(lBuff, L'\n', L' ');
+					wcscat(lDialogString, lBuff);
                 }
                 wcscat(lDialogString, L"\"):If IsEmpty(result) then:WScript.Echo 0");
                 wcscat(lDialogString, L":Else: WScript.Echo \"1\" & result : End If");
@@ -1301,6 +1335,9 @@ name = 'txt_input' value = '' style = 'float:left;width:100%' ><BR>\n\
                 free(lDialogString);
                 return NULL;
         }
+
+		memset(lBuff, 0, MAX_PATH_OR_CMD);
+
 #ifdef TINYFD_NOCCSUNICODE
 		fgets((char *)lBuff, 2*MAX_PATH_OR_CMD, lIn);
 #else
@@ -1344,9 +1381,17 @@ name = 'txt_input' value = '' style = 'float:left;width:100%' ><BR>\n\
         }
 
         /* wprintf( "lBuff+1: %ls\n" , lBuff+1 ) ; */
+
 #ifdef TINYFD_NOCCSUNICODE
+		if (aDefaultInput)
+		{
+			lDialogStringLen = wcslen(lBuff);
+			lBuff[lDialogStringLen - 1] = L'\0';
+			lBuff[lDialogStringLen - 2] = L'\0';
+		}
 		return lBuff + 2;
 #else
+		if (aDefaultInput) lBuff[wcslen(lBuff) - 1] = L'\0';
 		return lBuff + 1;
 #endif
 }
