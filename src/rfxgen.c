@@ -31,7 +31,7 @@
 *   DEPENDENCIES:
 *       raylib 2.6-dev          - Windowing/input management and drawing.
 *       raygui 2.6-dev          - Immediate-mode GUI controls.
-*       tinyfiledialogs 3.3.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       tinyfiledialogs 3.3.9   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
     bool regenerate = false;                    // Wave regeneration required
     int prevSlotActive = 0, slotActive = 0;     // Wave slot tracking
 
-    Rectangle waveRec = { 8, 428, 484, 58 };        // Wave drawing rectangle box
+    Rectangle waveRec = { 8, 428, 496, 58 };        // Wave drawing rectangle box
     Rectangle slidersRec = { 238, 16, 104, 400 };   // Area defining sliders to allow sound replay when mouse-released
 
     // Set default sound volume
@@ -607,120 +607,117 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------
             if (showSaveFileDialog || showExportFileDialog) GuiLock();
             
-            DrawText(FormatText("%s", TOOL_NAME), 31, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 86, 13, 10, 10 }, FormatText("v%s", TOOL_VERSION));
+            DrawText(FormatText("%s", TOOL_NAME), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+            GuiLabel((Rectangle){ 95, 13, 10, 10 }, FormatText("v%s", TOOL_VERSION));
 
             GuiSetStyle(BUTTON, INNER_PADDING, 6);
             GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
-            if (GuiButton((Rectangle){ 8, 42, 100, 24 }, "#146#Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 70, 100, 24 }, "#145#Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 98, 100, 24 }, "#147#Explosion")) { params[slotActive] = GenExplosion(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 126, 100, 24 }, "#148#PowerUp")) { params[slotActive] = GenPowerup(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 154, 100, 24 }, "#152#Hit/Hurt")) { params[slotActive] = GenHitHurt(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 182, 100, 24 }, "#150#Jump")) { params[slotActive] = GenJump(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 210, 100, 24 }, "#144#Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 42, 106, 24 }, "#146#Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 70, 106, 24 }, "#145#Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 98, 106, 24 }, "#147#Explosion")) { params[slotActive] = GenExplosion(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 126, 106, 24 }, "#148#PowerUp")) { params[slotActive] = GenPowerup(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 154, 106, 24 }, "#152#Hit/Hurt")) { params[slotActive] = GenHitHurt(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 182, 106, 24 }, "#150#Jump")) { params[slotActive] = GenJump(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 210, 106, 24 }, "#144#Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
 
-            GuiLine((Rectangle){ 8, 234, 100, 12 }, NULL);
+            GuiLine((Rectangle){ 8, 234, 106, 12 }, NULL);
 
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, 0);
             GuiSetStyle(TOGGLE, INNER_PADDING, 6);
-            params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 100, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
+            params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 106, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, 1);
             GuiSetStyle(TOGGLE, INNER_PADDING, 1);
 
-            GuiLine((Rectangle){ 8, 356, 102, 12 }, NULL);
+            GuiLine((Rectangle){ 8, 356, 108, 12 }, NULL);
 
-            if (GuiButton((Rectangle){ 8, 368, 100, 24 }, "#75#Mutate")) { WaveMutate(&params[slotActive]); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 396, 100, 24 }, "#77#Randomize")) { params[slotActive] = GenRandomize(); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 368, 106, 24 }, "#75#Mutate")) { WaveMutate(&params[slotActive]); regenerate = true; }
+            if (GuiButton((Rectangle){ 8, 396, 106, 24 }, "#77#Randomize")) { params[slotActive] = GenRandomize(); regenerate = true; }
 
-            GuiGroupBox((Rectangle){ 116, 12, 268, 22 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 33, 268, 69 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 101, 268, 104 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 204, 268, 37 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 240, 268, 36 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 275, 268, 23 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 297, 268, 39 }, NULL);
-            GuiGroupBox((Rectangle){ 116, 335, 268, 86 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 12, 268, 22 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 33, 268, 69 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 101, 268, 104 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 204, 268, 37 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 240, 268, 36 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 275, 268, 23 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 297, 268, 39 }, NULL);
+            GuiGroupBox((Rectangle){ 122, 335, 268, 86 }, NULL);
 
             // Parameters sliders
             //--------------------------------------------------------------------------------
-            volumeValue = GuiSliderBar((Rectangle){ 240, 18, 100, 10 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), volumeValue, 0, 1);
+            volumeValue = GuiSliderBar((Rectangle){ 246, 18, 100, 10 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), volumeValue, 0, 1);
 
-            params[slotActive].attackTimeValue = GuiSliderBar((Rectangle){ 240, 38, 100, 10 }, "ATTACK TIME", TextFormat("%.2f", params[slotActive].attackTimeValue), params[slotActive].attackTimeValue, 0, 1);
-            params[slotActive].sustainTimeValue = GuiSliderBar((Rectangle){ 240, 54, 100, 10 }, "SUSTAIN TIME", TextFormat("%.2f", params[slotActive].sustainTimeValue), params[slotActive].sustainTimeValue, 0, 1);
-            params[slotActive].sustainPunchValue = GuiSliderBar((Rectangle){ 240, 70, 100, 10 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[slotActive].sustainPunchValue), params[slotActive].sustainPunchValue, 0, 1);
-            params[slotActive].decayTimeValue = GuiSliderBar((Rectangle){ 240, 87, 100, 10 }, "DECAY TIME", TextFormat("%.2f", params[slotActive].decayTimeValue), params[slotActive].decayTimeValue, 0, 1);
-            params[slotActive].startFrequencyValue = GuiSliderBar((Rectangle){ 240, 107, 100, 10 }, "START FREQUENCY", TextFormat("%.2f", params[slotActive].startFrequencyValue), params[slotActive].startFrequencyValue, 0, 1);
-            params[slotActive].minFrequencyValue = GuiSliderBar((Rectangle){ 240, 124, 100, 10 }, "MIN FREQUENCY", TextFormat("%.2f", params[slotActive].minFrequencyValue), params[slotActive].minFrequencyValue, 0, 1);
-            params[slotActive].slideValue = GuiSliderBar((Rectangle){ 240, 140, 100, 10 }, "SLIDE", TextFormat("%.2f", params[slotActive].slideValue), params[slotActive].slideValue, -1, 1);
-            params[slotActive].deltaSlideValue = GuiSliderBar((Rectangle){ 240, 157, 100, 10 }, "DELTA SLIDE", TextFormat("%.2f", params[slotActive].deltaSlideValue), params[slotActive].deltaSlideValue, -1, 1);
-            params[slotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ 240, 173, 100, 10 }, "VIBRATO DEPTH", TextFormat("%.2f", params[slotActive].vibratoDepthValue), params[slotActive].vibratoDepthValue, 0, 1);
-            params[slotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ 240, 189, 100, 10 }, "VIBRATO SPEED", TextFormat("%.2f", params[slotActive].vibratoSpeedValue), params[slotActive].vibratoSpeedValue, 0, 1);
-            params[slotActive].changeAmountValue = GuiSliderBar((Rectangle){ 240, 209, 100, 10 }, "CHANGE AMOUNT", TextFormat("%.2f", params[slotActive].changeAmountValue), params[slotActive].changeAmountValue, -1, 1);
-            params[slotActive].changeSpeedValue = GuiSliderBar((Rectangle){ 240, 225, 100, 10 }, "CHANGE SPEED", TextFormat("%.2f", params[slotActive].changeSpeedValue), params[slotActive].changeSpeedValue, 0, 1);
-            params[slotActive].squareDutyValue = GuiSliderBar((Rectangle){ 240, 245, 100, 10 }, "SQUARE DUTY", TextFormat("%.2f", params[slotActive].squareDutyValue), params[slotActive].squareDutyValue, 0, 1);
-            params[slotActive].dutySweepValue = GuiSliderBar((Rectangle){ 240, 261, 100, 10 }, "DUTY SWEEP", TextFormat("%.2f", params[slotActive].dutySweepValue), params[slotActive].dutySweepValue, -1, 1);
-            params[slotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ 240, 281, 100, 10 }, "REPEAT SPEED", TextFormat("%.2f", params[slotActive].repeatSpeedValue), params[slotActive].repeatSpeedValue, 0, 1);
-            params[slotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ 240, 304, 100, 10 }, "PHASER OFFSET", TextFormat("%.2f", params[slotActive].phaserOffsetValue), params[slotActive].phaserOffsetValue, -1, 1);
-            params[slotActive].phaserSweepValue = GuiSliderBar((Rectangle){ 240, 320, 100, 10 }, "PHASER SWEEP", TextFormat("%.2f", params[slotActive].phaserSweepValue), params[slotActive].phaserSweepValue, -1, 1);
-            params[slotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ 240, 340, 100, 10 }, "LPF CUTOFF", TextFormat("%.2f", params[slotActive].lpfCutoffValue), params[slotActive].lpfCutoffValue, 0, 1);
-            params[slotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 356, 100, 10 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].lpfCutoffSweepValue), params[slotActive].lpfCutoffSweepValue, -1, 1);
-            params[slotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ 240, 372, 100, 10 }, "LPF RESONANCE", TextFormat("%.2f", params[slotActive].lpfResonanceValue), params[slotActive].lpfResonanceValue, 0, 1);
-            params[slotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ 240, 388, 100, 10 }, "HPF CUTOFF", TextFormat("%.2f", params[slotActive].hpfCutoffValue), params[slotActive].hpfCutoffValue, 0, 1);
-            params[slotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ 240, 404, 100, 10 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].hpfCutoffSweepValue), params[slotActive].hpfCutoffSweepValue, -1, 1);
+            params[slotActive].attackTimeValue = GuiSliderBar((Rectangle){ 246, 38, 100, 10 }, "ATTACK TIME", TextFormat("%.2f", params[slotActive].attackTimeValue), params[slotActive].attackTimeValue, 0, 1);
+            params[slotActive].sustainTimeValue = GuiSliderBar((Rectangle){ 246, 54, 100, 10 }, "SUSTAIN TIME", TextFormat("%.2f", params[slotActive].sustainTimeValue), params[slotActive].sustainTimeValue, 0, 1);
+            params[slotActive].sustainPunchValue = GuiSliderBar((Rectangle){ 246, 70, 100, 10 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[slotActive].sustainPunchValue), params[slotActive].sustainPunchValue, 0, 1);
+            params[slotActive].decayTimeValue = GuiSliderBar((Rectangle){ 246, 87, 100, 10 }, "DECAY TIME", TextFormat("%.2f", params[slotActive].decayTimeValue), params[slotActive].decayTimeValue, 0, 1);
+            params[slotActive].startFrequencyValue = GuiSliderBar((Rectangle){ 246, 107, 100, 10 }, "START FREQUENCY", TextFormat("%.2f", params[slotActive].startFrequencyValue), params[slotActive].startFrequencyValue, 0, 1);
+            params[slotActive].minFrequencyValue = GuiSliderBar((Rectangle){ 246, 124, 100, 10 }, "MIN FREQUENCY", TextFormat("%.2f", params[slotActive].minFrequencyValue), params[slotActive].minFrequencyValue, 0, 1);
+            params[slotActive].slideValue = GuiSliderBar((Rectangle){ 246, 140, 100, 10 }, "SLIDE", TextFormat("%.2f", params[slotActive].slideValue), params[slotActive].slideValue, -1, 1);
+            params[slotActive].deltaSlideValue = GuiSliderBar((Rectangle){ 246, 157, 100, 10 }, "DELTA SLIDE", TextFormat("%.2f", params[slotActive].deltaSlideValue), params[slotActive].deltaSlideValue, -1, 1);
+            params[slotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ 246, 173, 100, 10 }, "VIBRATO DEPTH", TextFormat("%.2f", params[slotActive].vibratoDepthValue), params[slotActive].vibratoDepthValue, 0, 1);
+            params[slotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ 246, 189, 100, 10 }, "VIBRATO SPEED", TextFormat("%.2f", params[slotActive].vibratoSpeedValue), params[slotActive].vibratoSpeedValue, 0, 1);
+            params[slotActive].changeAmountValue = GuiSliderBar((Rectangle){ 246, 209, 100, 10 }, "CHANGE AMOUNT", TextFormat("%.2f", params[slotActive].changeAmountValue), params[slotActive].changeAmountValue, -1, 1);
+            params[slotActive].changeSpeedValue = GuiSliderBar((Rectangle){ 246, 225, 100, 10 }, "CHANGE SPEED", TextFormat("%.2f", params[slotActive].changeSpeedValue), params[slotActive].changeSpeedValue, 0, 1);
+            params[slotActive].squareDutyValue = GuiSliderBar((Rectangle){ 246, 245, 100, 10 }, "SQUARE DUTY", TextFormat("%.2f", params[slotActive].squareDutyValue), params[slotActive].squareDutyValue, 0, 1);
+            params[slotActive].dutySweepValue = GuiSliderBar((Rectangle){ 246, 261, 100, 10 }, "DUTY SWEEP", TextFormat("%.2f", params[slotActive].dutySweepValue), params[slotActive].dutySweepValue, -1, 1);
+            params[slotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ 246, 281, 100, 10 }, "REPEAT SPEED", TextFormat("%.2f", params[slotActive].repeatSpeedValue), params[slotActive].repeatSpeedValue, 0, 1);
+            params[slotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ 246, 304, 100, 10 }, "PHASER OFFSET", TextFormat("%.2f", params[slotActive].phaserOffsetValue), params[slotActive].phaserOffsetValue, -1, 1);
+            params[slotActive].phaserSweepValue = GuiSliderBar((Rectangle){ 246, 320, 100, 10 }, "PHASER SWEEP", TextFormat("%.2f", params[slotActive].phaserSweepValue), params[slotActive].phaserSweepValue, -1, 1);
+            params[slotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ 246, 340, 100, 10 }, "LPF CUTOFF", TextFormat("%.2f", params[slotActive].lpfCutoffValue), params[slotActive].lpfCutoffValue, 0, 1);
+            params[slotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ 246, 356, 100, 10 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].lpfCutoffSweepValue), params[slotActive].lpfCutoffSweepValue, -1, 1);
+            params[slotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ 246, 372, 100, 10 }, "LPF RESONANCE", TextFormat("%.2f", params[slotActive].lpfResonanceValue), params[slotActive].lpfResonanceValue, 0, 1);
+            params[slotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ 246, 388, 100, 10 }, "HPF CUTOFF", TextFormat("%.2f", params[slotActive].hpfCutoffValue), params[slotActive].hpfCutoffValue, 0, 1);
+            params[slotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ 246, 404, 100, 10 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].hpfCutoffSweepValue), params[slotActive].hpfCutoffSweepValue, -1, 1);
             //--------------------------------------------------------------------------------
 
-            playOnChangeChecked = GuiCheckBox((Rectangle){ 392, 16, 14, 14 }, "Play on change", playOnChangeChecked);
-            if (GuiButton((Rectangle){ 392, 36, 100, 24 }, "#131#Play Sound")) PlaySound(sound[slotActive]);
+            playOnChangeChecked = GuiCheckBox((Rectangle){ 398, 16, 14, 14 }, "Play on change", playOnChangeChecked);
+            if (GuiButton((Rectangle){ 398, 36, 106, 24 }, "#131#Play Sound")) PlaySound(sound[slotActive]);
 
-            GuiLabel((Rectangle){ 392, 68, 25, 25 }, "Slot:");
+            GuiLabel((Rectangle){ 404, 68, 25, 25 }, "Slot:");
 
             int tooglePadding = GuiGetStyle(TOGGLE, GROUP_PADDING);
             GuiSetStyle(TOGGLE, GROUP_PADDING, 2);
-            slotActive = GuiToggleGroup((Rectangle){ 421, 72, 16, 16 }, "1;2;3;4", slotActive);
+            slotActive = GuiToggleGroup((Rectangle){ 433, 72, 16, 16 }, "1;2;3;4", slotActive);
             GuiSetStyle(TOGGLE, GROUP_PADDING, tooglePadding);
 
-            GuiLine((Rectangle){ 392, 93, 100, 16 }, NULL);
+            GuiLine((Rectangle){ 398, 93, 106, 16 }, NULL);
 
-            if (GuiButton((Rectangle){ 392, 110, 100, 24 }, "#1#Load Sound")) showLoadFileDialog = true;
-            if (GuiButton((Rectangle){ 392, 138, 100, 24 }, "#2#Save Sound")) showSaveFileDialog = true;
+            if (GuiButton((Rectangle){ 398, 110, 106, 24 }, "#1#Load Sound")) showLoadFileDialog = true;
+            if (GuiButton((Rectangle){ 398, 138, 106, 24 }, "#2#Save Sound")) showSaveFileDialog = true;
 
-            GuiLine((Rectangle){ 392, 162, 100, 16 }, NULL);
+            GuiLine((Rectangle){ 398, 162, 106, 16 }, NULL);
 
-            sampleRateActive = GuiComboBox((Rectangle){ 392, 178, 100, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
-            sampleSizeActive = GuiComboBox((Rectangle){ 392, 206, 100, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
+            sampleRateActive = GuiComboBox((Rectangle){ 398, 178, 106, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
+            sampleSizeActive = GuiComboBox((Rectangle){ 398, 206, 106, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
 
 #if !defined(VERSION_ONE)
             GuiDisable();
-            fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV", fileTypeActive);
+            fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV", fileTypeActive);
             if (!windowAboutState.windowAboutActive) GuiEnable();
 #else
-            fileTypeActive = GuiComboBox((Rectangle){ 392, 234, 100, 24 }, "WAV;RAW;CODE", fileTypeActive);
+            fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV;RAW;CODE", fileTypeActive);
 #endif
 
-            if (GuiButton((Rectangle){ 392, 264, 100, 24 }, "#7#Export Wave")) showExportFileDialog = true;
+            if (GuiButton((Rectangle){ 398, 264, 106, 24 }, "#7#Export Wave")) showExportFileDialog = true;
 
-            GuiLine((Rectangle){ 392, 288, 100, 16 }, NULL);
+            GuiLine((Rectangle){ 398, 288, 106, 16 }, NULL);
 
-            GuiLabel((Rectangle){ 392, 300, 100, 20 }, "Visual Style:");
+            GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
 #if !defined(VERSION_ONE)
             GuiDisable();
 #endif
-            visualStyleActive = GuiComboBox((Rectangle){ 392, 320, 100, 24 }, "Light;Dark;Candy", visualStyleActive);
+            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "Light;Dark;Candy", visualStyleActive);
             if (!windowAboutState.windowAboutActive) GuiEnable();
-            screenSizeActive = GuiToggle((Rectangle){ 392, 348, 100, 24 }, "Screen Size x2", screenSizeActive);
+            screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
 
-            GuiLine((Rectangle){ 392, 372, 100, 20 }, NULL);
+            GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);
 
-            if (GuiButton((Rectangle){ 392, 396, 100, 24 }, "#191#ABOUT")) windowAboutState.windowAboutActive = true;
+            if (GuiButton((Rectangle){ 398, 396, 106, 24 }, "#191#ABOUT")) windowAboutState.windowAboutActive = true;
 
             // Draw status bar
-            int defaultPadding = GuiGetStyle(DEFAULT, GROUP_PADDING);
-            GuiSetStyle(DEFAULT, INNER_PADDING, 8);
             GuiStatusBar((Rectangle){ 0, 492, 201, 20 }, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
-            GuiStatusBar((Rectangle){ 200, 492, 126, 20 }, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-            GuiStatusBar((Rectangle){ 324, 492, 176, 20 }, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
-            GuiSetStyle(DEFAULT, INNER_PADDING, defaultPadding);
+            GuiStatusBar((Rectangle){ 200, 492, 138, 20 }, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
+            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
             //----------------------------------------------------------------------------------
 
             // Draw Wave form
