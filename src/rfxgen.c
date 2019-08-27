@@ -7,6 +7,13 @@
 *   #define VERSION_ONE
 *       Enable PRO features for the tool. Usually command-line and export options related.
 *
+*   #define COMMAND_LINE_ONLY
+*       Compile tool only for command line usage
+*
+*   #define CUSTOM_MODAL_DIALOGS
+*       Use custom raygui generated modal dialogs instead of native OS ones
+*       NOTE: Avoids including tinyfiledialogs depencency library
+*
 *   #define RENDER_WAVE_TO_TEXTURE (defined by default)
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
@@ -106,7 +113,6 @@ static const char *toolName = "rFXGen";
 static const char *toolVersion = "2.1";
 static const char *toolDescription = "A simple and easy-to-use fx sounds generator";
 
-//#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
 // Float random number generation
@@ -303,7 +309,7 @@ static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
 static int kbhit(void);                         // Check if a key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
-#endif  // defined(COMMAND_LINE_ONLY)
+#endif  // VERSION_ONE || COMMAND_LINE_ONLY
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -313,6 +319,9 @@ int main(int argc, char *argv[])
 #if !defined(DEBUG)
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
+#if defined(COMMAND_LINE_ONLY)
+    ProcessCommandLine(argc, argv);
+#else
     char inFileName[512] = { 0 };       // Input file name (required in case of drag & drop over executable)
     char outFileName[512] = { 0 };      // Output file name (required for file save/export)
 
@@ -339,7 +348,6 @@ int main(int argc, char *argv[])
 #endif      // VERSION_ONE
     }
 
-#if !defined(COMMAND_LINE_ONLY)
 #if (!defined(DEBUG) && defined(VERSION_ONE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
@@ -880,8 +888,7 @@ int main(int argc, char *argv[])
     CloseWindow();          // Close window and OpenGL context
     //----------------------------------------------------------------------------------------
 
-#endif  //!defined(COMMAND_LINE_ONLY)
-
+#endif  // COMMAND_LINE_ONLY
     return 0;
 }
 
@@ -896,7 +903,7 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s ONE - %s               //\n", toolName, toolVersion, toolDescription);
-    printf("// powered by raylib v2.5 (www.raylib.com) and raygui v2.0                      //\n");
+    printf("// powered by raylib v2.6 (www.raylib.com) and raygui v2.6                      //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2016-2019 raylib technologies (@raylibtech)                    //\n");
@@ -949,6 +956,10 @@ static void ProcessCommandLine(int argc, char *argv[])
     int sampleRate = 44100;         // Default conversion sample rate
     int sampleSize = 16;            // Default conversion sample size
     int channels = 1;               // Default conversion channels number
+    
+#if defined(COMMAND_LINE_ONLY)
+    if (argc == 1) showUsageInfo = true;
+#endif
 
     // Process command line arguments
     for (int i = 1; i < argc; i++)
