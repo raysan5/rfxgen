@@ -102,9 +102,9 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 // Basic information
-static const char *TOOL_NAME = "rFXGen";
-static const char *TOOL_VERSION = "2.1";
-static const char *TOOL_DESCRIPTION = "A simple and easy-to-use fx sounds generator";
+static const char *toolName = "rFXGen";
+static const char *toolVersion = "2.1";
+static const char *toolDescription = "A simple and easy-to-use fx sounds generator";
 
 //#define COMMAND_LINE_ONLY             // Compile tool oly for command line usage
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
     const int screenHeight = 512;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
-    InitWindow(screenWidth, screenHeight, FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, TOOL_DESCRIPTION));
+    InitWindow(screenWidth, screenHeight, FormatText("%s v%s - %s", toolName, toolVersion, toolDescription));
     SetExitKey(0);
 
     InitAudioDevice();
@@ -475,7 +475,7 @@ int main(int argc, char *argv[])
                 params[slotActive] = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
 
-                SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(droppedFiles[0])));
+                SetWindowTitle(FormatText("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles[0])));
             }
 #if defined(VERSION_ONE)
             else if (IsFileExtension(droppedFiles[0], ".rgs")) GuiLoadStyle(droppedFiles[0]);
@@ -607,8 +607,8 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------
             if (showSaveFileDialog || showExportFileDialog) GuiLock();
             
-            DrawText(FormatText("%s", TOOL_NAME), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 95, 13, 10, 10 }, FormatText("v%s", TOOL_VERSION));
+            DrawText(FormatText("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+            GuiLabel((Rectangle){ 95, 13, 10, 10 }, FormatText("v%s", toolVersion));
 
             GuiSetStyle(BUTTON, INNER_PADDING, 6);
             GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
@@ -765,7 +765,7 @@ int main(int argc, char *argv[])
                 {
                     // Load parameters file
                     params[slotActive] = LoadWaveParams(inFileName);
-                    SetWindowTitle(FormatText("%s v%s - %s", TOOL_NAME, TOOL_VERSION, GetFileName(inFileName)));
+                    SetWindowTitle(FormatText("%s v%s - %s", toolName, toolVersion, GetFileName(inFileName)));
                     regenerate = true;
                 }
                 
@@ -895,7 +895,7 @@ static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// %s v%s ONE - %s               //\n", TOOL_NAME, TOOL_VERSION, TOOL_DESCRIPTION);
+    printf("// %s v%s ONE - %s               //\n", toolName, toolVersion, toolDescription);
     printf("// powered by raylib v2.5 (www.raylib.com) and raygui v2.0                      //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
@@ -1951,7 +1951,7 @@ static int GuiFileDialog(int dialogType, const char *title, char *fileName, cons
         case DIALOG_OPEN: /* TODO: Load file modal dialog */ break;
         case DIALOG_SAVE: /* TODO: Load file modal dialog */ break;
         case DIALOG_MESSAGE: result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_OPEN, title), message, filters); break;
-        case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, title), message, tempFileName, filters); break;
+        case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, title), message, filters, tempFileName); break;
         default: break;
     }
     
@@ -2039,7 +2039,7 @@ static void PlayWaveCLI(Wave wave)
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// %s v%s ONE - CLI audio player                                           //\n", TOOL_NAME, TOOL_VERSION);
+    printf("// %s v%s ONE - CLI audio player                                           //\n", toolName, toolVersion);
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
