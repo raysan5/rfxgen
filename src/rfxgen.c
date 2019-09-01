@@ -208,7 +208,7 @@ static const int paletteStyle[3][20] = {
         0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
         0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
         1,              // DEFAULT_BORDER_WIDTH
-        1,              // DEFAULT_INNER_PADDING;
+        1,              // DEFAULT_TEXT_PADDING;
         1,              // DEFAULT_TEXT_ALIGNMENT
         0,              // DEFAULT_RESERVED02
         10,             // DEFAULT_TEXT_SIZE
@@ -231,7 +231,7 @@ static const int paletteStyle[3][20] = {
         0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
         0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
         1,              // DEFAULT_BORDER_WIDTH
-        1,              // DEFAULT_INNER_PADDING;
+        1,              // DEFAULT_TEXT_PADDING;
         1,              // DEFAULT_TEXT_ALIGNMENT
         0,              // DEFAULT_RESERVED02
         10,             // DEFAULT_TEXT_SIZE
