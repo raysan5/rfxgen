@@ -208,7 +208,7 @@ static const int paletteStyle[3][20] = {
         0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
         0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
         1,              // DEFAULT_BORDER_WIDTH
-        1,              // DEFAULT_TEXT_PADDING;
+        0,              // DEFAULT_TEXT_PADDING;
         1,              // DEFAULT_TEXT_ALIGNMENT
         0,              // DEFAULT_RESERVED02
         10,             // DEFAULT_TEXT_SIZE
@@ -231,7 +231,7 @@ static const int paletteStyle[3][20] = {
         0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
         0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
         1,              // DEFAULT_BORDER_WIDTH
-        1,              // DEFAULT_TEXT_PADDING;
+        0,              // DEFAULT_TEXT_PADDING;
         1,              // DEFAULT_TEXT_ALIGNMENT
         0,              // DEFAULT_RESERVED02
         10,             // DEFAULT_TEXT_SIZE
@@ -254,7 +254,7 @@ static const int paletteStyle[3][20] = {
         0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
         0x9c8369ff,     // DEFAULT_TEXT_COLOR_DISABLED
         1,              // DEFAULT_BORDER_WIDTH
-        1,              // DEFAULT_INNER_PADDING;
+        0,              // DEFAULT_TEXT_PADDING;
         1,              // DEFAULT_TEXT_ALIGNMENT
         0,              // DEFAULT_RESERVED02
         10,             // DEFAULT_TEXT_SIZE
@@ -546,8 +546,13 @@ int main(int argc, char *argv[])
             GuiUpdateStyleComplete();
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
+            GuiSetStyle(CHECKBOX, TEXT_PADDING, 4);
+            GuiSetStyle(SLIDER, TEXT_PADDING, 4);
+            GuiSetStyle(STATUSBAR, TEXT_PADDING, 6);
+            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+            
+            prevVisualStyleActive = visualStyleActive;
         }
-        prevVisualStyleActive = visualStyleActive;
 #endif
         if (!windowAboutState.windowAboutActive && !windowExitActive)    // Avoid wave regeneration on Window About active
         {
@@ -618,8 +623,9 @@ int main(int argc, char *argv[])
             DrawText(FormatText("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             GuiLabel((Rectangle){ 95, 13, 10, 10 }, FormatText("v%s", toolVersion));
 
-            GuiSetStyle(BUTTON, INNER_PADDING, 6);
-            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
+            int prevTextPadding = GuiGetStyle(BUTTON, TEXT_PADDING);
+            GuiSetStyle(BUTTON, TEXT_PADDING, 6);
+            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             if (GuiButton((Rectangle){ 8, 42, 106, 24 }, "#146#Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 70, 106, 24 }, "#145#Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 98, 106, 24 }, "#147#Explosion")) { params[slotActive] = GenExplosion(); regenerate = true; }
@@ -627,14 +633,16 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 8, 154, 106, 24 }, "#152#Hit/Hurt")) { params[slotActive] = GenHitHurt(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 182, 106, 24 }, "#150#Jump")) { params[slotActive] = GenJump(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 210, 106, 24 }, "#144#Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
+            GuiSetStyle(BUTTON, TEXT_PADDING, prevTextPadding);
+            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
 
             GuiLine((Rectangle){ 8, 234, 106, 12 }, NULL);
 
-            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, 0);
-            GuiSetStyle(TOGGLE, INNER_PADDING, 6);
+            GuiSetStyle(TOGGLE, TEXT_PADDING, 6);
+            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 106, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
-            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, 1);
-            GuiSetStyle(TOGGLE, INNER_PADDING, 1);
+            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+            GuiSetStyle(TOGGLE, TEXT_PADDING, 0);
 
             GuiLine((Rectangle){ 8, 356, 108, 12 }, NULL);
 
@@ -699,9 +707,7 @@ int main(int argc, char *argv[])
             sampleSizeActive = GuiComboBox((Rectangle){ 398, 206, 106, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
 
 #if !defined(VERSION_ONE)
-            GuiDisable();
             fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV", fileTypeActive);
-            if (!windowAboutState.windowAboutActive) GuiEnable();
 #else
             fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV;RAW;CODE", fileTypeActive);
 #endif
@@ -712,10 +718,10 @@ int main(int argc, char *argv[])
 
             GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
 #if !defined(VERSION_ONE)
-            GuiDisable();
-#endif
+            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default", visualStyleActive);
+#else
             visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "Light;Dark;Candy", visualStyleActive);
-            if (!windowAboutState.windowAboutActive) GuiEnable();
+#endif
             screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
 
             GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);
