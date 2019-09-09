@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v2.1 - A simple and easy to use fx sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v2.1 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -18,7 +18,9 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       2.1  (18-Aug-2019) Ported to latest raygui 2.6
+*       2.1  (09-Sep-2019) Ported to latest raygui 2.6
+*                          Support custom file dialogs (on non-DESKTOP platforms)
+*                          Slight screen resize to adapt to new styles fonts
 *       2.0  (xx-Nov-2018) GUI redesigned, CLI improvements
 *       1.8  (10-Oct-2018) Functions renaming, code reorganized, better consistency...
 *       1.5  (23-Sep-2018) Support .wav export to code and sound playing on command line
@@ -37,7 +39,7 @@
 *
 *   DEPENDENCIES:
 *       raylib 2.6-dev          - Windowing/input management and drawing.
-*       raygui 2.6-dev          - Immediate-mode GUI controls.
+*       raygui 2.6              - Immediate-mode GUI controls.
 *       tinyfiledialogs 3.3.9   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
@@ -85,8 +87,21 @@
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
 #include "gui_window_about.h"           // GUI: About Window
 
+#if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
+    #include "style_jungle.h"           // raygui style: jungle
+    #include "style_candy.h"            // raygui style: candy
+    #include "style_lavanda.h"          // raygui style: lavanda
+#endif
+
 #if defined(PLATFORM_DESKTOP) && !defined(CUSTOM_MODAL_DIALOGS)
     #include "external/tinyfiledialogs.h"   // Required for: Native open/save file dialogs
+#endif
+
+#if defined(PLATFORM_WEB)
+    #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
+    
+    #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
+    #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
 #include <math.h>                       // Required for: sinf(), pow()
@@ -111,7 +126,7 @@
 // Basic information
 static const char *toolName = "rFXGen";
 static const char *toolVersion = "2.1";
-static const char *toolDescription = "A simple and easy-to-use fx sounds generator";
+static const char *toolDescription = "A simple and easy-to-use sounds generator";
 
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
@@ -186,84 +201,7 @@ typedef enum DialogType {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
-// Volume parameters
-static float volumeValue = 0.6f;        // Volume
-
-#if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
-// raygui style palettes
-static const int paletteStyle[3][20] = {
-    {
-        // Style palette: Light
-        0x838383ff,     // DEFAULT_BORDER_COLOR_NORMAL
-        0xc9c9c9ff,     // DEFAULT_BASE_COLOR_NORMAL
-        0x686868ff,     // DEFAULT_TEXT_COLOR_NORMAL
-        0x5bb2d9ff,     // DEFAULT_BORDER_COLOR_FOCUSED
-        0xc9effeff,     // DEFAULT_BASE_COLOR_FOCUSED
-        0x6c9bbcff,     // DEFAULT_TEXT_COLOR_FOCUSED
-        0x0492c7ff,     // DEFAULT_BORDER_COLOR_PRESSED
-        0x97e8ffff,     // DEFAULT_BASE_COLOR_PRESSED
-        0x368bafff,     // DEFAULT_TEXT_COLOR_PRESSED
-        0xb5c1c2ff,     // DEFAULT_BORDER_COLOR_DISABLED
-        0xe6e9e9ff,     // DEFAULT_BASE_COLOR_DISABLED
-        0xaeb7b8ff,     // DEFAULT_TEXT_COLOR_DISABLED
-        1,              // DEFAULT_BORDER_WIDTH
-        0,              // DEFAULT_TEXT_PADDING;
-        1,              // DEFAULT_TEXT_ALIGNMENT
-        0,              // DEFAULT_RESERVED02
-        10,             // DEFAULT_TEXT_SIZE
-        1,              // DEFAULT_TEXT_SPACING
-        0x90abb5ff,     // DEFAULT_LINE_COLOR
-        0xf5f5f5ff,     // DEFAULT_BACKGROUND_COLOR
-    },
-    {
-        // Style palette: Dark
-        0x60827dff,     // DEFAULT_BORDER_COLOR_NORMAL
-        0x2c3334ff,     // DEFAULT_BASE_COLOR_NORMAL
-        0x82a29fff,     // DEFAULT_TEXT_COLOR_NORMAL
-        0x5f9aa8ff,     // DEFAULT_BORDER_COLOR_FOCUSED
-        0x334e57ff,     // DEFAULT_BASE_COLOR_FOCUSED
-        0x6aa9b8ff,     // DEFAULT_TEXT_COLOR_FOCUSED
-        0xa9cb8dff,     // DEFAULT_BORDER_COLOR_PRESSED
-        0x3b6357ff,     // DEFAULT_BASE_COLOR_PRESSED
-        0x97af81ff,     // DEFAULT_TEXT_COLOR_PRESSED
-        0x5b6462ff,     // DEFAULT_BORDER_COLOR_DISABLED
-        0x2c3334ff,     // DEFAULT_BASE_COLOR_DISABLED
-        0x666b69ff,     // DEFAULT_TEXT_COLOR_DISABLED
-        1,              // DEFAULT_BORDER_WIDTH
-        0,              // DEFAULT_TEXT_PADDING;
-        1,              // DEFAULT_TEXT_ALIGNMENT
-        0,              // DEFAULT_RESERVED02
-        10,             // DEFAULT_TEXT_SIZE
-        1,              // DEFAULT_TEXT_SPACING
-        0x638465ff,     // DEFAULT_LINE_COLOR
-        0x2b3a3aff,     // DEFAULT_BACKGROUND_COLOR
-    },
-    {
-        // Style palette: Candy
-        0xe58b68ff,     // DEFAULT_BORDER_COLOR_NORMAL
-        0xfeda96ff,     // DEFAULT_BASE_COLOR_NORMAL
-        0xe59b5fff,     // DEFAULT_TEXT_COLOR_NORMAL
-        0xee813fff,     // DEFAULT_BORDER_COLOR_FOCUSED
-        0xfcd85bff,     // DEFAULT_BASE_COLOR_FOCUSED
-        0xf49641ff,     // DEFAULT_TEXT_COLOR_FOCUSED
-        0xb34848ff,     // DEFAULT_BORDER_COLOR_PRESSED
-        0xeb7272ff,     // DEFAULT_BASE_COLOR_PRESSED
-        0xbd4a4aff,     // DEFAULT_TEXT_COLOR_PRESSED
-        0x94795dff,     // DEFAULT_BORDER_COLOR_DISABLED
-        0xc2a37aff,     // DEFAULT_BASE_COLOR_DISABLED
-        0x9c8369ff,     // DEFAULT_TEXT_COLOR_DISABLED
-        1,              // DEFAULT_BORDER_WIDTH
-        0,              // DEFAULT_TEXT_PADDING;
-        1,              // DEFAULT_TEXT_ALIGNMENT
-        0,              // DEFAULT_RESERVED02
-        10,             // DEFAULT_TEXT_SIZE
-        1,              // DEFAULT_TEXT_SPACING
-        0xd77575ff,     // DEFAULT_LINE_COLOR
-        0xfff5e1ff,     // DEFAULT_BACKGROUND_COLOR
-    }
-};
-#endif
+static float volumeValue = 0.6f;        // Master volume
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -542,15 +480,16 @@ int main(int argc, char *argv[])
         // Set new gui style if changed
         if (visualStyleActive != prevVisualStyleActive)
         {
-            GuiLoadStyleProps(paletteStyle[visualStyleActive], 20);
-            GuiUpdateStyleComplete();
-            GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
-            GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
-            GuiSetStyle(CHECKBOX, TEXT_PADDING, 4);
-            GuiSetStyle(SLIDER, TEXT_PADDING, 4);
-            GuiSetStyle(STATUSBAR, TEXT_PADDING, 6);
-            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+            GuiLoadStyleDefault();
             
+            switch (visualStyleActive)
+            {
+                case 1: GuiLoadStyleJungle(); break; 
+                case 2: GuiLoadStyleCandy(); break;
+                case 3: GuiLoadStyleLavanda(); break;
+                default: break;
+            }
+
             prevVisualStyleActive = visualStyleActive;
         }
 #endif
@@ -620,11 +559,19 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------
             if (showSaveFileDialog || showExportFileDialog) GuiLock();
             
+            // Draw tool name and version, right aligned
+            int prevTextAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
+            int prevTextPadding = GuiGetStyle(LABEL, TEXT_PADDING);
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_RIGHT);
+            GuiSetStyle(LABEL, TEXT_PADDING, 0);
             DrawText(FormatText("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 95, 13, 10, 10 }, FormatText("v%s", toolVersion));
+            GuiLabel((Rectangle){ 84, 13, 30, 10 }, FormatText("v%s", toolVersion));
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, prevTextAlignment);
+            GuiSetStyle(LABEL, TEXT_PADDING, prevTextPadding);
 
-            int prevTextPadding = GuiGetStyle(BUTTON, TEXT_PADDING);
-            GuiSetStyle(BUTTON, TEXT_PADDING, 6);
+            // Draw left buttons
+            prevTextPadding = GuiGetStyle(BUTTON, TEXT_PADDING);
+            GuiSetStyle(BUTTON, TEXT_PADDING, 3);
             GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             if (GuiButton((Rectangle){ 8, 42, 106, 24 }, "#146#Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 70, 106, 24 }, "#145#Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
@@ -638,7 +585,7 @@ int main(int argc, char *argv[])
 
             GuiLine((Rectangle){ 8, 234, 106, 12 }, NULL);
 
-            GuiSetStyle(TOGGLE, TEXT_PADDING, 6);
+            GuiSetStyle(TOGGLE, TEXT_PADDING, 3);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 106, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
@@ -720,7 +667,7 @@ int main(int argc, char *argv[])
 #if !defined(VERSION_ONE)
             visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default", visualStyleActive);
 #else
-            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "Light;Dark;Candy", visualStyleActive);
+            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda", visualStyleActive);
 #endif
             screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
 
@@ -729,9 +676,14 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 398, 396, 106, 24 }, "#191#ABOUT")) windowAboutState.windowAboutActive = true;
 
             // Draw status bar
-            GuiStatusBar((Rectangle){ 0, 492, 201, 20 }, FormatText("SOUND INFO: Num samples: %i", wave[slotActive].sampleCount));
-            GuiStatusBar((Rectangle){ 200, 492, 138, 20 }, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, FormatText("Wave size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
+            int textPadding = GuiGetStyle(STATUSBAR, TEXT_PADDING);
+            GuiSetStyle(STATUSBAR, TEXT_PADDING, 0);
+            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+            GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, FormatText("Total Samples: %i", wave[slotActive].sampleCount));
+            GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
+            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, FormatText("Size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
+            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+            GuiSetStyle(STATUSBAR, TEXT_PADDING, textPadding);
             //----------------------------------------------------------------------------------
 
             // Draw Wave form
