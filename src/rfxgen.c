@@ -87,7 +87,7 @@
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
 #include "gui_window_about.h"           // GUI: About Window
 
-#if defined(VERSION_ONE) && !defined(COMMAND_LINE_ONLY)
+#if !defined(COMMAND_LINE_ONLY)
     #include "style_jungle.h"           // raygui style: jungle
     #include "style_candy.h"            // raygui style: candy
     #include "style_lavanda.h"          // raygui style: lavanda
@@ -476,7 +476,6 @@ int main(int argc, char *argv[])
         if (params[slotActive].waveTypeValue != prevWaveTypeValue[slotActive]) regenerate = true;
         prevWaveTypeValue[slotActive] = params[slotActive].waveTypeValue;
 
-#if defined(VERSION_ONE)
         // Set new gui style if changed
         if (visualStyleActive != prevVisualStyleActive)
         {
@@ -492,7 +491,7 @@ int main(int argc, char *argv[])
 
             prevVisualStyleActive = visualStyleActive;
         }
-#endif
+
         if (!windowAboutState.windowAboutActive && !windowExitActive)    // Avoid wave regeneration on Window About active
         {
             // Consider two possible cases to regenerate wave and update sound:
@@ -664,11 +663,8 @@ int main(int argc, char *argv[])
             GuiLine((Rectangle){ 398, 288, 106, 16 }, NULL);
 
             GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
-#if !defined(VERSION_ONE)
-            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default", visualStyleActive);
-#else
             visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda", visualStyleActive);
-#endif
+
             screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
 
             GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);

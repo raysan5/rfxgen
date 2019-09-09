@@ -12,6 +12,7 @@ rFXGen comes in two flavours: ZERO (free version) and ONE (low-cost version).
  - Load .rfx sounds and import .sfs files (compatible with sfxr)
  - Save .rfx sounds with generation parameters (104 bytes only)
  - Export .wav files, configurable sample-rate and bits-per-sample
+ - Three amazing GUI styles: Jungle, Candy, Lavanda
  - Wave data visualization in real-time
  - Completely portable (single file)
 
@@ -19,7 +20,6 @@ rFXGen comes in two flavours: ZERO (free version) and ONE (low-cost version).
 
  - Powerful command line for batch conversion and wave playing
  - Export wave to .raw samples data and code bytes array (.h)
- - Three additional GUI themes: Jungle, Candy, Lavanda.
  
 ## rFXGen Usage
 
