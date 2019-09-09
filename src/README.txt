@@ -1,4 +1,4 @@
-# rFXGen v2.0
+# rFXGen v2.1
 
 A simple and easy-to-use fx sounds generator, based on the amazing sfxr.
 
@@ -19,7 +19,7 @@ rFXGen comes in two flavours: ZERO (free version) and ONE (low-cost version).
 
  - Powerful command line for batch conversion and wave playing
  - Export wave to .raw samples data and code bytes array (.h)
- - Three unique GUI themes: Light, Dark, Candy
+ - Three additional GUI themes: Jungle, Candy, Lavanda.
  
 ## rFXGen Usage
 
