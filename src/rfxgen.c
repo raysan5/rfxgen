@@ -445,12 +445,12 @@ int main(int argc, char *argv[])
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) showExportFileDialog = true;
 
         // Toggle window about
-        if (IsKeyPressed(KEY_F1)) windowAboutState.windowAboutActive = !windowAboutState.windowAboutActive;
+        if (IsKeyPressed(KEY_F1)) windowAboutState.windowActive = !windowAboutState.windowActive;
 
         // Show closing window on ESC
         if (IsKeyPressed(KEY_ESCAPE))
         {
-            if (windowAboutState.windowAboutActive) windowAboutState.windowAboutActive = false;
+            if (windowAboutState.windowActive) windowAboutState.windowActive = false;
             else windowExitActive = !windowExitActive;
         }
         //----------------------------------------------------------------------------------
@@ -492,7 +492,7 @@ int main(int argc, char *argv[])
             prevVisualStyleActive = visualStyleActive;
         }
 
-        if (!windowAboutState.windowAboutActive && !windowExitActive)    // Avoid wave regeneration on Window About active
+        if (!windowAboutState.windowActive && !windowExitActive)    // Avoid wave regeneration on Window About active
         {
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -521,6 +521,7 @@ int main(int argc, char *argv[])
         // Change window size to x2
         if (screenSizeActive)
         {
+            // Screen size x2
             if (GetScreenWidth() < screenWidth*2)
             {
                 SetWindowSize(screenWidth*2, screenHeight*2);
@@ -529,6 +530,7 @@ int main(int argc, char *argv[])
         }
         else
         {
+            // Screen size x1
             if (screenWidth*2 >= GetScreenWidth())
             {
                 SetWindowSize(screenWidth, screenHeight);
@@ -551,7 +553,7 @@ int main(int argc, char *argv[])
             BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            if (windowAboutState.windowAboutActive || windowExitActive) GuiDisable();
+            if (windowAboutState.windowActive || windowExitActive) GuiDisable();
             else GuiEnable();
 
             // rFXGen Layout: controls drawing
@@ -669,7 +671,7 @@ int main(int argc, char *argv[])
 
             GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);
 
-            if (GuiButton((Rectangle){ 398, 396, 106, 24 }, "#191#ABOUT")) windowAboutState.windowAboutActive = true;
+            if (GuiButton((Rectangle){ 398, 396, 106, 24 }, "#191#ABOUT")) windowAboutState.windowActive = true;
 
             // Draw status bar
             int textPadding = GuiGetStyle(STATUSBAR, TEXT_PADDING);

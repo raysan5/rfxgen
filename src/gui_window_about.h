@@ -47,7 +47,7 @@
 typedef struct {
     Vector2 position;
 
-    bool windowAboutActive;
+    bool windowActive;
     bool chkLicenseChecked;
 
     // Custom state variables (depend on development software)
@@ -143,7 +143,7 @@ GuiWindowAboutState InitGuiWindowAbout(void)
 {
     GuiWindowAboutState state = { 0 };
 
-    state.windowAboutActive = false;
+    state.windowActive = false;
     state.chkLicenseChecked = true;
 
     // Custom variables initialization
@@ -183,14 +183,13 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
     const int toolColor = 0x5197d4ff;
 
-    if (state->windowAboutActive)
+    if (state->windowActive)
     {
         GuiEnable();
 
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-        state->position = (Vector2){ GetScreenWidth()/2 - state->windowWidth/2, GetScreenHeight()/2 - state->windowHeight/2 };
-        
-        state->windowAboutActive = !GuiWindowBox((Rectangle){ state->position.x + 0, state->position.y + 0, state->windowWidth, state->windowHeight }, FormatText("%s %s", windowAboutText, mode));
+
+        state->windowActive = !GuiWindowBox((Rectangle){ state->position.x, state->position.y, state->windowWidth, state->windowHeight }, FormatText("%s %s", windowAboutText, mode));
 
         // Draw a background rectangle for convenience
         DrawRectangle(state->position.x + 1, state->position.y + 4 + 20, state->windowWidth - 2, 90 - 4, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
@@ -240,7 +239,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         //GuiDisable();state->chkLicenseChecked = GuiCheckBox((Rectangle){ state->position.x + 10, state->position.y + 310, 16, 16 }, chkLicenseText, state->chkLicenseChecked); GuiEnable();
         if (GuiButton((Rectangle){ state->position.x + state->windowWidth - 80 - 85, state->position.y + 305 + 25, 75, 25 }, BtnBeONEText)) { OpenURL(linkToolDownloadText); }
 #endif
-        if (GuiButton((Rectangle){ state->position.x + state->windowWidth - 80, state->position.y + 305 + 25, 70, 25 }, BtnCloseText)) state->windowAboutActive = false;
+        if (GuiButton((Rectangle){ state->position.x + state->windowWidth - 80, state->position.y + 305 + 25, 70, 25 }, BtnCloseText)) state->windowActive = false;
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
         
         GuiDisable();
