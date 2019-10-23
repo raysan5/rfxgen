@@ -903,15 +903,15 @@ static void ShowCommandLineInfo(void)
 static void ProcessCommandLine(int argc, char *argv[])
 {
     // CLI required variables
-    bool showUsageInfo = false;     // Toggle command line usage info
+    bool showUsageInfo = false;         // Toggle command line usage info
 
-    char inFileName[512] = { 0 };   // Input file name
-    char outFileName[512] = { 0 };  // Output file name
-    char playFileName[512] = { 0 }; // Play file name
+    char inFileName[512] = { 0 };       // Input file name
+    char outFileName[512] = { 0 };      // Output file name
+    char playFileName[512] = { 0 };     // Play file name
 
-    int sampleRate = 44100;         // Default conversion sample rate
-    int sampleSize = 16;            // Default conversion sample size
-    int channels = 1;               // Default conversion channels number
+    int sampleRate = 44100;             // Default conversion sample rate
+    int sampleSize = 16;                // Default conversion sample size
+    int channels = 1;                   // Default conversion channels number
     
 #if defined(COMMAND_LINE_ONLY)
     if (argc == 1) showUsageInfo = true;
