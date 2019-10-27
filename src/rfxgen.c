@@ -99,7 +99,7 @@
 
 #if defined(PLATFORM_WEB)
     #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
-    
+
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
     #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
     SetExitKey(0);
 
     InitAudioDevice();
-    
+
     // GUI: Main Layout
     //-----------------------------------------------------------------------------------
     bool playOnChangeChecked = true;
@@ -325,13 +325,13 @@ int main(int argc, char *argv[])
     bool exitWindow = false;
     bool windowExitActive = false;
     //-----------------------------------------------------------------------------------
-    
+
     // GUI: Custom file dialogs
     //-----------------------------------------------------------------------------------
     bool showLoadFileDialog = false;
     bool showSaveFileDialog = false;
     bool showExportFileDialog = false;
-    //-----------------------------------------------------------------------------------  
+    //-----------------------------------------------------------------------------------
 
     // Wave and Sound Initialization
     //-----------------------------------------------------------------------------------
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
-    
+
     int wavSampleSize = 16;         // Wave sample size in bits (bitrate)
     int wavSampleRate = 44100;      // Wave sample rate (frequency)
     //-----------------------------------------------------------------------------------
@@ -365,11 +365,11 @@ int main(int argc, char *argv[])
         // Clean everything (just in case)
         UnloadWave(wave[0]);
         UnloadSound(sound[0]);
-        
+
         params[0] = LoadWaveParams(inFileName); // Load wave parameters from .rfx
         wave[0] = GenerateWave(params[0]);      // Generate wave from parameters
         sound[0] = LoadSoundFromWave(wave[0]);  // Load sound from new wave
-        
+
         PlaySound(sound[0]);                    // Play generated sound
     }
 
@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
             SetMasterVolume(volumeValue);
             prevVolumeValue = volumeValue;
         }
-        
+
         // Check gui combo box selected options
         if (sampleRateActive == 0) wavSampleRate = 22050;
         else if (sampleRateActive == 1) wavSampleRate = 44100;
@@ -472,7 +472,7 @@ int main(int argc, char *argv[])
         if (sampleSizeActive == 0) wavSampleSize = 8;
         else if (sampleSizeActive == 1) wavSampleSize = 16;
         else if (sampleSizeActive == 2) wavSampleSize = 32;
-        
+
         if (params[slotActive].waveTypeValue != prevWaveTypeValue[slotActive]) regenerate = true;
         prevWaveTypeValue[slotActive] = params[slotActive].waveTypeValue;
 
@@ -480,10 +480,10 @@ int main(int argc, char *argv[])
         if (visualStyleActive != prevVisualStyleActive)
         {
             GuiLoadStyleDefault();
-            
+
             switch (visualStyleActive)
             {
-                case 1: GuiLoadStyleJungle(); break; 
+                case 1: GuiLoadStyleJungle(); break;
                 case 2: GuiLoadStyleCandy(); break;
                 case 3: GuiLoadStyleLavanda(); break;
                 default: break;
@@ -559,7 +559,7 @@ int main(int argc, char *argv[])
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
             if (showSaveFileDialog || showExportFileDialog) GuiLock();
-            
+
             // Draw tool name and version, right aligned
             int prevTextAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
             int prevTextPadding = GuiGetStyle(LABEL, TEXT_PADDING);
@@ -713,7 +713,7 @@ int main(int argc, char *argv[])
                 else if (result == 1) exitWindow = true;
             }
             //----------------------------------------------------------------------------------------
-            
+
             GuiUnlock();
 
             // GUI: Load File Dialog (and loading logic)
@@ -732,11 +732,11 @@ int main(int argc, char *argv[])
                     SetWindowTitle(FormatText("%s v%s - %s", toolName, toolVersion, GetFileName(inFileName)));
                     regenerate = true;
                 }
-                
+
                 if (result >= 0) showLoadFileDialog = false;
             }
             //----------------------------------------------------------------------------------------
-            
+
             // GUI: Save File Dialog (and saving logic)
             //----------------------------------------------------------------------------------------
             if (showSaveFileDialog)
@@ -760,11 +760,11 @@ int main(int argc, char *argv[])
                     emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
                 #endif
                 }
-                
+
                 if (result >= 0) showSaveFileDialog = false;
             }
             //----------------------------------------------------------------------------------------
-            
+
             // GUI: Export File Dialog (and saving logic)
             //----------------------------------------------------------------------------------------
             if (showExportFileDialog)
@@ -772,7 +772,7 @@ int main(int argc, char *argv[])
                 // Consider different supported file types
                 char filters[64] = { 0 };
                 strcpy(outFileName, "sound");
-                
+
                 if (fileTypeActive == 0) { strcpy(filters, "*.wav"); strcat(outFileName, ".wav"); }
                 else if (fileTypeActive == 1) { strcpy(filters, "*.raw"); strcat(outFileName, ".raw"); }
                 else if (fileTypeActive == 2) { strcpy(filters, "*.h"); strcat(outFileName, ".h"); }
@@ -803,14 +803,14 @@ int main(int argc, char *argv[])
                     }
 
                     UnloadWave(cwave);
-     
+
                 #if defined(PLATFORM_WEB)
                     // Download file from MEMFS (emscripten memory filesystem)
                     // NOTE: Second argument must be a simple filename (we can't use directories)
                     emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
                 #endif
                 }
-                
+
                 if (result >= 0) showExportFileDialog = false;
             }
             //----------------------------------------------------------------------------------------
@@ -912,7 +912,7 @@ static void ProcessCommandLine(int argc, char *argv[])
     int sampleRate = 44100;             // Default conversion sample rate
     int sampleSize = 16;                // Default conversion sample size
     int channels = 1;                   // Default conversion channels number
-    
+
 #if defined(COMMAND_LINE_ONLY)
     if (argc == 1) showUsageInfo = true;
 #endif
@@ -1921,7 +1921,7 @@ static int GuiFileDialog(int dialogType, const char *title, char *fileName, cons
         case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(RICON_FILE_SAVE, title), message, filters, tempFileName); break;
         default: break;
     }
-    
+
     if ((result == 1) && (tempFileName[0] != '\0')) strcpy(fileName, tempFileName);
 
 #else   // Use native OS dialogs (tinyfiledialogs)
@@ -1929,7 +1929,7 @@ static int GuiFileDialog(int dialogType, const char *title, char *fileName, cons
     const char *tempFileName = NULL;
     int filterCount = 0;
     const char **filterSplit = TextSplit(filters, ';', &filterCount);
-    
+
     switch (dialogType)
     {
         case DIALOG_OPEN: tempFileName = tinyfd_openFileDialog(title, fileName, filterCount, filterSplit, message, 0); break;
@@ -1939,7 +1939,7 @@ static int GuiFileDialog(int dialogType, const char *title, char *fileName, cons
         default: break;
     }
 
-    if (tempFileName != NULL) 
+    if (tempFileName != NULL)
     {
         strcpy(fileName, tempFileName);
         result = 1;
