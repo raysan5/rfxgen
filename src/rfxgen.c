@@ -971,9 +971,9 @@ static void ProcessCommandLine(int argc, char *argv[])
                 else
                 {
                     // Read values text and convert to integer values
-                    sampleRate = atoi(values[0]);
-                    sampleSize = atoi(values[1]);
-                    channels = atoi(values[2]);
+                    sampleRate = TextToInteger(values[0]);
+                    sampleSize = TextToInteger(values[1]);
+                    channels = TextToInteger(values[2]);
 
                     // Verify retrieved values are valid
                     if ((sampleRate != 44100) && (sampleRate != 22050))
