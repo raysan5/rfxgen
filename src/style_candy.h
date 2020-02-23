@@ -6796,8 +6796,7 @@ static const CharInfo candyFontChars[95] = {
 static void GuiLoadStyleCandy(void)
 {
     // Load an populate global default style
-    GuiLoadStyleProps(styleCandy, 20);
-    GuiUpdateStyleComplete();
+    for (int i = 0; i < 20; i++) GuiSetStyle(DEFAULT, i, styleCandy[i]);
 
     // Set additional style properties (if required)
 

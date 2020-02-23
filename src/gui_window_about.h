@@ -198,8 +198,6 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
         DrawTechIcon(state->position.x + 10, state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 55, 200, 30 }, FormatText("%s %s %s", lblNameVersionText, mode, lblDateText));
-        
-        // TODO: Description could overflow due to the font
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 78, 245, 20 }, lblDescriptionText);
 
         GuiLine((Rectangle){ state->position.x, state->position.y + 100, state->windowWidth, 20 }, NULL);

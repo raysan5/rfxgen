@@ -6796,8 +6796,7 @@ static const CharInfo lavandaFontChars[95] = {
 static void GuiLoadStyleLavanda(void)
 {
     // Load an populate global default style
-    GuiLoadStyleProps(styleLavanda, 20);
-    GuiUpdateStyleComplete();
+    for (int i = 0; i < 20; i++) GuiSetStyle(DEFAULT, i, styleLavanda[i]);
 
     // Set additional style properties (if required)
 

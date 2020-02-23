@@ -1881,8 +1881,7 @@ static const CharInfo jungleFontChars[95] = {
 static void GuiLoadStyleJungle(void)
 {
     // Load an populate global default style
-    GuiLoadStyleProps(styleJungle, 20);
-    GuiUpdateStyleComplete();
+    for (int i = 0; i < 20; i++) GuiSetStyle(DEFAULT, i, styleJungle[i]);
 
     // Set additional style properties (if required)
 

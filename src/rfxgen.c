@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v2.1 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v2.2 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -18,6 +18,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
+*       2.2  (23-Feb-2019) Update to raygui 2.7 and adapted to web
 *       2.1  (09-Sep-2019) Ported to latest raygui 2.6
 *                          Support custom file dialogs (on non-DESKTOP platforms)
 *                          Slight screen resize to adapt to new styles fonts
@@ -80,13 +81,11 @@
 
 #if defined(PLATFORM_WEB)
     #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
-
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
-    #include <emscripten/html5.h>       // Emscripten HTML5 library
 #endif
 
 #define RAYGUI_IMPLEMENTATION
-#define RAYGUI_SUPPORT_RICONS
+#define RAYGUI_SUPPORT_ICONS
 #include "raygui.h"                     // Required for: IMGUI controls
 
 #undef RAYGUI_IMPLEMENTATION            // Avoid including raygui implementation again
@@ -123,8 +122,8 @@
 //----------------------------------------------------------------------------------
 // Basic information
 static const char *toolName = "rFXGen";
-static const char *toolVersion = "2.1";
-static const char *toolDescription = "A simple and easy-to-use sounds generator";
+static const char *toolVersion = "2.2";
+static const char *toolDescription = "A simple and easy-to-use fx sounds generator";
 
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
@@ -380,8 +379,8 @@ int main(int argc, char *argv[])
     RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
     SetTextureFilter(screenTarget.texture, FILTER_POINT);
 
-    SetTargetFPS(60);
-    //----------------------------------------------------------------------------------------
+    SetTargetFPS(60);      // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!exitWindow)    // Detect window close button or ESC key
@@ -525,6 +524,7 @@ int main(int argc, char *argv[])
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
@@ -649,9 +649,11 @@ int main(int argc, char *argv[])
 
             GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
             visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda", visualStyleActive);
-
+#if defined(PLATFORM_WEB)
+            if (GuiButton((Rectangle){ 398, 348, 106, 24 }, "#53#Fullscreen")) ToggleFullscreen();
+#else
             screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
-
+#endif
             GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);
 
             if (GuiButton((Rectangle){ 398, 396, 106, 24 }, "#191#ABOUT")) windowAboutState.windowActive = true;
@@ -740,7 +742,7 @@ int main(int argc, char *argv[])
                 #if defined(PLATFORM_WEB)
                     // Download file from MEMFS (emscripten memory filesystem)
                     // NOTE: Second argument must be a simple filename (we can't use directories)
-                    emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
+                    emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
                 #endif
                 }
 
@@ -771,18 +773,29 @@ int main(int argc, char *argv[])
                     Wave cwave = WaveCopy(wave[slotActive]);
                     WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);        // Before exporting wave data, we format it as desired
 
-                    if (fileTypeActive == 0) ExportWave(cwave, outFileName);            // Export wave data as WAV file
-                    else if (fileTypeActive == 2) ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
-                    else if (fileTypeActive == 1)
+                    if (fileTypeActive == 0) 
                     {
-                        // Export Wave as RAW data
+                        // Check for valid extension and make sure it is
+                        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
+                        ExportWave(cwave, outFileName);            // Export wave data as WAV file
+                    }
+                    else if (fileTypeActive == 2)
+                    {
+                        // Check for valid extension and make sure it is
+                        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".h")) strcat(outFileName, ".h\0");
+                        ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
+                    }
+                    else if (fileTypeActive == 1)   // Export Wave as RAW data
+                    {
+                        // Check for valid extension and make sure it is
+                        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".raw")) strcat(outFileName, ".raw\0");
                         FILE *rawFile = fopen(outFileName, "wb");
 
-                        if (rawFile != NULL)
-                        {
-                            fwrite(wave[slotActive].data, 1, wave[slotActive].sampleCount*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
-                            fclose(rawFile);
-                        }
+                            if (rawFile != NULL)
+                            {
+                                fwrite(wave[slotActive].data, 1, wave[slotActive].sampleCount*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
+                                fclose(rawFile);
+                            }
                     }
 
                     UnloadWave(cwave);
@@ -790,7 +803,7 @@ int main(int argc, char *argv[])
                 #if defined(PLATFORM_WEB)
                     // Download file from MEMFS (emscripten memory filesystem)
                     // NOTE: Second argument must be a simple filename (we can't use directories)
-                    emscripten_run_script(TextFormat("SaveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
+                    emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
                 #endif
                 }
 
