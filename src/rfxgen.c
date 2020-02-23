@@ -18,7 +18,7 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       2.2  (23-Feb-2019) Update to raygui 2.7 and adapted to web
+*       2.2  (23-Feb-2019) Update to raylib 3.0, raygui 2.7 and adapted for web
 *       2.1  (09-Sep-2019) Ported to latest raygui 2.6
 *                          Support custom file dialogs (on non-DESKTOP platforms)
 *                          Slight screen resize to adapt to new styles fonts
@@ -39,9 +39,9 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 2.6-dev          - Windowing/input management and drawing.
-*       raygui 2.6              - Immediate-mode GUI controls.
-*       tinyfiledialogs 3.3.9   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       raylib 3.0              - Windowing/input management and drawing.
+*       raygui 2.7              - Immediate-mode GUI controls.
+*       tinyfiledialogs 3.4.3   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
