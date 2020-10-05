@@ -1151,9 +1151,9 @@ static Wave GenerateWave(WaveParams params)
     float fphase = 0.0f;
     float fdphase = 0.0f;
     int iphase = 0;
-    float phaserBuffer[1024] = { 0.0f };
+    float phaserBuffer[1024] = { 0 };
     int ipp = 0;
-    float noiseBuffer[32] = { 0.0f };       // Required for noise wave, depends on random seed!
+    float noiseBuffer[32] = { 0 };       // Required for noise wave, depends on random seed!
     float fltp = 0.0f;
     float fltdp = 0.0f;
     float fltw = 0.0f;
