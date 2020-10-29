@@ -736,7 +736,7 @@ int main(int argc, char *argv[])
                 {
                     // Save file: outFileName
                     // Check for valid extension and make sure it is
-                    if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
+                    if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
                     SaveWaveParams(params[slotActive], outFileName);    // Save wave parameters
 
                 #if defined(PLATFORM_WEB)
@@ -776,19 +776,19 @@ int main(int argc, char *argv[])
                     if (fileTypeActive == 0) 
                     {
                         // Check for valid extension and make sure it is
-                        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
+                        if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
                         ExportWave(cwave, outFileName);            // Export wave data as WAV file
                     }
                     else if (fileTypeActive == 2)
                     {
                         // Check for valid extension and make sure it is
-                        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".h")) strcat(outFileName, ".h\0");
+                        if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".h")) strcat(outFileName, ".h\0");
                         ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
                     }
                     else if (fileTypeActive == 1)   // Export Wave as RAW data
                     {
                         // Check for valid extension and make sure it is
-                        if ((GetExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".raw")) strcat(outFileName, ".raw\0");
+                        if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".raw")) strcat(outFileName, ".raw\0");
                         FILE *rawFile = fopen(outFileName, "wb");
 
                             if (rawFile != NULL)
