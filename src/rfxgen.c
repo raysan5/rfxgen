@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
     const int screenHeight = 512;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
-    InitWindow(screenWidth, screenHeight, FormatText("%s v%s - %s", toolName, toolVersion, toolDescription));
+    InitWindow(screenWidth, screenHeight, TextFormat("%s v%s - %s", toolName, toolVersion, toolDescription));
     SetExitKey(0);
 
     InitAudioDevice();
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
                 params[slotActive] = LoadWaveParams(droppedFiles[0]);
                 regenerate = true;
 
-                SetWindowTitle(FormatText("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles[0])));
+                SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles[0])));
             }
 #if defined(VERSION_ONE)
             else if (IsFileExtension(droppedFiles[0], ".rgs")) GuiLoadStyle(droppedFiles[0]);
@@ -549,8 +549,8 @@ int main(int argc, char *argv[])
             int prevTextPadding = GuiGetStyle(LABEL, TEXT_PADDING);
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_RIGHT);
             GuiSetStyle(LABEL, TEXT_PADDING, 0);
-            DrawText(FormatText("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 84, 13, 30, 10 }, FormatText("v%s", toolVersion));
+            DrawText(TextFormat("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+            GuiLabel((Rectangle){ 84, 13, 30, 10 }, TextFormat("v%s", toolVersion));
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, prevTextAlignment);
             GuiSetStyle(LABEL, TEXT_PADDING, prevTextPadding);
 
@@ -663,9 +663,9 @@ int main(int argc, char *argv[])
             int textPadding = GuiGetStyle(STATUSBAR, TEXT_PADDING);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, 0);
             GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
-            GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, FormatText("Total Samples: %i", wave[slotActive].sampleCount));
-            GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, FormatText("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, FormatText("Size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
+            GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, TextFormat("Total Samples: %i", wave[slotActive].sampleCount));
+            GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, TextFormat("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
+            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, TextFormat("Size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
             GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, textPadding);
             //----------------------------------------------------------------------------------
@@ -715,7 +715,7 @@ int main(int argc, char *argv[])
                 {
                     // Load parameters file
                     params[slotActive] = LoadWaveParams(inFileName);
-                    SetWindowTitle(FormatText("%s v%s - %s", toolName, toolVersion, GetFileName(inFileName)));
+                    SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(inFileName)));
                     regenerate = true;
                 }
 
