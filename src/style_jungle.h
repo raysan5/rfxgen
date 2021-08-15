@@ -1779,7 +1779,7 @@ static const Rectangle jungleFontRecs[95] = {
 };
 
 // Font characters info data
-static const CharInfo jungleFontChars[95] = {
+static const GlyphInfo jungleFontChars[95] = {
     { 32, 0, 9, 5, { 0 }},
     { 33, 0, 2, 3, { 0 }},
     { 34, 0, 2, 6, { 0 }},
@@ -1902,8 +1902,8 @@ static void GuiLoadStyleJungle(void)
 
     // Copy font char info data from global jungleFontChars
     // NOTE: Required to avoid issues if trying to free font
-    font.chars = (CharInfo *)malloc(font.charsCount*sizeof(CharInfo));
-    memcpy(font.chars, jungleFontChars, font.charsCount*sizeof(CharInfo));
+    font.chars = (GlyphInfo *)malloc(font.charsCount*sizeof(GlyphInfo));
+    memcpy(font.chars, jungleFontChars, font.charsCount*sizeof(GlyphInfo));
 
     GuiSetFont(font);
     

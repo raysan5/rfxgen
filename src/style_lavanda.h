@@ -6694,7 +6694,7 @@ static const Rectangle lavandaFontRecs[95] = {
 };
 
 // Font characters info data
-static const CharInfo lavandaFontChars[95] = {
+static const GlyphInfo lavandaFontChars[95] = {
     { 32, 0, 12, 5, { 0 }},
     { 33, 0, 3, 2, { 0 }},
     { 34, 0, 3, 4, { 0 }},
@@ -6817,8 +6817,8 @@ static void GuiLoadStyleLavanda(void)
 
     // Copy font char info data from global lavandaFontChars
     // NOTE: Required to avoid issues if trying to free font
-    font.chars = (CharInfo *)malloc(font.charsCount*sizeof(CharInfo));
-    memcpy(font.chars, lavandaFontChars, font.charsCount*sizeof(CharInfo));
+    font.chars = (GlyphInfo *)malloc(font.charsCount*sizeof(GlyphInfo));
+    memcpy(font.chars, lavandaFontChars, font.charsCount*sizeof(GlyphInfo));
 
     GuiSetFont(font);
     
