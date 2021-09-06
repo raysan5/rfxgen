@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v2.3 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v2.5 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -18,8 +18,9 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       2.3  (20-Dec-2020) Update to raylib 3.5
-*       2.2  (23-Feb-2019) Update to raylib 3.0, raygui 2.7 and adapted for web
+*       2.5  (xx-Nov-2021) Updated to raylib 4.0 and raygui 3.0
+*       2.3  (20-Dec-2020) Updated to raylib 3.5
+*       2.2  (23-Feb-2019) Updated to raylib 3.0, raygui 2.7 and adapted for web
 *       2.1  (09-Sep-2019) Ported to latest raygui 2.6
 *                          Support custom file dialogs (on non-DESKTOP platforms)
 *                          Slight screen resize to adapt to new styles fonts
@@ -40,9 +41,9 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 3.5              - Windowing/input management and drawing.
-*       raygui 2.7              - Immediate-mode GUI controls.
-*       tinyfiledialogs 3.4.3   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       raylib 4.0              - Windowing/input management and drawing.
+*       raygui 3.0              - Immediate-mode GUI controls.
+*       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
