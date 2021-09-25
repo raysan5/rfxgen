@@ -58,6 +58,7 @@
 *   DEVELOPERS:
 *       Ramon Santamaria (@raysan5):   Developer, supervisor, updater and maintainer.
 *
+*
 *   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2021 raylib technologies (@raylibtech).
