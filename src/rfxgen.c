@@ -88,7 +88,6 @@
 #endif
 
 #define RAYGUI_IMPLEMENTATION
-#define RAYGUI_SUPPORT_ICONS
 #include "raygui.h"                     // Required for: IMGUI controls
 
 #undef RAYGUI_IMPLEMENTATION            // Avoid including raygui implementation again
@@ -334,8 +333,8 @@ int main(int argc, char *argv[])
         wave[i].sampleRate = 44100;
         wave[i].sampleSize = 32;    // 32 bit -> float
         wave[i].channels = 1;
-        wave[i].sampleCount = 10*wave[i].sampleRate*wave[i].channels;    // Max sampleCount for 10 seconds
-        wave[i].data = calloc(wave[i].sampleCount*wave[i].sampleSize/8, sizeof(char));
+        wave[i].frameCount = 10*wave[i].sampleRate;    // Max frame count for 10 seconds
+        wave[i].data = calloc(wave[i].frameCount*wave[i].channels*wave[i].sampleSize/8, sizeof(char));
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
@@ -374,13 +373,13 @@ int main(int argc, char *argv[])
 #if defined(RENDER_WAVE_TO_TEXTURE)
     // To avoid enabling MSXAAx4, we will render wave to a texture x2
     RenderTexture2D waveTarget = LoadRenderTexture(waveRec.width*2, waveRec.height*2);
-    SetTextureFilter(waveTarget.texture, FILTER_BILINEAR);
+    SetTextureFilter(waveTarget.texture, TEXTURE_FILTER_BILINEAR);
 #endif
 
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
     RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
-    SetTextureFilter(screenTarget.texture, FILTER_POINT);
+    SetTextureFilter(screenTarget.texture, TEXTURE_FILTER_POINT);
 
     SetTargetFPS(60);      // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -665,9 +664,9 @@ int main(int argc, char *argv[])
             int textPadding = GuiGetStyle(STATUSBAR, TEXT_PADDING);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, 0);
             GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
-            GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, TextFormat("Total Samples: %i", wave[slotActive].sampleCount));
-            GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, TextFormat("Duration: %i ms", wave[slotActive].sampleCount*1000/(wave[slotActive].sampleRate*wave[slotActive].channels)));
-            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, TextFormat("Size: %i bytes", wave[slotActive].sampleCount*wavSampleSize/8));
+            GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, TextFormat("Total Frames: %i", wave[slotActive].frameCount));
+            GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, TextFormat("Duration: %i ms", wave[slotActive].frameCount*1000/(wave[slotActive].sampleRate)));
+            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, TextFormat("Size: %i bytes", wave[slotActive].frameCount*wave[slotActive].channels*wavSampleSize/8));
             GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, textPadding);
             //----------------------------------------------------------------------------------
@@ -796,7 +795,7 @@ int main(int argc, char *argv[])
 
                             if (rawFile != NULL)
                             {
-                                fwrite(wave[slotActive].data, 1, wave[slotActive].sampleCount*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
+                                fwrite(wave[slotActive].data, 1, wave[slotActive].frameCount*wave[slotActive].channels*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
                                 fclose(rawFile);
                             }
                     }
@@ -1415,16 +1414,16 @@ static Wave GenerateWave(WaveParams params)
         buffer[i] = ssample;
     }
 
-    Wave genWave;
-    genWave.sampleCount = sampleCount;
+    Wave genWave = { 0 };
+    genWave.frameCount = sampleCount/1;
     genWave.sampleRate = WAVE_SAMPLE_RATE; // By default 44100 Hz
     genWave.sampleSize = 32;               // By default 32 bit float samples
     genWave.channels = 1;                  // By default 1 channel (mono)
 
     // NOTE: Wave can be converted to desired format after generation
 
-    genWave.data = calloc(genWave.sampleCount*genWave.channels, genWave.sampleSize/8);
-    memcpy(genWave.data, buffer, genWave.sampleCount*genWave.channels*genWave.sampleSize/8);
+    genWave.data = calloc(genWave.frameCount*genWave.channels, genWave.sampleSize/8);
+    memcpy(genWave.data, buffer, genWave.frameCount*genWave.channels*genWave.sampleSize/8);
 
     free(buffer);
 
@@ -1880,9 +1879,10 @@ static void WaveMutate(WaveParams *params)
 // bilinear/trilinear texture filtering
 static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 {
-    float sample, sampleNext;
+    float sample = 0.0f;
+    float sampleNext = 0.0f;
     float currentSample = 0.0f;
-    float sampleIncrement = (float)wave->sampleCount/(float)(bounds.width*2);
+    float sampleIncrement = (float)wave->frameCount*wave->channels/(float)(bounds.width*2);
     float sampleScale = (float)bounds.height;
 
     for (int i = 1; i < bounds.width*2 - 1; i++)

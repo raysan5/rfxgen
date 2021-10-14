@@ -1890,20 +1890,20 @@ static void GuiLoadStyleJungle(void)
 
     Font font = { 0 };
     font.baseSize = 12;
-    font.charsCount = 95;
+    font.glyphCount = 95;
     
     // Load texture from image
     font.texture = LoadTextureFromImage(imFont);
     
     // Copy char recs data from global jungleFontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)malloc(font.charsCount*sizeof(Rectangle));
-    memcpy(font.recs, jungleFontRecs, font.charsCount*sizeof(Rectangle));
+    font.recs = (Rectangle *)malloc(font.glyphCount*sizeof(Rectangle));
+    memcpy(font.recs, jungleFontRecs, font.glyphCount*sizeof(Rectangle));
 
     // Copy font char info data from global jungleFontChars
     // NOTE: Required to avoid issues if trying to free font
-    font.chars = (GlyphInfo *)malloc(font.charsCount*sizeof(GlyphInfo));
-    memcpy(font.chars, jungleFontChars, font.charsCount*sizeof(GlyphInfo));
+    font.glyphs = (GlyphInfo *)malloc(font.glyphCount*sizeof(GlyphInfo));
+    memcpy(font.glyphs, jungleFontChars, font.glyphCount*sizeof(GlyphInfo));
 
     GuiSetFont(font);
     

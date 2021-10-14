@@ -6805,20 +6805,20 @@ static void GuiLoadStyleCandy(void)
 
     Font font = { 0 };
     font.baseSize = 15;
-    font.charsCount = 95;
+    font.glyphCount = 95;
 
     // Load texture from image
     font.texture = LoadTextureFromImage(imFont);
 
     // Copy char recs data from global candyFontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)malloc(font.charsCount*sizeof(Rectangle));
-    memcpy(font.recs, candyFontRecs, font.charsCount*sizeof(Rectangle));
+    font.recs = (Rectangle *)malloc(font.glyphCount*sizeof(Rectangle));
+    memcpy(font.recs, candyFontRecs, font.glyphCount*sizeof(Rectangle));
 
     // Copy font char info data from global candyFontChars
     // NOTE: Required to avoid issues if trying to free font
-    font.chars = (GlyphInfo *)malloc(font.charsCount*sizeof(GlyphInfo));
-    memcpy(font.chars, candyFontChars, font.charsCount*sizeof(GlyphInfo));
+    font.glyphs = (GlyphInfo *)malloc(font.glyphCount*sizeof(GlyphInfo));
+    memcpy(font.glyphs, candyFontChars, font.glyphCount*sizeof(GlyphInfo));
 
     GuiSetFont(font);
     
