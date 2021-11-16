@@ -42,8 +42,14 @@ jobs:
       GNUTARGET: default
 
     steps:
-    - name: Checkout
+    - name: Checkout this repo
       uses: actions/checkout@master
+      
+    - name: Checkout raylib repo
+      uses: actions/checkout@v2
+      with:
+        repository: raysan5/raylib
+        path: raylib
     
     - name: Setup Release Version
       run: |
