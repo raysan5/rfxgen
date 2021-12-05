@@ -18,7 +18,8 @@ jobs:
     env:
       PROJECT_NAME: rfxgen
       PROJECT_VERSION: 2.0
-      RELEASE_PATH: $PROJECT_NAME_v$PROJECT_VERSION_win_x64
+      RELEASE_PATH: ${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64
+      VS_RELEASE_PATH: build
 
     steps:
     - name: Checkout this repo
@@ -46,7 +47,7 @@ jobs:
         cd build
         mkdir ${{ env.RELEASE_PATH }}
         cd ..
-        echo "VS_RELEASE_PATH=project\VS2022\build\$PROJECT_NAME\x64\Release" >> $GITHUB_ENV
+        echo "VS_RELEASE_PATH=project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release" >> $GITHUB_ENV
       shell: cmd
 
     # Setup MSBuild.exe path if required
@@ -56,13 +57,13 @@ jobs:
     - name: Build Solution
       run: |
         cd projects/VS2022
-        msbuild.exe $PROJECT_NAME.sln /target:$PROJECT_NAME /property:Configuration=Release /property:Platform=x64
+        msbuild.exe ${{ env.PROJECT_NAME }}.sln /target:${{ env.PROJECT_NAME }} /property:Configuration=Release /property:Platform=x64
         cd ../..
       shell: cmd
 
     - name: Generate Artifacts
       run: |
-        copy /Y $VS_RELEASE_PATH\$PROJECT_NAME.exe .\build\${{ env.RELEASE_PATH }}\$PROJECT_NAME.exe
+        copy /Y ${{ VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
         copy /Y .\README.md .\build\${{ env.RELEASE_PATH }}\README.md
         copy /Y .\LICENSE .\build\${{ env.RELEASE_PATH }}\LICENSE
         cd build
