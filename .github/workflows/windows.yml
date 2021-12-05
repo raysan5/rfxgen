@@ -17,8 +17,8 @@ jobs:
       PROJECT_NAME: "rfxgen"
       PROJECT_VERSION: "2.5"
       RELEASE_DIR_NAME: "rfxgen_dev_win_x64"
-      RELEASE_PATH: "build/rfxgen_dev_win_x64"
-      VS_RELEASE_PATH: "rfxgen/project/VS2022/build/rfxgen/x64/Release"
+      RELEASE_PATH: "build\\rfxgen_dev_win_x64"
+      VS_RELEASE_PATH: "rfxgen\\project\\VS2022\\build\\rfxgen\\bin\\x64\\Release"
 
     steps:
     - name: Checkout this repo
@@ -38,8 +38,8 @@ jobs:
     - name: Setup Release Paths
       run: |
         echo "RELEASE_DIR_NAME=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
-        echo "RELEASE_PATH=build/${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
-        echo "VS_RELEASE_PATH=${{ env.PROJECT_NAME }}/project/VS2022/build/${{ env.PROJECT_NAME }}/x64/Release" >> $GITHUB_ENV
+        echo "RELEASE_PATH=build\\${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
+        echo "VS_RELEASE_PATH=${{ env.PROJECT_NAME }}\\project\\VS2022\\build\\${{ env.PROJECT_NAME }}\\bin\\x64\\Release" >> $GITHUB_ENV
       shell: bash
 
     - name: Setup Environment
@@ -65,9 +65,9 @@ jobs:
 
     - name: Generate Artifacts
       run: |
-        copy /Y ./${{ env.VS_RELEASE_PATH }}/${{ env.PROJECT_NAME }}.exe ./${{ env.RELEASE_PATH }}/${{ env.PROJECT_NAME }}.exe
-        copy /Y ./README.md ./${{ env.RELEASE_PATH }}/README.md
-        copy /Y ./LICENSE ./${{ env.RELEASE_PATH }}/LICENSE
+        copy /Y .\\${{ env.VS_RELEASE_PATH }}\\${{ env.PROJECT_NAME }}.exe .\\${{ env.RELEASE_PATH }}\\${{ env.PROJECT_NAME }}.exe
+        copy /Y .\\${{ env.PROJECT_NAME }}\\README.md .\\${{ env.RELEASE_PATH }}\\README.md
+        copy /Y .\\${{ env.PROJECT_NAME }}\\LICENSE .\\${{ env.RELEASE_PATH }}\\LICENSE
         cd build
         7z a ./${{ env.RELEASE_DIR_NAME }}.zip ./${{ env.RELEASE_PATH }}
         dir
