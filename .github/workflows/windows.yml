@@ -19,13 +19,6 @@ jobs:
       RELEASE_DIR_NAME: "rfxgen_dev_win_x64"
       RELEASE_PATH: "build/rfxgen_dev_win_x64"
       VS_RELEASE_PATH: "rfxgen/project/VS2022/build/rfxgen/x64/Release"
-      
-    - name: Setup Release Paths
-      run: |
-        echo "RELEASE_DIR_NAME=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
-        echo "RELEASE_PATH=build/${{ env.RELEASE_DIR_NAME }}" >> $GITHUB_ENV
-        echo "VS_RELEASE_PATH=${{ env.PROJECT_NAME }}/project/VS2022/build/${{ env.PROJECT_NAME }}/x64/Release" >> $GITHUB_ENV
-      shell: bash
 
     steps:
     - name: Checkout this repo
@@ -38,10 +31,17 @@ jobs:
       with:
         repository: raysan5/raylib
         path: raylib
-
+        
     # NOTE: Visual Studio project build configuration already defines all required directories where project is generated
     # $(SolutionDir)\build\$(ProjectName)\bin\$(Platform)\$(Configuration)\
     # By default for this build: rfxgen\project\VS2022\build\rfxgen\bin\x64\Release\
+    - name: Setup Release Paths
+      run: |
+        echo "RELEASE_DIR_NAME=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
+        echo "RELEASE_PATH=build/${{ env.RELEASE_DIR_NAME }}" >> $GITHUB_ENV
+        echo "VS_RELEASE_PATH=${{ env.PROJECT_NAME }}/project/VS2022/build/${{ env.PROJECT_NAME }}/x64/Release" >> $GITHUB_ENV
+      shell: bash
+
     - name: Setup Environment
       run: | 
         dir
