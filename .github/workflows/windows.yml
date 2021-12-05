@@ -16,8 +16,8 @@ jobs:
       max-parallel: 1
 
     env:
-      PROJECT_NAME: rfxgen
-      PROJECT_VERSION: 2.0
+      PROJECT_NAME: "rfxgen"
+      PROJECT_VERSION: "2.5"
       RELEASE_PATH: ${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64
       VS_RELEASE_PATH: build
 
