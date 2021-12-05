@@ -66,9 +66,10 @@ jobs:
     - name: Generate Artifacts
       run: |
         dir ${{ env.VS_RELEASE_PATH }}
-        xcopy /Y .\${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
-        xcopy /Y .\${{ env.PROJECT_NAME }}\README.md .\${{ env.RELEASE_PATH }}\README.md
-        xcopy /Y .\${{ env.PROJECT_NAME }}\LICENSE .\${{ env.RELEASE_PATH }}\LICENSE
+        copy /Y .\${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
+        copy /Y .\${{ env.PROJECT_NAME }}\README.md .\${{ env.RELEASE_PATH }}\README.md
+        copy /Y .\${{ env.PROJECT_NAME }}\LICENSE .\${{ env.RELEASE_PATH }}\LICENSE
+        dir ${{ env.PROJECT_NAME }}
         dir ${{ env.RELEASE_PATH }}
         7z a .\build\${{ env.RELEASE_DIR_NAME }}.zip .\${{ env.RELEASE_PATH }}
       shell: cmd
