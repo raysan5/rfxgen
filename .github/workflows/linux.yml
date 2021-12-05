@@ -1,21 +1,20 @@
-name: Windows
+name: Linux
 
 on:
   workflow_dispatch:
   release:
     types: [published]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    runs-on: windows-latest
-
+    runs-on: ubuntu-latest
+    
     env:
       PROJECT_NAME: "rfxgen"
       PROJECT_VERSION: "2.5"
-      RELEASE_PATH: "rfxgen_dev_win_x64"
-      BUILD_PATH: "rfxgen\\projects\\VS2022\\build\\rfxgen\\bin\\x64\\Release"
-
+      RELEASE_PATH: "rfxgen_dev_linux_x64"
+      BUILD_PATH: "rfxgen\\build"
+    
     steps:
     - name: Checkout this repo
       uses: actions/checkout@master
@@ -28,32 +27,30 @@ jobs:
         repository: raysan5/raylib
         path: raylib
         
-    # NOTE: Visual Studio project build configuration already defines all required directories where project is generated
-    # $(SolutionDir)\build\$(ProjectName)\bin\$(Platform)\$(Configuration)\
-    # By default for this build: rfxgen\projects\VS2022\build\rfxgen\bin\x64\Release\
     - name: Setup Release Paths
       run: |
-        echo "RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
-        echo "BUILD_PATH=${{ env.PROJECT_NAME }}\\projects\\VS2022\\build\\${{ env.PROJECT_NAME }}\\bin\\x64\\Release" >> $GITHUB_ENV
+        echo "RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_linux_x64" >> $GITHUB_ENV
+        echo "BUILD_PATH=${{ env.PROJECT_NAME }}\\build" >> $GITHUB_ENV
       shell: bash
-
+    
     - name: Setup Environment
       run: | 
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
         mkdir ${{ env.RELEASE_PATH }}
         dir
-      shell: cmd
-
-    # Setup MSBuild.exe path if required
-    - name: Setup MSBuild path
-      uses: microsoft/setup-msbuild@v1.1
-
-    - name: Build Product (VS2022 solution)
+      shell: bash
+        
+    - name: Build raylib Library
       run: |
-        dir
-        cd rfxgen/projects/VS2022
-        msbuild.exe ${{ env.PROJECT_NAME }}.sln /target:${{ env.PROJECT_NAME }} /property:Configuration=Release /property:Platform=x64
-        cd ../..
-      shell: cmd
+        cd raylib/src
+        gcc --version
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc RAYLIB_LIBTYPE=STATIC -DSUPPORT_RSHAPES
+
+    - name: Build Product
+      run: |
+        cd ${{ env.PROJECT_NAME }}
+        make PLATFORM=PLATFORM_DESKTOP CC=gcc -B
 
     - name: Generate Artifacts
       run: |
@@ -62,7 +59,7 @@ jobs:
         copy /Y .\${{ env.PROJECT_NAME }}\README.md .\${{ env.RELEASE_PATH }}\README.md
         copy /Y .\${{ env.PROJECT_NAME }}\LICENSE .\${{ env.RELEASE_PATH }}\LICENSE
         dir ${{ env.RELEASE_PATH }}
-        7z a .\${{ env.RELEASE_PATH }}.zip .\${{ env.RELEASE_PATH }}
+        7z a .\${{ env.RELEASE_DIR_NAME }}.zip .\${{ env.RELEASE_PATH }}
       shell: cmd
 
     # Issue: Double zip: https://github.com/actions/upload-artifact/issues/39
