@@ -59,13 +59,15 @@ jobs:
 
     - name: Build Solution
       run: |
-        cd projects/VS2022
+        dir
+        cd rfxgen/projects/VS2022
         msbuild.exe ${{ env.PROJECT_NAME }}.sln /target:${{ env.PROJECT_NAME }} /property:Configuration=Release /property:Platform=x64
         cd ../..
       shell: cmd
 
     - name: Generate Artifacts
       run: |
+        dir
         copy /Y ${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
         copy /Y .\README.md .\build\${{ env.RELEASE_PATH }}\README.md
         copy /Y .\LICENSE .\build\${{ env.RELEASE_PATH }}\LICENSE
