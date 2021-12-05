@@ -16,9 +16,16 @@ jobs:
     env:
       PROJECT_NAME: "rfxgen"
       PROJECT_VERSION: "2.5"
-      RELEASE_DIR_NAME: ${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64
-      RELEASE_PATH: build\${{ env.RELEASE_DIR_NAME }}
-      VS_RELEASE_PATH: ${{ env.PROJECT_NAME }}\project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release
+      RELEASE_DIR_NAME: "rfxgen_dev_win_x64"
+      RELEASE_PATH: "build\rfxgen_dev_win_x64"
+      VS_RELEASE_PATH: "rfxgen\project\VS2022\build\rfxgen\x64\Release"
+      
+    - name: Setup Release Paths
+      run: |
+        echo "RELEASE_DIR_NAME=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
+        echo "RELEASE_PATH=build\${{ env.RELEASE_DIR_NAME }}" >> $GITHUB_ENV
+        echo "VS_RELEASE_PATH=${{ env.PROJECT_NAME }}\project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release" >> $GITHUB_ENV
+      shell: bash
 
     steps:
     - name: Checkout this repo
