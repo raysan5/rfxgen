@@ -74,12 +74,14 @@ jobs:
         7z a .\build\${{ env.RELEASE_DIR_NAME }}.zip .\${{ env.RELEASE_PATH }}
       shell: cmd
 
+    # Issue: Double zip: https://github.com/actions/upload-artifact/issues/39
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: ${{ env.RELEASE_DIR_NAME }}.zip
         path: ./${{ env.RELEASE_PATH }}.zip
         
+    # Alternative: https://github.com/marketplace/actions/gh-release
     - name: Upload Artifact to Release
       uses: actions/upload-release-asset@v1.0.1
       env:
