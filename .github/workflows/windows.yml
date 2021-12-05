@@ -19,7 +19,7 @@ jobs:
       PROJECT_NAME: "rfxgen"
       PROJECT_VERSION: "2.5"
       RELEASE_PATH: "rfxgen_dev_win_x64"
-      VS_RELEASE_PATH: "build"
+      VS_RELEASE_PATH: "testing"
 
     steps:
     - name: Checkout this repo
@@ -68,7 +68,9 @@ jobs:
     - name: Generate Artifacts
       run: |
         dir
-        copy /Y ${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
+        cd rfxgen
+        echo "path:${{ env.VS_RELEASE_PATH }}"
+        copy /Y .\${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
         copy /Y .\README.md .\build\${{ env.RELEASE_PATH }}\README.md
         copy /Y .\LICENSE .\build\${{ env.RELEASE_PATH }}\LICENSE
         cd build

@@ -104,7 +104,7 @@
     #include "style_lavanda.h"          // raygui style: lavanda
 #endif
 
-#include <math.h>                       // Required for: sinf(), pow()
+#include <math.h>                       // Required for: sinf(), powf()
 #include <time.h>                       // Required for: clock()
 #include <stdlib.h>                     // Required for: calloc(), free()
 #include <string.h>                     // Required for: strcmp()
@@ -1182,28 +1182,28 @@ static Wave GenerateWave(WaveParams params)
     fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
     period = (int)fperiod;
     fmaxperiod = 100.0/(params.minFrequencyValue*params.minFrequencyValue + 0.001);
-    fslide = 1.0 - pow((double)params.slideValue, 3.0)*0.01;
-    fdslide = -pow((double)params.deltaSlideValue, 3.0)*0.000001;
+    fslide = 1.0 - powf((double)params.slideValue, 3.0)*0.01;
+    fdslide = -powf((double)params.deltaSlideValue, 3.0)*0.000001;
     squareDuty = 0.5f - params.squareDutyValue*0.5f;
     squareSlide = -params.dutySweepValue*0.00005f;
 
-    if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - pow((double)params.changeAmountValue, 2.0)*0.9;
-    else arpeggioModulation = 1.0 + pow((double)params.changeAmountValue, 2.0)*10.0;
+    if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - powf((double)params.changeAmountValue, 2.0)*0.9;
+    else arpeggioModulation = 1.0 + powf((double)params.changeAmountValue, 2.0)*10.0;
 
-    arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
+    arpeggioLimit = (int)(powf(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
     if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT: float comparison
 
     // Reset filter parameters
-    fltw = pow(params.lpfCutoffValue, 3.0f)*0.1f;
+    fltw = powf(params.lpfCutoffValue, 3.0f)*0.1f;
     fltwd = 1.0f + params.lpfCutoffSweepValue*0.0001f;
-    fltdmp = 5.0f/(1.0f + pow(params.lpfResonanceValue, 2.0f)*20.0f)*(0.01f + fltw);
+    fltdmp = 5.0f/(1.0f + powf(params.lpfResonanceValue, 2.0f)*20.0f)*(0.01f + fltw);
     if (fltdmp > 0.8f) fltdmp = 0.8f;
-    flthp = pow(params.hpfCutoffValue, 2.0f)*0.1f;
+    flthp = powf(params.hpfCutoffValue, 2.0f)*0.1f;
     flthpd = 1.0 + params.hpfCutoffSweepValue*0.0003f;
 
     // Reset vibrato
-    vibratoSpeed = pow(params.vibratoSpeedValue, 2.0f)*0.01f;
+    vibratoSpeed = powf(params.vibratoSpeedValue, 2.0f)*0.01f;
     vibratoAmplitude = params.vibratoDepthValue*0.5f;
 
     // Reset envelope
@@ -1211,17 +1211,17 @@ static Wave GenerateWave(WaveParams params)
     envelopeLength[1] = (int)(params.sustainTimeValue*params.sustainTimeValue*100000.0f);
     envelopeLength[2] = (int)(params.decayTimeValue*params.decayTimeValue*100000.0f);
 
-    fphase = pow(params.phaserOffsetValue, 2.0f)*1020.0f;
+    fphase = powf(params.phaserOffsetValue, 2.0f)*1020.0f;
     if (params.phaserOffsetValue < 0.0f) fphase = -fphase;
 
-    fdphase = pow(params.phaserSweepValue, 2.0f)*1.0f;
+    fdphase = powf(params.phaserSweepValue, 2.0f)*1.0f;
     if (params.phaserSweepValue < 0.0f) fdphase = -fdphase;
 
     iphase = abs((int)fphase);
 
     for (int i = 0; i < 32; i++) noiseBuffer[i] = GetRandomFloat(2.0f) - 1.0f;      // WATCH OUT: GetRandomFloat()
 
-    repeatLimit = (int)(pow(1.0f - params.repeatSpeedValue, 2.0f)*20000 + 32);
+    repeatLimit = (int)(powf(1.0f - params.repeatSpeedValue, 2.0f)*20000 + 32);
 
     if (params.repeatSpeedValue == 0.0f) repeatLimit = 0;
     //----------------------------------------------------------------------------------------
@@ -1252,16 +1252,16 @@ static Wave GenerateWave(WaveParams params)
             fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
             period = (int)fperiod;
             fmaxperiod = 100.0/(params.minFrequencyValue*params.minFrequencyValue + 0.001);
-            fslide = 1.0 - pow((double)params.slideValue, 3.0)*0.01;
-            fdslide = -pow((double)params.deltaSlideValue, 3.0)*0.000001;
+            fslide = 1.0 - powf((double)params.slideValue, 3.0)*0.01;
+            fdslide = -powf((double)params.deltaSlideValue, 3.0)*0.000001;
             squareDuty = 0.5f - params.squareDutyValue*0.5f;
             squareSlide = -params.dutySweepValue*0.00005f;
 
-            if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - pow((double)params.changeAmountValue, 2.0)*0.9;
-            else arpeggioModulation = 1.0 + pow((double)params.changeAmountValue, 2.0)*10.0;
+            if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - powf((double)params.changeAmountValue, 2.0)*0.9;
+            else arpeggioModulation = 1.0 + powf((double)params.changeAmountValue, 2.0)*10.0;
 
             arpeggioTime = 0;
-            arpeggioLimit = (int)(pow(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
+            arpeggioLimit = (int)(powf(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
             if (params.changeSpeedValue == 1.0f) arpeggioLimit = 0;     // WATCH OUT: float comparison
         }
@@ -1314,7 +1314,7 @@ static Wave GenerateWave(WaveParams params)
         }
 
         if (envelopeStage == 0) envelopeVolume = (float)envelopeTime/envelopeLength[0];
-        if (envelopeStage == 1) envelopeVolume = 1.0f + pow(1.0f - (float)envelopeTime/envelopeLength[1], 1.0f)*2.0f*params.sustainPunchValue;
+        if (envelopeStage == 1) envelopeVolume = 1.0f + powf(1.0f - (float)envelopeTime/envelopeLength[1], 1.0f)*2.0f*params.sustainPunchValue;
         if (envelopeStage == 2) envelopeVolume = 1.0f - (float)envelopeTime/envelopeLength[2];
 
         // Phaser step
@@ -1796,26 +1796,26 @@ static WaveParams GenRandomize(void)
 
     params.randSeed = GetRandomValue(0, 0xFFFE);
 
-    params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 2.0f);
+    params.startFrequencyValue = powf(frnd(2.0f) - 1.0f, 2.0f);
 
-    if (GetRandomValue(0, 1)) params.startFrequencyValue = pow(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
+    if (GetRandomValue(0, 1)) params.startFrequencyValue = powf(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
 
     params.minFrequencyValue = 0.0f;
-    params.slideValue = pow(frnd(2.0f) - 1.0f, 5.0f);
+    params.slideValue = powf(frnd(2.0f) - 1.0f, 5.0f);
 
     if ((params.startFrequencyValue > 0.7f) && (params.slideValue > 0.2f)) params.slideValue = -params.slideValue;
     if ((params.startFrequencyValue < 0.2f) && (params.slideValue < -0.05f)) params.slideValue = -params.slideValue;
 
-    params.deltaSlideValue = pow(frnd(2.0f) - 1.0f, 3.0f);
+    params.deltaSlideValue = powf(frnd(2.0f) - 1.0f, 3.0f);
     params.squareDutyValue = frnd(2.0f) - 1.0f;
-    params.dutySweepValue = pow(frnd(2.0f) - 1.0f, 3.0f);
-    params.vibratoDepthValue = pow(frnd(2.0f) - 1.0f, 3.0f);
+    params.dutySweepValue = powf(frnd(2.0f) - 1.0f, 3.0f);
+    params.vibratoDepthValue = powf(frnd(2.0f) - 1.0f, 3.0f);
     params.vibratoSpeedValue = frnd(2.0f) - 1.0f;
     //params.vibratoPhaseDelay = frnd(2.0f) - 1.0f;
-    params.attackTimeValue = pow(frnd(2.0f) - 1.0f, 3.0f);
-    params.sustainTimeValue = pow(frnd(2.0f) - 1.0f, 2.0f);
+    params.attackTimeValue = powf(frnd(2.0f) - 1.0f, 3.0f);
+    params.sustainTimeValue = powf(frnd(2.0f) - 1.0f, 2.0f);
     params.decayTimeValue = frnd(2.0f)-1.0f;
-    params.sustainPunchValue = pow(frnd(0.8f), 2.0f);
+    params.sustainPunchValue = powf(frnd(0.8f), 2.0f);
 
     if (params.attackTimeValue + params.sustainTimeValue + params.decayTimeValue < 0.2f)
     {
@@ -1824,15 +1824,15 @@ static WaveParams GenRandomize(void)
     }
 
     params.lpfResonanceValue = frnd(2.0f) - 1.0f;
-    params.lpfCutoffValue = 1.0f - pow(frnd(1.0f), 3.0f);
-    params.lpfCutoffSweepValue = pow(frnd(2.0f) - 1.0f, 3.0f);
+    params.lpfCutoffValue = 1.0f - powf(frnd(1.0f), 3.0f);
+    params.lpfCutoffSweepValue = powf(frnd(2.0f) - 1.0f, 3.0f);
 
     if (params.lpfCutoffValue < 0.1f && params.lpfCutoffSweepValue < -0.05f) params.lpfCutoffSweepValue = -params.lpfCutoffSweepValue;
 
-    params.hpfCutoffValue = pow(frnd(1.0f), 5.0f);
-    params.hpfCutoffSweepValue = pow(frnd(2.0f) - 1.0f, 5.0f);
-    params.phaserOffsetValue = pow(frnd(2.0f) - 1.0f, 3.0f);
-    params.phaserSweepValue = pow(frnd(2.0f) - 1.0f, 3.0f);
+    params.hpfCutoffValue = powf(frnd(1.0f), 5.0f);
+    params.hpfCutoffSweepValue = powf(frnd(2.0f) - 1.0f, 5.0f);
+    params.phaserOffsetValue = powf(frnd(2.0f) - 1.0f, 3.0f);
+    params.phaserSweepValue = powf(frnd(2.0f) - 1.0f, 3.0f);
     params.repeatSpeedValue = frnd(2.0f) - 1.0f;
     params.changeSpeedValue = frnd(2.0f) - 1.0f;
     params.changeAmountValue = frnd(2.0f) - 1.0f;
