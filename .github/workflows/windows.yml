@@ -18,26 +18,21 @@ jobs:
     env:
       PROJECT_NAME: "rfxgen"
       PROJECT_VERSION: "2.5"
-      RELEASE_PATH: "rfxgen_dev_win_x64"
-      VS_RELEASE_PATH: "project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release"
+      RELEASE_DIR_NAME: "${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64"
+      RELEASE_PATH: "build\${{ env.RELEASE_DIR_NAME }}"
+      VS_RELEASE_PATH: "${{ env.PROJECT_NAME }}\project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release"
 
     steps:
     - name: Checkout this repo
       uses: actions/checkout@master
       with:
-        path: rfxgen
+        path: ${{ env.PROJECT_NAME }}
       
     - name: Checkout raylib repo
       uses: actions/checkout@v2
       with:
         repository: raysan5/raylib
         path: raylib
-    
-    - name: Setup Release Version
-      run: |
-        echo "RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
-      shell: bash
-      if: github.event_name == 'release' && github.event.action == 'published'
 
     # NOTE: Visual Studio project build configuration already defines all required directories where project is generated
     # $(SolutionDir)\build\$(ProjectName)\bin\$(Platform)\$(Configuration)\
@@ -45,10 +40,9 @@ jobs:
     - name: Setup Environment
       run: | 
         dir
-        cd rfxgen
         mkdir build
         cd build
-        mkdir ${{ env.RELEASE_PATH }}
+        mkdir ${{ env.RELEASE_DIR_NAME }}
         cd ..
       shell: cmd
 
@@ -66,22 +60,19 @@ jobs:
 
     - name: Generate Artifacts
       run: |
-        dir
-        cd rfxgen
-        echo "path:${{ env.VS_RELEASE_PATH }}"
-        copy /Y .\${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
-        copy /Y .\README.md .\build\${{ env.RELEASE_PATH }}\README.md
-        copy /Y .\LICENSE .\build\${{ env.RELEASE_PATH }}\LICENSE
+        copy /Y .\${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
+        copy /Y .\README.md .\${{ env.RELEASE_PATH }}\README.md
+        copy /Y .\LICENSE .\${{ env.RELEASE_PATH }}\LICENSE
         cd build
-        7z a ./${{ env.RELEASE_PATH }}.zip ./${{ env.RELEASE_PATH }}
+        7z a ./${{ env.RELEASE_DIR_NAME }}.zip ./${{ env.RELEASE_PATH }}
         dir
       shell: cmd
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.RELEASE_NAME }}.zip
-        path: ./build/${{ env.RELEASE_NAME }}.zip
+        name: ${{ env.RELEASE_DIR_NAME }}.zip
+        path: ./${{ env.RELEASE_PATH }}.zip
         
     - name: Upload Artifact to Release
       uses: actions/upload-release-asset@v1.0.1
@@ -89,7 +80,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./build/${{ env.RELEASE_NAME }}.zip
-        asset_name: ${{ env.RELEASE_NAME }}.zip
+        asset_path: ./${{ env.RELEASE_PATH }}.zip
+        asset_name: ${{ env.RELEASE_DIR_NAME }}.zip
         asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'
