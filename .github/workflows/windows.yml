@@ -18,7 +18,7 @@ jobs:
       PROJECT_VERSION: "2.5"
       RELEASE_DIR_NAME: "rfxgen_dev_win_x64"
       RELEASE_PATH: "build\\rfxgen_dev_win_x64"
-      VS_RELEASE_PATH: "rfxgen\\project\\VS2022\\build\\rfxgen\\bin\\x64\\Release"
+      VS_RELEASE_PATH: "rfxgen\\projects\\VS2022\\build\\rfxgen\\bin\\x64\\Release"
 
     steps:
     - name: Checkout this repo
@@ -34,7 +34,7 @@ jobs:
         
     # NOTE: Visual Studio project build configuration already defines all required directories where project is generated
     # $(SolutionDir)\build\$(ProjectName)\bin\$(Platform)\$(Configuration)\
-    # By default for this build: rfxgen\project\VS2022\build\rfxgen\bin\x64\Release\
+    # By default for this build: rfxgen\projects\VS2022\build\rfxgen\bin\x64\Release\
     - name: Setup Release Paths
       run: |
         echo "RELEASE_DIR_NAME=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_win_x64" >> $GITHUB_ENV
