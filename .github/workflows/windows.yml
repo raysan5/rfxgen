@@ -19,7 +19,7 @@ jobs:
       PROJECT_NAME: "rfxgen"
       PROJECT_VERSION: "2.5"
       RELEASE_PATH: "rfxgen_dev_win_x64"
-      VS_RELEASE_PATH: "testing"
+      VS_RELEASE_PATH: "project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release"
 
     steps:
     - name: Checkout this repo
@@ -50,7 +50,6 @@ jobs:
         cd build
         mkdir ${{ env.RELEASE_PATH }}
         cd ..
-        echo "VS_RELEASE_PATH=project\VS2022\build\${{ env.PROJECT_NAME }}\x64\Release" >> $GITHUB_ENV
       shell: cmd
 
     # Setup MSBuild.exe path if required
