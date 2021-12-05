@@ -63,7 +63,7 @@ jobs:
 
     - name: Generate Artifacts
       run: |
-        copy /Y ${{ VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
+        copy /Y ${{ env.VS_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe .\build\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
         copy /Y .\README.md .\build\${{ env.RELEASE_PATH }}\README.md
         copy /Y .\LICENSE .\build\${{ env.RELEASE_PATH }}\LICENSE
         cd build
