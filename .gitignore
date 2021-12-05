@@ -34,3 +34,11 @@
 
 # Build folder
 [Bb]uild
+
+# Visual Studio files
+[Dd]ebug/
+[Dd]ebug.DLL/
+[R]elease/
+[Rr]elease.DLL/
+*.user
+.vs

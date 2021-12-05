@@ -124,7 +124,7 @@
 //----------------------------------------------------------------------------------
 // Basic information
 static const char *toolName = "rFXGen";
-static const char *toolVersion = "2.2";
+static const char *toolVersion = "2.5";
 static const char *toolDescription = "A simple and easy-to-use fx sounds generator";
 
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
@@ -239,7 +239,7 @@ static char getch(void) { return getchar(); }   // Get pressed character
 int main(int argc, char *argv[])
 {
 #if !defined(DEBUG)
-    SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
+    //SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
 #if defined(COMMAND_LINE_ONLY)
     ProcessCommandLine(argc, argv);
@@ -1052,7 +1052,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
             if (rawFile != NULL)
             {
-                fwrite(wave.data, 1, wave.sampleCount*wave.sampleSize/8, rawFile);  // Write wave data
+                fwrite(wave.data, 1, wave.frameCount*wave.channels*wave.sampleSize/8, rawFile);  // Write wave data
                 fclose(rawFile);
             }
         }
@@ -1952,7 +1952,7 @@ static void WaitTime(int ms)
 // Play provided wave through CLI
 static void PlayWaveCLI(Wave wave)
 {
-    float waveTimeMs = (float)wave.sampleCount*1000.0/(wave.sampleRate*wave.channels);
+    float waveTimeMs = (float)wave.frameCount*1000.0/wave.sampleRate;
 
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load audio wave
@@ -1975,7 +1975,7 @@ static void PlayWaveCLI(Wave wave)
     CloseAudioDevice();                 // Close audio device
 }
 
-#if !defined(__WIN32)
+#if !defined(_WIN32)
 // Check if a key has been pressed
 static int kbhit(void)
 {
