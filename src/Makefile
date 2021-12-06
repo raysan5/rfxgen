@@ -40,6 +40,13 @@ PLATFORM              ?= PLATFORM_DESKTOP
 # Build mode for project: DEBUG or RELEASE
 BUILD_MODE            ?= RELEASE
 
+# PLATFORM_WEB: Default properties
+BUILD_WEB_ASYNCIFY    ?= FALSE
+BUILD_WEB_SHELL       ?= $(RAYLIB_SRC_PATH)/shell.html
+BUILD_WEB_HEAP_SIZE   ?= 67108864
+BUILD_WEB_RESOURCES   ?= FALSE
+BUILD_WEB_RESOURCES_PATH  ?= resources
+
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -148,7 +155,11 @@ ifeq ($(BUILD_MODE),DEBUG)
     endif
 else
     ifeq ($(PLATFORM),PLATFORM_WEB)
-        CFLAGS += -Os
+        ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+            CFLAGS += -O3 -s ASYNCIFY
+        else
+            CFLAGS += -Os
+        endif
     else
         CFLAGS += -s -O2
     endif
@@ -175,10 +186,15 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
-    CFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --preload-file resources
+    CFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -s FORCE_FILESYSTEM=1
+    
+    # Add resources building if required
+    ifeq ($(BUILD_WEB_RESOURCES),TRUE)
+        CFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
+    endif
 
     # Define a custom shell .html and output extension
-    CFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
+    CFLAGS += --shell-file $(BUILD_WEB_SHELL)
     EXT = .html
 endif
 

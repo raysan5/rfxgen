@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      PROJECT_NAME: "rfxgen"
-      PROJECT_BUILD_PATH: "rfxgen/src"
-      RELEASE_PATH: "rfxgen_dev_linux_x64"
+      PROJECT_NAME: rfxgen
+      PROJECT_BUILD_PATH: rfxgen/src
+      PROJECT_RELEASE_PATH: rfxgen_dev_linux_x64
       PROJECT_SOURCES: "'rfxgen.c external/tinyfiledialogs.c'"
       RAYLIB_CONFIG: "'-DEXTERNAL_CONFIG_FLAGS -DSUPPORT_MODULE_RSHAPES -DSUPPORT_MODULE_RTEXTURES -DSUPPORT_MODULE_RTEXT -DSUPPORT_MODULE_RAUDIO -DSUPPORT_EVENTS_WAITING -DSUPPORT_COMPRESSION_API -DSUPPORT_QUADS_DRAW_MODE -DSUPPORT_IMAGE_MANIPULATION -DSUPPORT_DEFAULT_FONT -DSUPPORT_FILEFORMAT_TTF -DSUPPORT_TEXT_MANIPULATION -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_STANDARD_FILEIO -DSUPPORT_TRACELOG'"
     
@@ -30,7 +30,7 @@ jobs:
         
     - name: Setup Release Paths
       run: |
-        echo "RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_linux_x64" >> $GITHUB_ENV
+        echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_linux_x64" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
     
@@ -38,7 +38,7 @@ jobs:
       run: | 
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev
-        mkdir ${{ env.RELEASE_PATH }}
+        mkdir ${{ env.PROJECT_RELEASE_PATH }}
         ls
       shell: bash
         
@@ -46,7 +46,7 @@ jobs:
       run: |
         cd raylib/src
         gcc --version
-        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_RELEASE_PATH=. -B
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_PROJECT_RELEASE_PATH=. -B
 
     - name: Build Product
       run: |
@@ -56,18 +56,18 @@ jobs:
     - name: Generate Artifacts
       run: |
         ls ${{ env.PROJECT_BUILD_PATH }}
-        cp ${{ env.PROJECT_BUILD_PATH }}/${{ env.PROJECT_NAME }} ${{ env.RELEASE_PATH }}
-        cp ${{ env.PROJECT_NAME }}/README.md ${{ env.RELEASE_PATH }}
-        cp ${{ env.PROJECT_NAME }}/LICENSE ${{ env.RELEASE_PATH }}
-        ls ${{ env.RELEASE_PATH }}
-        7z a ./${{ env.RELEASE_PATH }}.zip ./${{ env.RELEASE_PATH }}
+        cp ${{ env.PROJECT_BUILD_PATH }}/${{ env.PROJECT_NAME }} ${{ env.PROJECT_RELEASE_PATH }}
+        cp ${{ env.PROJECT_NAME }}/README.md ${{ env.PROJECT_RELEASE_PATH }}
+        cp ${{ env.PROJECT_NAME }}/LICENSE ${{ env.PROJECT_RELEASE_PATH }}
+        ls ${{ env.PROJECT_RELEASE_PATH }}
+        7z a ./${{ env.PROJECT_RELEASE_PATH }}.zip ./${{ env.PROJECT_RELEASE_PATH }}
 
     # Issue: Double zip: https://github.com/actions/upload-artifact/issues/39
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.RELEASE_PATH }}.zip
-        path: ./${{ env.RELEASE_PATH }}.zip
+        name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
         
     # Alternative: https://github.com/marketplace/actions/gh-release
     - name: Upload Artifact to Release
@@ -76,7 +76,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_name: ${{ env.RELEASE_PATH }}.zip
-        asset_path: ./${{ env.RELEASE_PATH }}.zip
+        asset_name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        asset_path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
         asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'

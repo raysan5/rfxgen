@@ -11,9 +11,10 @@ jobs:
     
     env:
       PROJECT_NAME: "rfxgen"
-      PROJECT_VERSION: "2.5"
-      RELEASE_PATH: "rfxgen_dev_linux_x64"
-      BUILD_PATH: "rfxgen\\build"
+      PROJECT_BUILD_PATH: "rfxgen/src"
+      PROJECT_RELEASE_PATH: "rfxgen_dev_wasm"
+      PROJECT_SOURCES: "'rfxgen.c external/tinyfiledialogs.c'"
+      RAYLIB_CONFIG: "'-DEXTERNAL_CONFIG_FLAGS -DSUPPORT_MODULE_RSHAPES -DSUPPORT_MODULE_RTEXTURES -DSUPPORT_MODULE_RTEXT -DSUPPORT_MODULE_RAUDIO -DSUPPORT_EVENTS_WAITING -DSUPPORT_COMPRESSION_API -DSUPPORT_QUADS_DRAW_MODE -DSUPPORT_IMAGE_MANIPULATION -DSUPPORT_DEFAULT_FONT -DSUPPORT_FILEFORMAT_TTF -DSUPPORT_TEXT_MANIPULATION -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_STANDARD_FILEIO -DSUPPORT_TRACELOG'"
     
     steps:
     - name: Checkout this repo
@@ -35,43 +36,44 @@ jobs:
         
     - name: Setup Release Paths
       run: |
-        echo "RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ env.PROJECT_VERSION }}_linux_x64" >> $GITHUB_ENV
-        echo "BUILD_PATH=${{ env.PROJECT_NAME }}\\build" >> $GITHUB_ENV
+        echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_wasm" >> $GITHUB_ENV
       shell: bash
-
+      if: github.event_name == 'release' && github.event.action == 'published'
+    
     - name: Setup Environment
       run: | 
-        mkdir ${{ env.RELEASE_PATH }}
+        mkdir ${{ env.PROJECT_RELEASE_PATH }}
         dir
    
     - name: Build raylib Library
       run: |
         cd raylib/src
         emcc -v
-        make PLATFORM=PLATFORM_WEB EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
-        cd ..
-        
+        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_PROJECT_RELEASE_PATH=. -B
+
     - name: Build Product
       run: |
-        cd ${{ env.PROJECT_NAME }}
-        make PLATFORM=PLATFORM_WEB -B
+        cd ${{ env.PROJECT_NAME }}/src
+        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib -B
   
     - name: Generate Artifacts
       run: |
-        dir ${{ env.BUILD_PATH }}
-        copy /Y .\${{ env.BUILD_PATH }}\${{ env.PROJECT_NAME }}.exe .\${{ env.RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
-        copy /Y .\${{ env.PROJECT_NAME }}\README.md .\${{ env.RELEASE_PATH }}\README.md
-        copy /Y .\${{ env.PROJECT_NAME }}\LICENSE .\${{ env.RELEASE_PATH }}\LICENSE
-        dir ${{ env.RELEASE_PATH }}
-        7z a .\${{ env.RELEASE_DIR_NAME }}.zip .\${{ env.RELEASE_PATH }}
+        dir ${{ env.PROJECT_BUILD_PATH }}
+        copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.wasm ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.wasm
+        copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.html ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.html
+        copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.js ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.js
+        copy /Y ${{ env.PROJECT_NAME }}\README.md ${{ env.PROJECT_RELEASE_PATH }}\README.md
+        copy /Y ${{ env.PROJECT_NAME }}\LICENSE ${{ env.PROJECT_RELEASE_PATH }}\LICENSE
+        dir ${{ env.PROJECT_RELEASE_PATH }}
+        7z a .\${{ env.PROJECT_RELEASE_PATH }}.zip .\${{ env.PROJECT_RELEASE_PATH }}
       shell: cmd
         
     # Issue: Double zip: https://github.com/actions/upload-artifact/issues/39
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.RELEASE_PATH }}.zip
-        path: ./${{ env.RELEASE_PATH }}.zip
+        name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
         
     # Alternative: https://github.com/marketplace/actions/gh-release
     - name: Upload Artifact to Release
@@ -80,7 +82,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_name: ${{ env.RELEASE_PATH }}.zip
-        asset_path: ./${{ env.RELEASE_PATH }}.zip
+        asset_name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        asset_path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
         asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'
