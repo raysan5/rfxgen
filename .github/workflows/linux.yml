@@ -48,11 +48,6 @@ jobs:
         cd raylib/src
         gcc --version
         make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_RELEASE_PATH=. -B
-        ls
-        cd ..
-        ls
-        cd ..
-        ls
 
     - name: Build Product
       run: |
