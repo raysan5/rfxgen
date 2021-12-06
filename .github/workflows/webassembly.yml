@@ -49,12 +49,12 @@ jobs:
       run: |
         cd raylib/src
         emcc -v
-        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_PROJECT_RELEASE_PATH=. -B
+        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_PROJECT_RELEASE_PATH=. -B
 
     - name: Build Product
       run: |
         cd ${{ env.PROJECT_NAME }}/src
-        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-master" PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib -B
+        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib -B
   
     - name: Generate Artifacts
       run: |
