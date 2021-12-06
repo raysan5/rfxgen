@@ -12,7 +12,7 @@ jobs:
     env:
       PROJECT_NAME: "rfxgen"
       RELEASE_PATH: "rfxgen_dev_linux_x64"
-      BUILD_PATH: "rfxgen\\build"
+      BUILD_PATH: "rfxgen/build"
       PROJECT_SOURCES: |
         rfxgen.c
         external/tinyfiledialogs.c.c
@@ -69,7 +69,7 @@ jobs:
     - name: Build Product
       run: |
         cd ${{ env.PROJECT_NAME }}
-        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE CFLAGS=${{ env.RAYLIB_CONFIG }} PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} RAYLIB_PATH="./${{ env.PROJECT_NAME }}/raylib" -B
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=${{ env.BUILD_PATH }} RAYLIB_PATH="./${{ env.PROJECT_NAME }}/raylib" CFLAGS=${{ env.RAYLIB_CONFIG }} -B
 
     - name: Generate Artifacts
       run: |
