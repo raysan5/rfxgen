@@ -52,7 +52,7 @@ jobs:
     - name: Build Product
       run: |
         cd ${{ env.PROJECT_NAME }}/src
-        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=${{ env.BUILD_PATH }} RAYLIB_PATH=../../raylib -B
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=../../${{ env.BUILD_PATH }} RAYLIB_PATH=../../raylib -B
 
     - name: Generate Artifacts
       run: |
