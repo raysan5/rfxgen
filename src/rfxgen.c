@@ -484,11 +484,10 @@ int main(int argc, char *argv[])
             if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
             {
                 UnloadWave(wave[slotActive]);
-                wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
-
                 UnloadSound(sound[slotActive]);
+                
+                wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
                 sound[slotActive] = LoadSoundFromWave(wave[slotActive]);    // Reload sound from new wave
-                //UpdateSound(sound[slotActive], wave[slotActive].data, wave[slotActive].sampleCount);    // Update sound buffer with new data --> CRASHES RANDOMLY!
 
                 if (regenerate || playOnChangeChecked) PlaySound(sound[slotActive]);
 
@@ -1131,8 +1130,8 @@ static Wave GenerateWave(WaveParams params)
     #define MAX_WAVE_LENGTH_SECONDS  10     // Max length for wave: 10 seconds
     #define WAVE_SAMPLE_RATE      44100     // Default sample rate
 
-    // NOTE: GetRandomValue() is provided by raylib and seed is initialized at InitWindow()
-    #define GetRandomFloat(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
+    #define rnd(n) (rand()%(n + 1))
+    #define GetRandomFloat(range) ((float)rnd(10000)/10000*range)
 
     if (params.randSeed != 0) srand(params.randSeed);   // Initialize seed if required
 
@@ -1415,7 +1414,7 @@ static Wave GenerateWave(WaveParams params)
     }
 
     Wave genWave = { 0 };
-    genWave.frameCount = sampleCount/1;
+    genWave.frameCount = sampleCount/1;    // Number of samples / channels
     genWave.sampleRate = WAVE_SAMPLE_RATE; // By default 44100 Hz
     genWave.sampleSize = 32;               // By default 32 bit float samples
     genWave.channels = 1;                  // By default 1 channel (mono)
@@ -1843,7 +1842,7 @@ static WaveParams GenRandomize(void)
 // Mutate current sound
 static void WaveMutate(WaveParams *params)
 {
-    if (GetRandomValue(0, 1)) params->startFrequencyValue += frnd(0.1f) - 0.05f;
+    if (GetRandomValue(0, 1)) params->startFrequencyValue += frnd(0.1f) - 0.05f;        
     //if (GetRandomValue(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
     if (GetRandomValue(0, 1)) params->slideValue += frnd(0.1f) - 0.05f;
     if (GetRandomValue(0, 1)) params->deltaSlideValue += frnd(0.1f) - 0.05f;
