@@ -26,7 +26,7 @@
 # Define required variables
 PROJECT_NAME          ?= project_name
 PROJECT_VERSION       ?= 1.0
-PROJECT_BUILD_PATH    ?= build
+PROJECT_BUILD_PATH    ?= .
 
 RAYLIB_PATH           ?= C:/GitHub/raylib
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_PATH)/src
@@ -136,8 +136,9 @@ endif
 #  -std=c99             defines C language mode (standard C from 1999 revision)
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+#  -Wunused-result      ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces
+CFLAGS += -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 ifeq ($(BUILD_MODE),DEBUG)
