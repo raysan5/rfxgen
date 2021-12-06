@@ -27,9 +27,8 @@ jobs:
         repository: raysan5/raylib
         path: raylib
         
-    # NOTE: Visual Studio project build configuration already defines all required directories where project is generated
+    # NOTE: Visual Studio project build configuration already defines all required directories where project is generated:
     # $(SolutionDir)\build\$(ProjectName)\bin\$(Platform)\$(Configuration)\
-    # By default for this build: rfxgen\projects\VS2022\build\rfxgen\bin\x64\Release\
     - name: Setup Release Paths
       run: |
         echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_win_x64" >> $GITHUB_ENV

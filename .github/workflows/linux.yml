@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      PROJECT_NAME: rfxgen
-      PROJECT_BUILD_PATH: rfxgen/src
-      PROJECT_RELEASE_PATH: rfxgen_dev_linux_x64
-      PROJECT_SOURCES: "'rfxgen.c external/tinyfiledialogs.c'"
+      PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_BUILD_PATH: ${{ github.event.repository.name }}/src
+      PROJECT_RELEASE_PATH: ${{ github.event.repository.name }}_dev_linux_x64
+      PROJECT_SOURCES: "'${{ github.event.repository.name }}.c external/tinyfiledialogs.c'"
       RAYLIB_CONFIG: "'-DEXTERNAL_CONFIG_FLAGS -DSUPPORT_MODULE_RSHAPES -DSUPPORT_MODULE_RTEXTURES -DSUPPORT_MODULE_RTEXT -DSUPPORT_MODULE_RAUDIO -DSUPPORT_EVENTS_WAITING -DSUPPORT_COMPRESSION_API -DSUPPORT_QUADS_DRAW_MODE -DSUPPORT_IMAGE_MANIPULATION -DSUPPORT_DEFAULT_FONT -DSUPPORT_FILEFORMAT_TTF -DSUPPORT_TEXT_MANIPULATION -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_STANDARD_FILEIO -DSUPPORT_TRACELOG'"
     
     steps:
