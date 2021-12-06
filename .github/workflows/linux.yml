@@ -15,7 +15,7 @@ jobs:
       BUILD_PATH: "rfxgen/build"
       PROJECT_SOURCES: |
         rfxgen.c
-        external/tinyfiledialogs.c.c
+        external/tinyfiledialogs.c
       RAYLIB_CONFIG: |
         -DEXTERNAL_CONFIG_FLAGS 
         -DSUPPORT_MODULE_RSHAPES 
@@ -64,12 +64,12 @@ jobs:
       run: |
         cd raylib/src
         gcc --version
-        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC 
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_SRC_PATH=${{ env.PROJECT_NAME }}/raylib/src
 
     - name: Build Product
       run: |
-        cd ${{ env.PROJECT_NAME }}
-        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=${{ env.BUILD_PATH }} RAYLIB_PATH="./${{ env.PROJECT_NAME }}/raylib" CFLAGS=${{ env.RAYLIB_CONFIG }} -B
+        cd ${{ env.PROJECT_NAME }}/src
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=${{ env.BUILD_PATH }} RAYLIB_PATH=${{ env.PROJECT_NAME }}/raylib -B
 
     - name: Generate Artifacts
       run: |
