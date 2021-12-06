@@ -11,8 +11,8 @@ jobs:
     
     env:
       PROJECT_NAME: "rfxgen"
+      PROJECT_BUILD_PATH: "rfxgen/src"
       RELEASE_PATH: "rfxgen_dev_linux_x64"
-      BUILD_PATH: "rfxgen/build"
       PROJECT_SOURCES: "'rfxgen.c external/tinyfiledialogs.c'"
       RAYLIB_CONFIG: "'-DEXTERNAL_CONFIG_FLAGS -DSUPPORT_MODULE_RSHAPES -DSUPPORT_MODULE_RTEXTURES -DSUPPORT_MODULE_RTEXT -DSUPPORT_MODULE_RAUDIO -DSUPPORT_EVENTS_WAITING -DSUPPORT_COMPRESSION_API -DSUPPORT_QUADS_DRAW_MODE -DSUPPORT_IMAGE_MANIPULATION -DSUPPORT_DEFAULT_FONT -DSUPPORT_FILEFORMAT_TTF -DSUPPORT_TEXT_MANIPULATION -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_STANDARD_FILEIO -DSUPPORT_TRACELOG'"
     
@@ -31,7 +31,6 @@ jobs:
     - name: Setup Release Paths
       run: |
         echo "RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_linux_x64" >> $GITHUB_ENV
-        echo "BUILD_PATH=${{ env.PROJECT_NAME }}\\build" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
     
@@ -52,12 +51,12 @@ jobs:
     - name: Build Product
       run: |
         cd ${{ env.PROJECT_NAME }}/src
-        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=../../${{ env.BUILD_PATH }} RAYLIB_PATH=../../raylib -B
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} RAYLIB_PATH=../../raylib -B
 
     - name: Generate Artifacts
       run: |
-        ls ${{ env.BUILD_PATH }}
-        cp ${{ env.BUILD_PATH }}/${{ env.PROJECT_NAME }}.exe ${{ env.RELEASE_PATH }}
+        ls ${{ env.PROJECT_BUILD_PATH }}
+        cp ${{ env.PROJECT_BUILD_PATH }}/${{ env.PROJECT_NAME }} ${{ env.RELEASE_PATH }}
         cp ${{ env.PROJECT_NAME }}/README.md ${{ env.RELEASE_PATH }}
         cp ${{ env.PROJECT_NAME }}/LICENSE ${{ env.RELEASE_PATH }}
         ls ${{ env.RELEASE_PATH }}
