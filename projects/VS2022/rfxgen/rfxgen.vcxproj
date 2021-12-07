@@ -349,8 +349,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\external\tinyfiledialogs.c" />
+    <ClInclude Include="..\..\..\src\gui_file_dialogs.h" />
+    <ClInclude Include="..\..\..\src\gui_window_about.h" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="..\..\..\src\rfxgen.c" />
+    <ClCompile Include="..\..\..\src\external\tinyfiledialogs.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\src\rfxgen.rc" />

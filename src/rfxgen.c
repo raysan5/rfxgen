@@ -82,6 +82,11 @@
 
 #include "raylib.h"
 
+#define TOOL_NAME               "rFXGen"
+#define TOOL_VERSION            "2.5"
+#define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
+#define TOOL_RELEASE_DATE       "Dec.2021"
+
 #if defined(PLATFORM_WEB)
     #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
     #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
@@ -123,9 +128,9 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 // Basic information
-static const char *toolName = "rFXGen";
-static const char *toolVersion = "2.5";
-static const char *toolDescription = "A simple and easy-to-use fx sounds generator";
+static const char *toolName = TOOL_NAME;
+static const char *toolVersion = TOOL_VERSION;
+static const char *toolDescription = TOOL_DESCRIPTION;
 
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
@@ -224,7 +229,7 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave
 #endif
 
 #if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
-static void WaitTime(int ms);               // Simple time wait in milliseconds
+static void WaitTimePlayer(int ms);         // Simple time wait in milliseconds for the CLI player
 static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
 
 #if !defined(_WIN32)
@@ -372,7 +377,7 @@ int main(int argc, char *argv[])
 #define RENDER_WAVE_TO_TEXTURE
 #if defined(RENDER_WAVE_TO_TEXTURE)
     // To avoid enabling MSXAAx4, we will render wave to a texture x2
-    RenderTexture2D waveTarget = LoadRenderTexture(waveRec.width*2, waveRec.height*2);
+    RenderTexture2D waveTarget = LoadRenderTexture((int)waveRec.width*2, (int)waveRec.height*2);
     SetTextureFilter(waveTarget.texture, TEXTURE_FILTER_BILINEAR);
 #endif
 
@@ -407,9 +412,7 @@ int main(int argc, char *argv[])
 
                 SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles[0])));
             }
-#if defined(VERSION_ONE)
             else if (IsFileExtension(droppedFiles[0], ".rgs")) GuiLoadStyle(droppedFiles[0]);
-#endif
 
             ClearDroppedFiles();
         }
@@ -530,7 +533,7 @@ int main(int argc, char *argv[])
 #if defined(RENDER_WAVE_TO_TEXTURE)
             BeginTextureMode(waveTarget);
                 ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-                DrawWave(&wave[slotActive], (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+                DrawWave(&wave[slotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             EndTextureMode();
 #endif
             // Render all screen to a texture (for scaling)
@@ -637,12 +640,7 @@ int main(int argc, char *argv[])
 
             sampleRateActive = GuiComboBox((Rectangle){ 398, 178, 106, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
             sampleSizeActive = GuiComboBox((Rectangle){ 398, 206, 106, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
-
-#if !defined(VERSION_ONE)
-            fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV", fileTypeActive);
-#else
             fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV;RAW;CODE", fileTypeActive);
-#endif
 
             if (GuiButton((Rectangle){ 398, 264, 106, 24 }, "#7#Export Wave")) showExportFileDialog = true;
 
@@ -679,8 +677,8 @@ int main(int argc, char *argv[])
 #endif
             // TODO: FEATURE: Draw playing progress rectangle
 
-            DrawRectangle(waveRec.x, waveRec.y + waveRec.height/2, waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
-            DrawRectangleLines(waveRec.x, waveRec.y, waveRec.width, waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+            DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
+            DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
 
             // GUI: About Window
@@ -692,11 +690,13 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (windowExitActive)
             {
+                GuiEnable();
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-                int result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 125, GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+                int result = GuiMessageBox((Rectangle){ (float)GetScreenWidth()/2 - 125, (float)GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
                 if ((result == 0) || (result == 2)) windowExitActive = false;
                 else if (result == 1) exitWindow = true;
+                GuiDisable();
             }
             //----------------------------------------------------------------------------------------
 
@@ -815,8 +815,8 @@ int main(int argc, char *argv[])
             EndTextureMode();
 
             // Draw render texture to screen
-            if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Rectangle){ 0, 0, screenTarget.texture.width*2, screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
-            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, screenTarget.texture.width, -screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Rectangle){ 0, 0, (float)screenTarget.texture.width*2, (float)screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
 #if defined(DEBUG)
             //DrawRectangleRec(slidersRec, Fade(RED, 0.5f));
 #endif
@@ -856,10 +856,10 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s ONE - %s               //\n", toolName, toolVersion, toolDescription);
-    printf("// powered by raylib v2.6 (www.raylib.com) and raygui v2.6                      //\n");
+    printf("// powered by raylib (www.raylib.com) and raygui (github.com/raysan5/raygui)    //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2014-2020 raylib technologies (@raylibtech)                    //\n");
+    printf("// Copyright (c) 2014-2021 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -1181,13 +1181,13 @@ static Wave GenerateWave(WaveParams params)
     fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
     period = (int)fperiod;
     fmaxperiod = 100.0/(params.minFrequencyValue*params.minFrequencyValue + 0.001);
-    fslide = 1.0 - powf((double)params.slideValue, 3.0)*0.01;
-    fdslide = -powf((double)params.deltaSlideValue, 3.0)*0.000001;
+    fslide = 1.0 - pow((double)params.slideValue, 3.0)*0.01;
+    fdslide = -pow((double)params.deltaSlideValue, 3.0)*0.000001;
     squareDuty = 0.5f - params.squareDutyValue*0.5f;
     squareSlide = -params.dutySweepValue*0.00005f;
 
-    if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - powf((double)params.changeAmountValue, 2.0)*0.9;
-    else arpeggioModulation = 1.0 + powf((double)params.changeAmountValue, 2.0)*10.0;
+    if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - pow((double)params.changeAmountValue, 2.0)*0.9;
+    else arpeggioModulation = 1.0 + pow((double)params.changeAmountValue, 2.0)*10.0;
 
     arpeggioLimit = (int)(powf(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
 
@@ -1199,7 +1199,7 @@ static Wave GenerateWave(WaveParams params)
     fltdmp = 5.0f/(1.0f + powf(params.lpfResonanceValue, 2.0f)*20.0f)*(0.01f + fltw);
     if (fltdmp > 0.8f) fltdmp = 0.8f;
     flthp = powf(params.hpfCutoffValue, 2.0f)*0.1f;
-    flthpd = 1.0 + params.hpfCutoffSweepValue*0.0003f;
+    flthpd = 1.0f + params.hpfCutoffSweepValue*0.0003f;
 
     // Reset vibrato
     vibratoSpeed = powf(params.vibratoSpeedValue, 2.0f)*0.01f;
@@ -1251,13 +1251,13 @@ static Wave GenerateWave(WaveParams params)
             fperiod = 100.0/(params.startFrequencyValue*params.startFrequencyValue + 0.001);
             period = (int)fperiod;
             fmaxperiod = 100.0/(params.minFrequencyValue*params.minFrequencyValue + 0.001);
-            fslide = 1.0 - powf((double)params.slideValue, 3.0)*0.01;
-            fdslide = -powf((double)params.deltaSlideValue, 3.0)*0.000001;
+            fslide = 1.0 - pow((double)params.slideValue, 3.0)*0.01;
+            fdslide = -pow((double)params.deltaSlideValue, 3.0)*0.000001;
             squareDuty = 0.5f - params.squareDutyValue*0.5f;
             squareSlide = -params.dutySweepValue*0.00005f;
 
-            if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - powf((double)params.changeAmountValue, 2.0)*0.9;
-            else arpeggioModulation = 1.0 + powf((double)params.changeAmountValue, 2.0)*10.0;
+            if (params.changeAmountValue >= 0.0f) arpeggioModulation = 1.0 - pow((double)params.changeAmountValue, 2.0)*0.9;
+            else arpeggioModulation = 1.0 + pow((double)params.changeAmountValue, 2.0)*10.0;
 
             arpeggioTime = 0;
             arpeggioLimit = (int)(powf(1.0f - params.changeSpeedValue, 2.0f)*20000 + 32);
@@ -1284,12 +1284,12 @@ static Wave GenerateWave(WaveParams params)
             if (params.minFrequencyValue > 0.0f) generatingSample = false;
         }
 
-        float rfperiod = fperiod;
+        float rfperiod = (float)fperiod;
 
         if (vibratoAmplitude > 0.0f)
         {
             vibratoPhase += vibratoSpeed;
-            rfperiod = fperiod*(1.0 + sinf(vibratoPhase)*vibratoAmplitude);
+            rfperiod = (float)(fperiod*(1.0 + sinf(vibratoPhase)*vibratoAmplitude));
         }
 
         period = (int)rfperiod;
@@ -1905,7 +1905,7 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 
 #if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 // Simple time wait in milliseconds
-static void WaitTime(int ms)
+static void WaitTimePlayer(int ms)
 {
     if (ms > 0)
     {
@@ -1951,7 +1951,7 @@ static void WaitTime(int ms)
 // Play provided wave through CLI
 static void PlayWaveCLI(Wave wave)
 {
-    float waveTimeMs = (float)wave.frameCount*1000.0/wave.sampleRate;
+    float waveTimeMs = (float)wave.frameCount*1000.0f/wave.sampleRate;
 
     InitAudioDevice();                  // Init audio device
     Sound fx = LoadSoundFromWave(wave); // Load audio wave
