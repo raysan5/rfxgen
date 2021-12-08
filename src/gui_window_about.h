@@ -1,6 +1,16 @@
 /*******************************************************************************************
 *
 *   Window About
+* 
+*   NOTES:
+*       This module tries to be generic for all tools, so, tools info could be customized
+*       just defining some tool info before including this file:
+*
+*       #define TOOL_NAME           "rToolName"
+*       #define TOOL_VERSION        "1.0"
+*       #define TOOL_DESCRIPTION    "Tool description"
+*       #define TOOL_RELEASE_DATE   "Jan.2022"
+*       #define TOOL_LOGO_COLOR     0x000000ff
 *
 *   MODULE USAGE:
 *       #define GUI_WINDOW_ABOUT_IMPLEMENTATION
@@ -96,19 +106,22 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// The following defines are required to show the about info,
-// they are usually defined externally in the tool
+// The following defines are required to customize the about info,
+// they are usually defined externally in the tool code
 #if !defined(TOOL_NAME)
     #define TOOL_NAME           "rTool"
 #endif
-#if !defined(TOOL_NAME)
+#if !defined(TOOL_VERSION)
     #define TOOL_VERSION        "1.0"
 #endif
-#if !defined(TOOL_NAME)
+#if !defined(TOOL_DESCRIPTION)
     #define TOOL_DESCRIPTION    "A simple and easy-to-use tool to do something"
 #endif
-#if !defined(TOOL_NAME)
+#if !defined(TOOL_RELEASE_DATE)
     #define TOOL_RELEASE_DATE   "Dec.2021"
+#endif
+#if !defined(TOOL_LOGO_COLOR)
+#define TOOL_LOGO_COLOR         0x000000ff
 #endif
 
 //----------------------------------------------------------------------------------
@@ -119,7 +132,17 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-//...
+static const char *lblUsedLibsText = "Powered by:";
+static const char *linkraylibText = "www.raylib.com";
+static const char *linkGitraylibText = "github.com/raysan5/raylib";
+static const char *linkGitrayguiText = "github.com/raysan5/raygui";
+static const char *lblCopyrightText = "Copyright (c) 2021 raylib technologies.";
+static const char *linkraylibtechText = "[@raylibtech]";
+static const char *lblMoreInfoText = "More info:";
+static const char *linkMailText = "ray@raylibtech.com";
+static const char *lblSupportText = "Support:";
+static const char* btnDonateText = "#146#Donate";
+static const char *btnCloseText = "#159#Close";
 
 //----------------------------------------------------------------------------------
 // Internal Module Functions Definition
@@ -172,23 +195,6 @@ GuiWindowAboutState InitGuiWindowAbout(void)
 // Gui about window
 void GuiWindowAbout(GuiWindowAboutState *state)
 {
-    const char *lblUsedLibsText = "Powered by:";
-    const char *linkraylibText = "www.raylib.com";
-    const char *linkGitraylibText = "github.com/raysan5/raylib";
-    const char *linkGitrayguiText = "github.com/raysan5/raygui";
-    const char *lblCopyrightText = "Copyright (c) 2021 raylib technologies.";
-    const char *linkraylibtechText = "[@raylibtech]";
-    const char *lblMoreInfoText = "More info:";
-    const char *linkToolWebText = "www.raylibtech.com/rfxgen";
-    const char *linkToolDownloadText = "https://raylibtech.itch.io/rfxgen";
-    const char *linkMailText = "ray@raylibtech.com";
-    const char *lblSupportText = "Support:";
-    const char *chkLicenseText = "License Agreement (EULA)";
-    const char* btnDonateText = "#146#Donate";
-    const char *btnCloseText = "#159#Close";
-
-    const int toolColor = 0x5197d4ff;
-
     if (state->windowActive)
     {
         GuiEnable();
@@ -202,7 +208,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         int labelTextAlign = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
         GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
-        DrawTechIcon((int)state->position.x + 10, (int)state->position.y + 35, 64, "rFX", 20, true, GetColor(toolColor));
+        DrawTechIcon((int)state->position.x + 10, (int)state->position.y + 35, 64, "rFX", 20, true, GetColor(TOOL_LOGO_COLOR));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 55, 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 78, 245, 20 }, TOOL_DESCRIPTION);
 
@@ -216,7 +222,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 160, 150, 15 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 180, 150, 15 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
         
-        DrawTextEx(GetFontDefault(), "miniAUDIO", (Vector2){ (int)state->position.x + 12, (int)state->position.y + 205 }, 30, 2, GetColor(0x003800ff));
+        DrawTextEx(GetFontDefault(), "miniAUDIO", (Vector2){ state->position.x + 12, state->position.y + 205 }, 30, 2, GetColor(0x003800ff));
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 210, 150, 15 }, "github.com/dr-soft/miniaudio")) { OpenURL("https://github.com/dr-soft/miniaudio"); }
 
         GuiLine((Rectangle){ state->position.x, state->position.y + 200 + 30, (float)state->windowWidth, 20 }, NULL);
@@ -224,7 +230,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 220 + 28, 289, 20 }, lblCopyrightText);
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 250 + 25, 65, 15 }, lblMoreInfoText);
 
-        if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 250 + 25, MeasureTextEx(GuiGetFont(), linkToolWebText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x, 15 }, linkToolWebText)) { OpenURL("https://www.raylibtech.com/"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 250 + 25, MeasureTextEx(GuiGetFont(), TextFormat("www.raylibtech.com/%s", TextToLower(TOOL_NAME)), (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x, 15 }, TextFormat("www.raylibtech.com/%s", TextToLower(TOOL_NAME)))) { OpenURL("https://www.raylibtech.com/"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 270 + 25, MeasureTextEx(GuiGetFont(), linkMailText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x, 15 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 90 + MeasureTextEx(GuiGetFont(), linkMailText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x + 4, state->position.y + 270 + 25, 165, 15 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
 
