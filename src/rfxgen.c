@@ -86,6 +86,7 @@
 #define TOOL_VERSION            "2.5"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
 #define TOOL_RELEASE_DATE       "Dec.2021"
+#define TOOL_LOGO_COLOR         0x5197d4ff
 
 #if defined(PLATFORM_WEB)
     #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
@@ -127,11 +128,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// Basic information
-static const char *toolName = TOOL_NAME;
-static const char *toolVersion = TOOL_VERSION;
-static const char *toolDescription = TOOL_DESCRIPTION;
-
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
 // Float random number generation
@@ -196,6 +192,10 @@ typedef struct WaveParams {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+static const char *toolName = TOOL_NAME;
+static const char *toolVersion = TOOL_VERSION;
+static const char *toolDescription = TOOL_DESCRIPTION;
+
 static float volumeValue = 0.6f;        // Master volume
 
 //----------------------------------------------------------------------------------
@@ -438,7 +438,9 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
+        #if !defined(PLATFORM_WEB)
             else windowExitActive = !windowExitActive;
+        #endif
         }
         //----------------------------------------------------------------------------------
 
