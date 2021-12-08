@@ -31,9 +31,17 @@
 # Debug files
 *.dSYM/
 *.su
+*.idb
+*.pdb
 
-# Build folder
-[Bb]uild
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
 
 # Visual Studio files
 [Dd]ebug/
@@ -42,3 +50,6 @@
 [Rr]elease.DLL/
 *.user
 .vs
+
+# Build folder
+[Bb]uild
