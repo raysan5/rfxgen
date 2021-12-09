@@ -3,10 +3,11 @@
 *   Window About
 * 
 *   NOTES:
-*       This module tries to be generic for all tools, so, tools info could be customized
+*       This module is generic for all tools, so, tools info should be customized
 *       just defining some tool info before including this file:
 *
 *       #define TOOL_NAME           "rToolName"
+*        #define TOOL_SHORT_NAME        "rTN"
 *       #define TOOL_VERSION        "1.0"
 *       #define TOOL_DESCRIPTION    "Tool description"
 *       #define TOOL_RELEASE_DATE   "Jan.2022"
@@ -111,6 +112,9 @@ void GuiWindowAbout(GuiWindowAboutState *state);
 #if !defined(TOOL_NAME)
     #define TOOL_NAME           "rTool"
 #endif
+#if !defined(TOOL_SHORT_NAME)
+    #define TOOL_SHORT_NAME     "rTN"    
+#endif
 #if !defined(TOOL_VERSION)
     #define TOOL_VERSION        "1.0"
 #endif
@@ -121,7 +125,7 @@ void GuiWindowAbout(GuiWindowAboutState *state);
     #define TOOL_RELEASE_DATE   "Dec.2021"
 #endif
 #if !defined(TOOL_LOGO_COLOR)
-#define TOOL_LOGO_COLOR         0x000000ff
+    #define TOOL_LOGO_COLOR       0x000000ff
 #endif
 
 //----------------------------------------------------------------------------------
@@ -200,7 +204,8 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiEnable();
 
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-
+        state->position = (Vector2){ (float)GetScreenWidth()/2 - (float)state->windowWidth/2, (float)GetScreenHeight()/2 - (float)state->windowHeight/2 };
+        
         state->windowActive = !GuiWindowBox((Rectangle){ state->position.x, state->position.y, (float)state->windowWidth, (float)state->windowHeight }, TextFormat("#191#About %s", TOOL_NAME));
 
         // Draw a background rectangle for convenience
@@ -208,7 +213,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         int labelTextAlign = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
         GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
-        DrawTechIcon((int)state->position.x + 10, (int)state->position.y + 35, 64, "rFX", 20, true, GetColor(TOOL_LOGO_COLOR));
+        DrawTechIcon((int)state->position.x + 10, (int)state->position.y + 35, 64, TOOL_SHORT_NAME, 20, true, GetColor(TOOL_LOGO_COLOR));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 55, 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + 78, 245, 20 }, TOOL_DESCRIPTION);
 

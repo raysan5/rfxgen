@@ -83,6 +83,7 @@
 #include "raylib.h"
 
 #define TOOL_NAME               "rFXGen"
+#define TOOL_SHORT_NAME         "rFX"
 #define TOOL_VERSION            "2.5"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
 #define TOOL_RELEASE_DATE       "Dec.2021"
