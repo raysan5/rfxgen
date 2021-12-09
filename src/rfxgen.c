@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
     const int screenHeight = 512;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
-    InitWindow(screenWidth, screenHeight, TextFormat("%s v%s - %s", toolName, toolVersion, toolDescription));
+    InitWindow(screenWidth, screenHeight, TextFormat("%s v%s | %s", toolName, toolVersion, toolDescription));
     SetExitKey(0);
 
     InitAudioDevice();
