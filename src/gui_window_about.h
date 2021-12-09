@@ -7,7 +7,7 @@
 *       just defining some tool info before including this file:
 *
 *       #define TOOL_NAME           "rToolName"
-*        #define TOOL_SHORT_NAME        "rTN"
+*       #define TOOL_SHORT_NAME     "rTN"
 *       #define TOOL_VERSION        "1.0"
 *       #define TOOL_DESCRIPTION    "Tool description"
 *       #define TOOL_RELEASE_DATE   "Jan.2022"
@@ -23,7 +23,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2021 raylib technologies (@raylibtech).
+*   Copyright (c) 2019-2021 raylib technologies (@raylibtech).
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
