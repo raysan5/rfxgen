@@ -61,7 +61,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2021 raylib technologies (@raylibtech).
+*   Copyright (c) 2014-2022 raylib technologies (@raylibtech).
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -530,15 +530,15 @@ int main(int argc, char *argv[])
 
         // Draw
         //----------------------------------------------------------------------------------
+#if defined(RENDER_WAVE_TO_TEXTURE)
+        BeginTextureMode(waveTarget);
+            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+            DrawWave(&wave[slotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+        EndTextureMode();
+#endif
         BeginDrawing();
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-#if defined(RENDER_WAVE_TO_TEXTURE)
-            BeginTextureMode(waveTarget);
-                ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-                DrawWave(&wave[slotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            EndTextureMode();
-#endif
             // Render all screen to a texture (for scaling)
             BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
@@ -852,7 +852,7 @@ int main(int argc, char *argv[])
 // Module Functions Definitions (local)
 //--------------------------------------------------------------------------------------------
 
-#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)      // Command line
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
@@ -862,7 +862,7 @@ static void ShowCommandLineInfo(void)
     printf("// powered by raylib (www.raylib.com) and raygui (github.com/raysan5/raygui)    //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2014-2021 raylib technologies (@raylibtech)                    //\n");
+    printf("// Copyright (c) 2014-2022 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -1072,7 +1072,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
     if (showUsageInfo) ShowCommandLineInfo();
 }
-#endif      // VERSION_ONE
+#endif      // VERSION_ONE: Command line
 
 //--------------------------------------------------------------------------------------------
 // Load/Save/Export functions
@@ -1961,11 +1961,11 @@ static void PlayWaveCLI(Wave wave)
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// %s v%s ONE - CLI audio player                                           //\n", toolName, toolVersion);
+    printf("// %s v%s ONE - CLI audio player                                     //\n", toolName, toolVersion);
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2020 raylib technologies (@raylibtech)                         //\n");
+    printf("// Copyright (c) 2020-2022 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -2006,4 +2006,4 @@ static int kbhit(void)
     return 0;
 }
 #endif
-#endif      // VERSION_ONE
+#endif      // VERSION_ONE: PlayWaveCLI()
