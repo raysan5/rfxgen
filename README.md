@@ -11,18 +11,18 @@ rFXGen can be used for free [here](https://raylibtech.itch.io/rfxgen) (WebAssemb
 
  - Predefined **sound presets** (Coin, Shoot, Explosion, PowerUp...)
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
- - Up to **four save slots** to store generate sound (temporary save)
- - Load **.rfx** sounds or import **.sfs** files (compatible with sfxr)
- - Save **.rfx** sounds with generation parameters (**104 bytes only**)
+ - Up to **4 save slots** to store generate sound (temporary save)
+ - Load `.rfx` sounds or import `.sfs` files (compatible with sfxr)
+ - Save `.rfx` sounds with generation parameters (**104 bytes only**)
  - Export generated waves with configurable sample-rate and bits-per-sample
- - Export to **.wav**, **.raw** data or **.h** code file (byte array)
- - Four unique GUI themes: **Light**, **Jungle**, **Candy** and **Lavanda**
- - **Completely portable (single-file, no-dependencies)**
+ - Export to `.wav`, `.raw` data or `.h` code file (byte array)
+ - Four unique GUI styles: **Light**, **Jungle**, **Candy** and **Lavanda**
  
 ### rFXGen Standalone Additional Features
 
  - Command-line support for `.rfx`/`.sfs` to `.wav` batch conversion
  - Command-line audio player for `.wav`, `.ogg`, `.mp3` and `.flac`
+ - **Completely portable (single-file, no-dependencies)**
 
 ## rFXGen Screenshot
 
