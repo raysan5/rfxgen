@@ -134,7 +134,7 @@
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
 
-#if (!defined(DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
+#if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
 bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib)
 #endif
 
@@ -244,8 +244,8 @@ static char getch(void) { return getchar(); }   // Get pressed character
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-#if !defined(DEBUG)
-    //SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
+#if !defined(_DEBUG)
+    SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
 #if defined(COMMAND_LINE_ONLY)
     ProcessCommandLine(argc, argv);
@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
 #endif      // VERSION_ONE
     }
 
-#if (!defined(DEBUG) && defined(VERSION_ONE) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
+#if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
     // and closing console (FreeConsole()) when changing to GUI interface
@@ -536,11 +536,8 @@ int main(int argc, char *argv[])
             DrawWave(&wave[slotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
         EndTextureMode();
 #endif
-        BeginDrawing();
-            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-
-            // Render all screen to a texture (for scaling)
-            BeginTextureMode(screenTarget);
+        // Render all screen to a texture (for scaling)
+        BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
             if (windowAboutState.windowActive || windowExitActive) GuiDisable();
@@ -815,14 +812,15 @@ int main(int argc, char *argv[])
             }
             //----------------------------------------------------------------------------------------
 
-            EndTextureMode();
+        EndTextureMode();
 
+        BeginDrawing();
+            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+            
             // Draw render texture to screen
             if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Rectangle){ 0, 0, (float)screenTarget.texture.width*2, (float)screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
-#if defined(DEBUG)
-            //DrawRectangleRec(slidersRec, Fade(RED, 0.5f));
-#endif
+
         EndDrawing();
         //------------------------------------------------------------------------------------
     }
