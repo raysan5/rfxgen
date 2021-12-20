@@ -3,7 +3,7 @@
 # rFXGen
 A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
-`rFXGen` can be used for free [here](https://raylibtech.itch.io/rfxgen) (WebAssembly online version). It can also be downloaded as a standalone tool for _Windows_ and _Linux_ with some extra features. It can also be compiled for other OSs if desired.
+`rFXGen` can be used for free as a [WebAssembly online tool](https://raylibtech.itch.io/rfxgen) and it can also be downloaded as a **standalone tool** for _Windows_ and _Linux_ with some extra features. Binaries for other OSs are not provide but it can be compiled if desired.
 
 <br>
 
