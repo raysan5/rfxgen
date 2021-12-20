@@ -858,7 +858,7 @@ static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// %s v%s ONE - %s               //\n", toolName, toolVersion, toolDescription);
+    printf("// %s v%s - %s                   //\n", toolName, toolVersion, toolDescription);
     printf("// powered by raylib (www.raylib.com) and raygui (github.com/raysan5/raygui)    //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
@@ -1961,7 +1961,7 @@ static void PlayWaveCLI(Wave wave)
 
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
-    printf("// %s v%s ONE - CLI audio player                                     //\n", toolName, toolVersion);
+    printf("// %s v%s - CLI audio player                                         //\n", toolName, toolVersion);
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
