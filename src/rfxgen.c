@@ -109,6 +109,7 @@
     #include "style_jungle.h"           // raygui style: jungle
     #include "style_candy.h"            // raygui style: candy
     #include "style_lavanda.h"          // raygui style: lavanda
+    #include "style_cyber.h"            // raygui style: cyber
 #endif
 
 #include <math.h>                       // Required for: sinf(), powf()
@@ -476,6 +477,7 @@ int main(int argc, char *argv[])
                 case 1: GuiLoadStyleJungle(); break;
                 case 2: GuiLoadStyleCandy(); break;
                 case 3: GuiLoadStyleLavanda(); break;
+                case 4: GuiLoadStyleCyber(); break;
                 default: break;
             }
 
@@ -647,7 +649,7 @@ int main(int argc, char *argv[])
             GuiLine((Rectangle){ 398, 288, 106, 16 }, NULL);
 
             GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
-            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda", visualStyleActive);
+            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda;Cyber", visualStyleActive);
 #if defined(PLATFORM_WEB)
             if (GuiButton((Rectangle){ 398, 348, 106, 24 }, "#53#Fullscreen")) ToggleFullscreen();
 #else
@@ -857,7 +859,7 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s - %s                   //\n", toolName, toolVersion, toolDescription);
-    printf("// powered by raylib (www.raylib.com) and raygui (github.com/raysan5/raygui)    //\n");
+    printf("// powered by raylib v%s and raygui v%s                                       //\n", RAYLIB_VERSION, RAYGUI_VERSION);
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2014-2022 raylib technologies (@raylibtech)                    //\n");
