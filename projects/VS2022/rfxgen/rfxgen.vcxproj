@@ -351,6 +351,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\src\gui_file_dialogs.h" />
     <ClInclude Include="..\..\..\src\gui_window_about.h" />
+    <ClInclude Include="..\..\..\src\style_candy.h" />
+    <ClInclude Include="..\..\..\src\style_cyber.h" />
+    <ClInclude Include="..\..\..\src\style_jungle.h" />
+    <ClInclude Include="..\..\..\src\style_lavanda.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\rfxgen.c" />
