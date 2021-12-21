@@ -18,7 +18,9 @@
 *       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
 *
 *   VERSIONS HISTORY:
-*       2.5  (xx-Nov-2021) Updated to raylib 4.0 and raygui 3.0
+*       2.5  (xx-Nov-2021) Updated to raylib 4.0 and raygui 3.1
+*                          Removed tool references to ZERO or ONE
+*                          Added a new gui style: lavanda
 *       2.3  (20-Dec-2020) Updated to raylib 3.5
 *       2.2  (23-Feb-2019) Updated to raylib 3.0, raygui 2.7 and adapted for web
 *       2.1  (09-Sep-2019) Ported to latest raygui 2.6
@@ -41,9 +43,9 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 4.0              - Windowing/input management and drawing.
-*       raygui 3.0              - Immediate-mode GUI controls.
-*       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs.
+*       raylib 4.0              - Windowing/input management and drawing
+*       raygui 3.1              - Immediate-mode GUI controls with custom styling and icons
+*       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
@@ -130,14 +132,23 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+#if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
+bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib)
+#endif
+
+// Simple log system to avoid printf() calls if required
+// NOTE: Avoiding those calls, also avoids const strings memory usage
+#define SUPPORT_LOG_INFO
+#if defined(SUPPORT_LOG_INFO)
+  #define LOG(...) printf(__VA_ARGS__)
+#else
+  #define LOG(...)
+#endif
+
 #define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
 
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
-
-#if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
-bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib)
-#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -341,7 +352,7 @@ int main(int argc, char *argv[])
         wave[i].sampleSize = 32;    // 32 bit -> float
         wave[i].channels = 1;
         wave[i].frameCount = 10*wave[i].sampleRate;    // Max frame count for 10 seconds
-        wave[i].data = calloc(wave[i].frameCount*wave[i].channels*wave[i].sampleSize/8, sizeof(char));
+        wave[i].data = (float *)calloc(wave[i].frameCount*wave[i].channels, sizeof(float));
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
@@ -394,8 +405,9 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!exitWindow)    // Detect window close button or ESC key
     {
+#if !defined(PLATFORM_WEB)
         if (WindowShouldClose()) exitWindow = true;
-
+#endif
         if (!windowAboutState.chkLicenseChecked) exitWindow = true;
 
         // Dropped files logic
@@ -758,17 +770,17 @@ int main(int argc, char *argv[])
             if (showExportFileDialog)
             {
                 // Consider different supported file types
-                char filters[64] = { 0 };
+                char fileTypeFilters[64] = { 0 };
                 strcpy(outFileName, "sound");
 
-                if (fileTypeActive == 0) { strcpy(filters, "*.wav"); strcat(outFileName, ".wav"); }
-                else if (fileTypeActive == 1) { strcpy(filters, "*.raw"); strcat(outFileName, ".raw"); }
-                else if (fileTypeActive == 2) { strcpy(filters, "*.h"); strcat(outFileName, ".h"); }
+                if (fileTypeActive == 0) { strcpy(fileTypeFilters, "*.wav"); strcat(outFileName, ".wav"); }
+                else if (fileTypeActive == 1) { strcpy(fileTypeFilters, "*.raw"); strcat(outFileName, ".raw"); }
+                else if (fileTypeActive == 2) { strcpy(fileTypeFilters, "*.h"); strcat(outFileName, ".h"); }
 
 #if defined(CUSTOM_MODAL_DIALOGS)
                 int result = GuiFileDialog(DIALOG_TEXTINPUT, "Export wave file...", outFileName, "Ok;Cancel", NULL);
 #else
-                int result = GuiFileDialog(DIALOG_SAVE, "Export wave file...", outFileName, filters, TextFormat("File type (%s)", filters));
+                int result = GuiFileDialog(DIALOG_SAVE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
 #endif
                 if (result == 1)
                 {
@@ -794,11 +806,11 @@ int main(int argc, char *argv[])
                         if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".raw")) strcat(outFileName, ".raw\0");
                         FILE *rawFile = fopen(outFileName, "wb");
 
-                            if (rawFile != NULL)
-                            {
-                                fwrite(wave[slotActive].data, 1, wave[slotActive].frameCount*wave[slotActive].channels*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
-                                fclose(rawFile);
-                            }
+                        if (rawFile != NULL)
+                        {
+                            fwrite(wave[slotActive].data, 1, wave[slotActive].frameCount*wave[slotActive].channels*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
+                            fclose(rawFile);
+                        }
                     }
 
                     UnloadWave(cwave);
@@ -849,9 +861,8 @@ int main(int argc, char *argv[])
 }
 
 //--------------------------------------------------------------------------------------------
-// Module Functions Definitions (local)
+// Module functions definition
 //--------------------------------------------------------------------------------------------
-
 #if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)      // Command line
 // Show command line usage info
 static void ShowCommandLineInfo(void)
@@ -1424,8 +1435,8 @@ static Wave GenerateWave(WaveParams params)
 
     // NOTE: Wave can be converted to desired format after generation
 
-    genWave.data = calloc(genWave.frameCount*genWave.channels, genWave.sampleSize/8);
-    memcpy(genWave.data, buffer, genWave.frameCount*genWave.channels*genWave.sampleSize/8);
+    genWave.data = (float *)calloc(genWave.frameCount*genWave.channels, sizeof(float));
+    memcpy(genWave.data, buffer, genWave.frameCount*genWave.channels*sizeof(float));
 
     free(buffer);
 
