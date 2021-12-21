@@ -1856,6 +1856,8 @@ static WaveParams GenRandomize(void)
 // Mutate current sound
 static void WaveMutate(WaveParams *params)
 {
+    srand(time(NULL));      // Refresh seed to avoid converging behaviour
+    
     if (GetRandomValue(0, 1)) params->startFrequencyValue += frnd(0.1f) - 0.05f;        
     //if (GetRandomValue(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
     if (GetRandomValue(0, 1)) params->slideValue += frnd(0.1f) - 0.05f;
