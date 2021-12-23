@@ -403,13 +403,10 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!exitWindow)    // Detect window close button or ESC key
+    while (!exitWindow)    // Detect window close button
     {
-#if !defined(PLATFORM_WEB)
         if (WindowShouldClose()) exitWindow = true;
-#endif
-        if (!windowAboutState.chkLicenseChecked) exitWindow = true;
-
+        
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
@@ -454,6 +451,10 @@ int main(int argc, char *argv[])
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
         #if !defined(PLATFORM_WEB)
             else windowExitActive = !windowExitActive;
+        #else
+            else if (showLoadFileDialog) showLoadFileDialog = false;
+            else if (showSaveFileDialog) showSaveFileDialog = false;
+            else if (showExportFileDialog) showExportFileDialog = false;
         #endif
         }
         //----------------------------------------------------------------------------------
@@ -1886,7 +1887,6 @@ static void WaveMutate(WaveParams *params)
 //--------------------------------------------------------------------------------------------
 // Auxiliar functions
 //--------------------------------------------------------------------------------------------
-
 #if !defined(COMMAND_LINE_ONLY)
 // Draw wave data
 // NOTE: For proper visualization, MSAA x4 is recommended, alternatively
