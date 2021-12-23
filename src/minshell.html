@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <title>rFXGen | A simple and easy-to-use fx sounds generator</title>
+    
+    <meta name="title" content="rFXGen by raylib technologies">
+    <meta name="description" content="A simple and easy-to-use fx sounds generator">
+    <meta name="keywords" content="rFXGen, raylib, raylibtech, tool, technology, wasm, programming, C, C++">
+    <meta name="viewport" content="width=device-width">
+    
+    <!-- Open Graph metatags for sharing -->
+    <meta property="og:title" content="rFXGen by raylib technologies">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image" content="https://www.raylibtech.com/images/tools/rfxgen_card.png">
+    <meta property="og:site_name" content="raylibtech.com | rFXGen">
+    <meta property="og:url" content="https://raylibtech.itch.io/rFXGen">
+    <meta property="og:description" content="A simple and easy-to-use fx sounds generator">
+
+    <!-- Twitter metatags for sharing -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@raylibtech">
+    <meta name="twitter:title" content="rFXGen by raylib technologies">
+    <meta name="twitter:image" content="https://www.raylibtech.com/images/tools/rfxgen_card.png">
+    <meta name="twitter:url" content="https://raylibtech.itch.io/rFXGen">
+    <meta name="twitter:description" content="A simple and easy-to-use fx sounds generator">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="https://www.raylibtech.com/images/tools/rfxgen.ico">
+    <style>
+        canvas.emscripten { border: 0px none; background-color: black; }
+    </style>
+    <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
+    <script type='text/javascript'>
+        function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
+        {
+            var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            var data = FS.readFile(memoryFSname);
+            var blob;
+
+            if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
+            else blob = new Blob([data.buffer], { type: "application/octet-binary" });
+
+            // NOTE: SaveAsDialog is a browser setting. For example, in Google Chrome,
+            // in Settings/Advanced/Downloads section you have a setting:
+            // 'Ask where to save each file before downloading' - which you can set true/false.
+            // If you enable this setting it would always ask you and bring the SaveAsDialog
+            saveAs(blob, localFSname);
+        }
+    </script>
+    </head>
+    <body>
+        <canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
+        <p id="output" />
+        <script>
+            var Module = {
+                print: (function() {
+                    var element = document.getElementById('output');
+                    if (element) element.value = ''; // clear browser cache
+                    return function(text) {
+                        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                        console.log(text);
+                        if (element) {
+                          element.value += text + "\n";
+                          element.scrollTop = element.scrollHeight; // focus on bottom
+                        }
+                    };
+                })(),            
+                canvas: (function() {
+                    var canvas = document.getElementById('canvas');
+                    return canvas;
+                })()
+            };
+        </script>
+        {{{ SCRIPT }}}
+    </body>
+</html>
