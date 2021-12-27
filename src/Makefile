@@ -233,6 +233,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --source-map-base          # allow debugging in browser with source map
     LDFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -s FORCE_FILESYSTEM=1
     
+    # Build using asyncify
+    ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+        LDFLAGS += -s ASYNCIFY
+    endif
+    
     # Add resources building if required
     ifeq ($(BUILD_WEB_RESOURCES),TRUE)
         LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
@@ -242,11 +247,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDFLAGS += --shell-file $(BUILD_WEB_SHELL)
     EXT = .html
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
-        LDFLAGS += -s ASYNCIFY
-    endif
-endif
+
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
 endif
