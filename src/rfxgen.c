@@ -14,9 +14,6 @@
 *       Use custom raygui generated modal dialogs instead of native OS ones
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
-*   #define RENDER_WAVE_TO_TEXTURE (defined by default)
-*       Use RenderTexture2D to render wave on. If not defined, wave is diretly drawn using lines.
-*
 *   VERSIONS HISTORY:
 *       2.5  (xx-Nov-2021) Updated to raylib 4.0 and raygui 3.1
 *                          Removed tool references to ZERO or ONE
@@ -387,12 +384,9 @@ int main(int argc, char *argv[])
     // Set default sound volume
     for (int i = 0; i < MAX_WAVE_SLOTS; i++) SetSoundVolume(sound[i], volumeValue);
 
-#define RENDER_WAVE_TO_TEXTURE
-#if defined(RENDER_WAVE_TO_TEXTURE)
-    // To avoid enabling MSXAAx4, we will render wave to a texture x2
+    // Render texture to draw wave at x2, it will be scaled down with bilinear filtering (cheapre than MSAA x4)
     RenderTexture2D waveTarget = LoadRenderTexture((int)waveRec.width*2, (int)waveRec.height*2);
     SetTextureFilter(waveTarget.texture, TEXTURE_FILTER_BILINEAR);
-#endif
 
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
@@ -545,13 +539,13 @@ int main(int argc, char *argv[])
 
         // Draw
         //----------------------------------------------------------------------------------
-#if defined(RENDER_WAVE_TO_TEXTURE)
+        // Render wave data to texture
         BeginTextureMode(waveTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
             DrawWave(&wave[slotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
         EndTextureMode();
-#endif
-        // Render all screen to a texture (for scaling)
+
+        // Render all screen to texture (for scaling)
         BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
@@ -685,11 +679,9 @@ int main(int argc, char *argv[])
 
             // Draw Wave form
             //--------------------------------------------------------------------------------
-#if defined(RENDER_WAVE_TO_TEXTURE)
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
-#else
-            DrawWave(&wave[slotActive], waveRec, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
-#endif
+            //DrawWave(&wave[slotActive], waveRec, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));     // Not used
+            
             // TODO: FEATURE: Draw playing progress rectangle
 
             DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
@@ -1887,11 +1879,10 @@ static void WaveMutate(WaveParams *params)
 //--------------------------------------------------------------------------------------------
 // Auxiliar functions
 //--------------------------------------------------------------------------------------------
-#if !defined(COMMAND_LINE_ONLY)
+#if 0
 // Draw wave data
-// NOTE: For proper visualization, MSAA x4 is recommended, alternatively
-// it should be rendered to a bigger texture and then scaled down with
-// bilinear/trilinear texture filtering
+// NOTE: For proper visualization, MSAA x4 is recommended but it could be costly for the GPU
+// Alternative: Rendered to a bigger texture and scale down with bilinear/trilinear texture filtering
 static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 {
     float sample = 0.0f;
@@ -1917,7 +1908,7 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
         currentSample += sampleIncrement;
     }
 }
-#endif // COMMAND_LINE_ONLY
+#endif
 
 #if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 // Simple time wait in milliseconds
