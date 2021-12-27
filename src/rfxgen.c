@@ -549,13 +549,11 @@ int main(int argc, char *argv[])
         BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            if (windowAboutState.windowActive || windowExitActive) GuiDisable();
-            else GuiEnable();
+            // Some windows should lockall the main tool controls when shown
+            if (windowAboutState.windowActive || windowExitActive || showLoadFileDialog || showSaveFileDialog || showExportFileDialog) GuiLock();
 
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
-            if (showSaveFileDialog || showExportFileDialog) GuiLock();
-
             // Draw tool name and version, right aligned
             int prevTextAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
             int prevTextPadding = GuiGetStyle(LABEL, TEXT_PADDING);
@@ -686,8 +684,13 @@ int main(int argc, char *argv[])
             DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
             DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
+            
+            // Before drawing the windows, we unlock them
+            GuiUnlock();
 
             // GUI: About Window
+            // TODO: WARNING: It uses GuiEnable()/GuiDisable() internally, probably not needed if GuiLock() is used
+            // QUESTION: Could there be multiple windows overlapping?
             //--------------------------------------------------------------------------------
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
@@ -696,17 +699,13 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (windowExitActive)
             {
-                GuiEnable();
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
                 int result = GuiMessageBox((Rectangle){ (float)GetScreenWidth()/2 - 125, (float)GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
                 if ((result == 0) || (result == 2)) windowExitActive = false;
                 else if (result == 1) exitWindow = true;
-                GuiDisable();
             }
             //----------------------------------------------------------------------------------------
-
-            GuiUnlock();
 
             // GUI: Load File Dialog (and loading logic)
             //----------------------------------------------------------------------------------------

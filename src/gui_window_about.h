@@ -62,7 +62,6 @@ typedef struct {
     Vector2 position;
 
     bool windowActive;
-    bool chkLicenseChecked;
 
     // Custom state variables (depend on development software)
     // NOTE: This variables should be added manually if required
@@ -186,7 +185,6 @@ GuiWindowAboutState InitGuiWindowAbout(void)
     GuiWindowAboutState state = { 0 };
 
     state.windowActive = false;
-    state.chkLicenseChecked = true;
 
     // Custom variables initialization
     state.windowWidth = 360;
@@ -201,9 +199,8 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 {
     if (state->windowActive)
     {
-        GuiEnable();
-
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+        // TODO: REVIEW: White rectangle should be here?
+        //DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
         state->position = (Vector2){ (float)GetScreenWidth()/2 - (float)state->windowWidth/2, (float)GetScreenHeight()/2 - (float)state->windowHeight/2 };
         
         state->windowActive = !GuiWindowBox((Rectangle){ state->position.x, state->position.y, (float)state->windowWidth, (float)state->windowHeight }, TextFormat("#191#About %s", TOOL_NAME));
@@ -252,8 +249,6 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 
         if (GuiButton((Rectangle){ state->position.x + state->windowWidth - 80, state->position.y + 305 + 25, 70, 24 }, btnCloseText)) state->windowActive = false;
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
-        
-        GuiDisable();
     }
 }
 
