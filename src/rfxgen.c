@@ -680,7 +680,6 @@ int main(int argc, char *argv[])
             // Draw Wave form
             //--------------------------------------------------------------------------------
             DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
-            //DrawWave(&wave[slotActive], waveRec, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));     // Not used
             
             // TODO: FEATURE: Draw playing progress rectangle
 
@@ -1879,7 +1878,6 @@ static void WaveMutate(WaveParams *params)
 //--------------------------------------------------------------------------------------------
 // Auxiliar functions
 //--------------------------------------------------------------------------------------------
-#if 0
 // Draw wave data
 // NOTE: For proper visualization, MSAA x4 is recommended but it could be costly for the GPU
 // Alternative: Rendered to a bigger texture and scale down with bilinear/trilinear texture filtering
@@ -1908,7 +1906,6 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
         currentSample += sampleIncrement;
     }
 }
-#endif
 
 #if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
 // Simple time wait in milliseconds
