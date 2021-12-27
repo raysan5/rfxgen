@@ -52,7 +52,7 @@ jobs:
       run: |
         cd raylib/src
         emcc -v
-        make PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" CFLAGS=${{ env.RAYLIB_CONFIG }} RAYLIB_PROJECT_RELEASE_PATH=. -B
+        make PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" RAYLIB_CONFIG_FLAGS=${{ env.RAYLIB_CONFIG_FLAGS }} RAYLIB_PROJECT_RELEASE_PATH=. -B
 
     - name: Build Product
       run: |
