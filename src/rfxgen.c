@@ -5,18 +5,18 @@
 *   CONFIGURATION:
 *
 *   #define VERSION_ONE
-*       Enable PRO features for the tool. Usually command-line and export options related.
-*
-*   #define COMMAND_LINE_ONLY
-*       Compile tool only for command line usage
+*       Enable command-line usage and PRO features for the tool
 *
 *   #define CUSTOM_MODAL_DIALOGS
 *       Use custom raygui generated modal dialogs instead of native OS ones
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       2.5  (xx-Nov-2021) Updated to raylib 4.0 and raygui 3.1
+*       2.5  (28-Dec-2021) Updated to raylib 4.1-dev and raygui 3.1
+*                          Fixed issue with 32bit float WAV export
+*                          Fixed issue with WaveMutate() convergence
 *                          Removed tool references to ZERO or ONE
+*                          Reviewed code naming conventions
 *                          Added a new gui style: lavanda
 *       2.3  (20-Dec-2020) Updated to raylib 3.5
 *       2.2  (23-Feb-2019) Updated to raylib 3.0, raygui 2.7 and adapted for web
@@ -79,14 +79,14 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"
-
 #define TOOL_NAME               "rFXGen"
 #define TOOL_SHORT_NAME         "rFX"
 #define TOOL_VERSION            "2.5"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
 #define TOOL_RELEASE_DATE       "Dec.2021"
 #define TOOL_LOGO_COLOR         0x5197d4ff
+
+#include "raylib.h"
 
 #if defined(PLATFORM_WEB)
     #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
@@ -104,12 +104,11 @@
 #define GUI_FILE_DIALOGS_IMPLEMENTATION
 #include "gui_file_dialogs.h"           // GUI: File Dialogs
 
-#if !defined(COMMAND_LINE_ONLY)
-    #include "style_jungle.h"           // raygui style: jungle
-    #include "style_candy.h"            // raygui style: candy
-    #include "style_lavanda.h"          // raygui style: lavanda
-    #include "style_cyber.h"            // raygui style: cyber
-#endif
+// raygui embedded styles
+#include "style_jungle.h"               // raygui style: jungle
+#include "style_candy.h"                // raygui style: candy
+#include "style_lavanda.h"              // raygui style: lavanda
+#include "style_cyber.h"                // raygui style: cyber
 
 #include <math.h>                       // Required for: sinf(), powf()
 #include <time.h>                       // Required for: clock()
@@ -211,7 +210,7 @@ static float volumeValue = 0.6f;        // Master volume
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE)
 static void ShowCommandLineInfo(void);                      // Show command line usage info
 static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
 #endif
@@ -233,20 +232,17 @@ static WaveParams GenBlipSelect(void);      // Generate sound: Blip/Select
 static WaveParams GenRandomize(void);       // Generate random sound
 static void WaveMutate(WaveParams *params); // Mutate current sound
 
-#if !defined(COMMAND_LINE_ONLY)
 // Auxiliar functions
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
-#endif
 
-#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
-static void WaitTimePlayer(int ms);         // Simple time wait in milliseconds for the CLI player
-static void PlayWaveCLI(Wave wave);         // Play provided wave through CLI
-
+#if defined(VERSION_ONE)
+static void WaitTimePlayer(int ms);             // Simple time wait in milliseconds for the CLI player
+static void PlayWaveCLI(Wave wave);             // Play provided wave through CLI
 #if !defined(_WIN32)
 static int kbhit(void);                         // Check if a key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
-#endif  // VERSION_ONE || COMMAND_LINE_ONLY
+#endif  // VERSION_ONE
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -256,9 +252,7 @@ int main(int argc, char *argv[])
 #if !defined(_DEBUG)
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
-#if defined(COMMAND_LINE_ONLY)
-    ProcessCommandLine(argc, argv);
-#else
+#if defined(VERSION_ONE)
     char inFileName[512] = { 0 };       // Input file name (required in case of drag & drop over executable)
     char outFileName[512] = { 0 };      // Output file name (required for file save/export)
 
@@ -276,15 +270,13 @@ int main(int argc, char *argv[])
                 strcpy(inFileName, argv[1]);        // Read input filename to open with gui interface
             }
         }
-#if defined(VERSION_ONE)
         else
         {
             ProcessCommandLine(argc, argv);
             return 0;
         }
-#endif      // VERSION_ONE
     }
-
+#endif  // VERSION_ONE
 #if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
@@ -496,7 +488,7 @@ int main(int argc, char *argv[])
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
             // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
-            if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
+            if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && !GuiIsLocked())))
             {
                 UnloadWave(wave[slotActive]);
                 UnloadSound(sound[slotActive]);
@@ -655,9 +647,7 @@ int main(int argc, char *argv[])
 
             GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
             visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda;Cyber", visualStyleActive);
-#if defined(PLATFORM_WEB)
-            if (GuiButton((Rectangle){ 398, 348, 106, 24 }, "#53#Fullscreen")) ToggleFullscreen();
-#else
+#if !defined(PLATFORM_WEB)
             screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
 #endif
             GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);
@@ -685,13 +675,15 @@ int main(int argc, char *argv[])
             DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
             
-            // Before drawing the windows, we unlock them
+            // NOTE: If some overlap window is open and main window is locked, we draw a background rectangle
+            if (GuiIsLocked()) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
+            
+            // WARNING: Before drawing the windows, we unlock them
             GuiUnlock();
 
             // GUI: About Window
-            // TODO: WARNING: It uses GuiEnable()/GuiDisable() internally, probably not needed if GuiLock() is used
-            // QUESTION: Could there be multiple windows overlapping?
             //--------------------------------------------------------------------------------
+            windowAboutState.position = (Vector2){ screenWidth/2 - (float)windowAboutState.windowWidth/2, screenHeight/2 - (float)windowAboutState.windowHeight/2 };
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
 
@@ -699,7 +691,6 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (windowExitActive)
             {
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
                 int result = GuiMessageBox((Rectangle){ (float)GetScreenWidth()/2 - 125, (float)GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
                 if ((result == 0) || (result == 2)) windowExitActive = false;
@@ -839,29 +830,26 @@ int main(int argc, char *argv[])
     }
 
     UnloadRenderTexture(screenTarget);
-#if defined(RENDER_WAVE_TO_TEXTURE)
     UnloadRenderTexture(waveTarget);
-#endif
 
-    CloseAudioDevice();
+    CloseAudioDevice();     // Close audio device
     CloseWindow();          // Close window and OpenGL context
     //----------------------------------------------------------------------------------------
 
-#endif  // COMMAND_LINE_ONLY
     return 0;
 }
 
 //--------------------------------------------------------------------------------------------
 // Module functions definition
 //--------------------------------------------------------------------------------------------
-#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)      // Command line
+#if defined(VERSION_ONE)
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s - %s                   //\n", toolName, toolVersion, toolDescription);
-    printf("// powered by raylib v%s and raygui v%s                                       //\n", RAYLIB_VERSION, RAYGUI_VERSION);
+    printf("// powered by raylib v%s and raygui v%s                                   //\n", RAYLIB_VERSION, RAYGUI_VERSION);
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2014-2022 raylib technologies (@raylibtech)                    //\n");
@@ -915,9 +903,7 @@ static void ProcessCommandLine(int argc, char *argv[])
     int sampleSize = 16;                // Default conversion sample size
     int channels = 1;                   // Default conversion channels number
 
-#if defined(COMMAND_LINE_ONLY)
     if (argc == 1) showUsageInfo = true;
-#endif
 
     // Process command line arguments
     for (int i = 1; i < argc; i++)
@@ -940,11 +926,11 @@ static void ProcessCommandLine(int argc, char *argv[])
                 {
                     strcpy(inFileName, argv[i + 1]);    // Read input filename
                 }
-                else printf("WARNING: Input file extension not recognized\n");
+                else LOG("WARNING: Input file extension not recognized\n");
 
                 i++;
             }
-            else printf("WARNING: No input file provided\n");
+            else LOG("WARNING: No input file provided\n");
         }
         else if ((strcmp(argv[i], "-o") == 0) || (strcmp(argv[i], "--output") == 0))
         {
@@ -956,11 +942,11 @@ static void ProcessCommandLine(int argc, char *argv[])
                 {
                     strcpy(outFileName, argv[i + 1]);   // Read output filename
                 }
-                else printf("WARNING: Output file extension not recognized\n");
+                else LOG("WARNING: Output file extension not recognized\n");
 
                 i++;
             }
-            else printf("WARNING: No output file provided\n");
+            else LOG("WARNING: No output file provided\n");
         }
         else if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--format") == 0))
         {
@@ -969,7 +955,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                 int numValues = 0;
                 const char **values = TextSplit(argv[i + 1], ',', &numValues);
 
-                if (numValues != 3) printf("WARNING: Incorrect number of format values\n");
+                if (numValues != 3) LOG("WARNING: Incorrect number of format values\n");
                 else
                 {
                     // Read values text and convert to integer values
@@ -980,24 +966,24 @@ static void ProcessCommandLine(int argc, char *argv[])
                     // Verify retrieved values are valid
                     if ((sampleRate != 44100) && (sampleRate != 22050))
                     {
-                        printf("WARNING: Sample rate not supported. Default: 44100 Hz\n");
+                        LOG("WARNING: Sample rate not supported. Default: 44100 Hz\n");
                         sampleRate = 44100;
                     }
 
                     if ((sampleSize != 8) && (sampleSize != 16) && (sampleSize != 32))
                     {
-                        printf("WARNING: Sample size not supported. Default: 16 bit\n");
+                        LOG("WARNING: Sample size not supported. Default: 16 bit\n");
                         sampleSize = 16;
                     }
 
                     if ((channels != 1) && (channels != 2))
                     {
-                        printf("WARNING: Channels number not supported. Default: 1 (mono)\n");
+                        LOG("WARNING: Channels number not supported. Default: 1 (mono)\n");
                         channels = 1;
                     }
                 }
             }
-            else printf("WARNING: Format parameters provided not valid\n");
+            else LOG("WARNING: Format parameters provided not valid\n");
         }
         else if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--play") == 0))
         {
@@ -1011,11 +997,11 @@ static void ProcessCommandLine(int argc, char *argv[])
                     strcpy(playFileName, argv[i + 1]);   // Read filename to play
                     i++;
                 }
-                else printf("WARNING: Play file format not supported\n");
+                else LOG("WARNING: Play file format not supported\n");
 
                 i++;
             }
-            else printf("WARNING: No file to play provided\n");
+            else LOG("WARNING: No file to play provided\n");
         }
     }
 
@@ -1024,9 +1010,9 @@ static void ProcessCommandLine(int argc, char *argv[])
     {
         if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");  // Set a default name for output in case not provided
 
-        printf("\nInput file:       %s", inFileName);
-        printf("\nOutput file:      %s", outFileName);
-        printf("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1)? "Mono" : "Stereo");
+        LOG("\nInput file:       %s", inFileName);
+        LOG("\nOutput file:      %s", outFileName);
+        LOG("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1)? "Mono" : "Stereo");
 
         Wave wave = { 0 };
 
@@ -1074,7 +1060,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
     if (showUsageInfo) ShowCommandLineInfo();
 }
-#endif      // VERSION_ONE: Command line
+#endif      // VERSION_ONE
 
 //--------------------------------------------------------------------------------------------
 // Load/Save/Export functions
@@ -1459,14 +1445,14 @@ static WaveParams LoadWaveParams(const char *fileName)
                 fread(&version, 1, sizeof(unsigned short), rfxFile);
                 fread(&length, 1, sizeof(unsigned short), rfxFile);
 
-                if (version != 200) printf("[%s] rFX file version not supported (%i)\n", fileName, version);
+                if (version != 200) LOG("[%s] rFX file version not supported (%i)\n", fileName, version);
                 else
                 {
-                    if (length != sizeof(WaveParams)) printf("[%s] Wrong rFX wave parameters size\n", fileName);
+                    if (length != sizeof(WaveParams)) LOG("[%s] Wrong rFX wave parameters size\n", fileName);
                     else fread(&params, 1, sizeof(WaveParams), rfxFile);   // Load wave generation parameters
                 }
             }
-            else printf("[%s] rFX file does not seem to be valid\n", fileName);
+            else LOG("[%s] rFX file does not seem to be valid\n", fileName);
 
             fclose(rfxFile);
         }
@@ -1528,7 +1514,7 @@ static WaveParams LoadWaveParams(const char *fileName)
                 fread(&params.changeAmountValue, 1, sizeof(float), sfsFile);
             }
         }
-        else printf("[%s] SFS file version not supported\n", fileName);
+        else LOG("[%s] SFS file version not supported\n", fileName);
 
         fclose(sfsFile);
     }
@@ -1906,7 +1892,7 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
     }
 }
 
-#if defined(VERSION_ONE) || defined(COMMAND_LINE_ONLY)
+#if defined(VERSION_ONE)
 // Simple time wait in milliseconds
 static void WaitTimePlayer(int ms)
 {
@@ -1935,19 +1921,19 @@ static void WaitTimePlayer(int ms)
 
             if (percent != prevPercent)
             {
-                printf("\r[");
+                LOG("\r[");
                 for (int j = 0; j < 50; j++)
                 {
-                    if (j < percent/2) printf("=");
-                    else printf(" ");
+                    if (j < percent/2) LOG("=");
+                    else LOG(" ");
                 }
-                printf("] [%02i%%]", percent);
+                LOG("] [%02i%%]", percent);
 
                 prevPercent = percent;
             }
         }
 
-        printf("\n\n");
+        LOG("\n\n");
     }
 }
 
@@ -2006,4 +1992,4 @@ static int kbhit(void)
     return 0;
 }
 #endif
-#endif      // VERSION_ONE: PlayWaveCLI()
+#endif      // VERSION_ONE

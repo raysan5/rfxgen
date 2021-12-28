@@ -199,10 +199,8 @@ void GuiWindowAbout(GuiWindowAboutState *state)
 {
     if (state->windowActive)
     {
-        // TODO: REVIEW: White rectangle should be here?
-        //DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-        state->position = (Vector2){ (float)GetScreenWidth()/2 - (float)state->windowWidth/2, (float)GetScreenHeight()/2 - (float)state->windowHeight/2 };
-        
+        // WARNING: GetScreen*() returns the window render size, not the logical original size
+        //state->position = (Vector2){ (float)GetScreenWidth()/2 - (float)state->windowWidth/2, (float)GetScreenHeight()/2 - (float)state->windowHeight/2 };
         state->windowActive = !GuiWindowBox((Rectangle){ state->position.x, state->position.y, (float)state->windowWidth, (float)state->windowHeight }, TextFormat("#191#About %s", TOOL_NAME));
 
         // Draw a background rectangle for convenience

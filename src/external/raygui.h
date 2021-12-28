@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raygui v3.0 - A simple and easy-to-use immediate-mode gui library
+*   raygui v3.1-dev - A simple and easy-to-use immediate-mode gui library
 *
 *   DESCRIPTION:
 *
@@ -184,7 +184,7 @@
 #ifndef RAYGUI_H
 #define RAYGUI_H
 
-#define RAYGUI_VERSION  "3.0"
+#define RAYGUI_VERSION  "3.1-dev"
 
 #if !defined(RAYGUI_STANDALONE)
     #include "raylib.h"
@@ -3252,8 +3252,9 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
 // https://stackoverflow.com/questions/4435450/2d-opengl-drawing-lines-that-dont-exactly-fit-pixel-raster
 Vector2 GuiGrid(Rectangle bounds, float spacing, int subdivs)
 {
+    // Grid lines alpha amount
     #if !defined(RAYGUI_GRID_ALPHA)
-        #define RAYGUI_GRID_ALPHA    0.15f           // Grid lines alpha amount
+        #define RAYGUI_GRID_ALPHA    0.15f
     #endif
 
     GuiControlState state = guiState;
