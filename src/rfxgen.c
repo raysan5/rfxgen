@@ -249,13 +249,13 @@ static char getch(void) { return getchar(); }   // Get pressed character
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+    char inFileName[512] = { 0 };       // Input file name (required in case of drag & drop over executable)
+    char outFileName[512] = { 0 };      // Output file name (required for file save/export)
+
 #if !defined(_DEBUG)
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
 #if defined(VERSION_ONE)
-    char inFileName[512] = { 0 };       // Input file name (required in case of drag & drop over executable)
-    char outFileName[512] = { 0 };      // Output file name (required for file save/export)
-
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
     if (argc > 1)
