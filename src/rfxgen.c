@@ -849,7 +849,7 @@ static void ShowCommandLineInfo(void)
     printf("\n//////////////////////////////////////////////////////////////////////////////////\n");
     printf("//                                                                              //\n");
     printf("// %s v%s - %s                   //\n", toolName, toolVersion, toolDescription);
-    printf("// powered by raylib v%s and raygui v%s                                   //\n", RAYLIB_VERSION, RAYGUI_VERSION);
+    printf("// powered by raylib v%s and raygui v%s                               //\n", RAYLIB_VERSION, RAYGUI_VERSION);
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
     printf("// Copyright (c) 2014-2022 raylib technologies (@raylibtech)                    //\n");
