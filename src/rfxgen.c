@@ -488,7 +488,7 @@ int main(int argc, char *argv[])
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
             // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
-            if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && !GuiIsLocked())))
+            if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
             {
                 UnloadWave(wave[slotActive]);
                 UnloadSound(sound[slotActive]);
@@ -496,7 +496,7 @@ int main(int argc, char *argv[])
                 wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
                 sound[slotActive] = LoadSoundFromWave(wave[slotActive]);    // Reload sound from new wave
 
-                if (regenerate || playOnChangeChecked) PlaySound(sound[slotActive]);
+                if ((regenerate || playOnChangeChecked) && !GuiIsLocked())  PlaySound(sound[slotActive]);
 
                 regenerate = false;
             }
@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (windowExitActive)
             {
-                int result = GuiMessageBox((Rectangle){ (float)GetScreenWidth()/2 - 125, (float)GetScreenHeight()/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+                int result = GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
                 if ((result == 0) || (result == 2)) windowExitActive = false;
                 else if (result == 1) exitWindow = true;

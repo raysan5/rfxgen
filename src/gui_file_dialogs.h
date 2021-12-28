@@ -117,7 +117,6 @@ int GuiFileDialog(int dialogType, const char *title, char *fileName, const char 
 
 #if defined(CUSTOM_MODAL_DIALOGS)
     static char tempFileName[256] = { 0 };
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
 
     switch (dialogType)
     {
