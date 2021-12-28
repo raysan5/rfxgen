@@ -1958,7 +1958,7 @@ static void PlayWaveCLI(Wave wave)
     printf("Playing sound [%.2f sec.]. Press ENTER to finish.\n", waveTimeMs/1000.0f);
 
     PlaySound(fx);                      // Play sound
-    WaitTime(waveTimeMs);               // Wait while audio is playing
+    WaitTimePlayer(waveTimeMs);         // Wait while audio is playing
     UnloadSound(fx);                    // Unload sound data
     CloseAudioDevice();                 // Close audio device
 }
