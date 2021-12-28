@@ -213,7 +213,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs
-        LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)
+        #LDFLAGS += -L$(RAYLIB_RELEASE_PATH)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -241,6 +241,11 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # Add resources building if required
     ifeq ($(BUILD_WEB_RESOURCES),TRUE)
         LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
+    endif
+    
+    # Add debug mode flags if required
+    ifeq ($(BUILD_MODE),DEBUG)
+        LDFLAGS += -s ASSERTIONS=1 --profiling
     endif
 
     # Define a custom shell .html and output extension
