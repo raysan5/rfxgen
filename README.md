@@ -40,8 +40,12 @@ Sounds could be saved as `.rfx` (sound generation parameters) and also exported 
 
 ## rFXGen License
 
-`rFXGen` source code is distributed as **open source**, licensed under an unmodified [zlib/libpng license](LICENSE). `rFXGen` binaries are completely free for anyone willing to compile it directly from source.
+`rFXGen` source code is distributed as **open source**, licensed under an unmodified [zlib/libpng license](LICENSE). 
 
-`rFXGen Standalone` desktop tool is distributed as freeware. In any case, consider some donation to help the author keep working on software for games development.
+`rFXGen` binaries are completely free for anyone willing to compile it directly from source.
+
+`rFXGen Standalone` desktop tool is distributed as freeware. 
+
+In any case, consider some donation to help the author keep working on software for games development.
 
 *Copyright (c) 2015-2021 raylib technologies ([@raylibtech](https://twitter.com/raylibtech))*
