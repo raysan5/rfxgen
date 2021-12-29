@@ -208,8 +208,8 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
         DrawTechIcon((int)state->position.x + 10, (int)state->position.y + 35, 64, TOOL_SHORT_NAME, 20, true, GetColor(TOOL_LOGO_COLOR));
         
-		bool singleLine = true;
-		GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 55 : 35), 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
+        bool singleLine = true;
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 55 : 35), 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 78 : 60), 245, 20 }, TOOL_DESCRIPTION);
 
         GuiLine((Rectangle){ state->position.x, state->position.y + 100, (float)state->windowWidth, 20 }, NULL);

@@ -391,7 +391,7 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!exitWindow)    // Detect window close button
     {
-        if (WindowShouldClose()) exitWindow = true;
+        if (WindowShouldClose()) windowExitActive = true;
         
         // Dropped files logic
         //----------------------------------------------------------------------------------
@@ -447,7 +447,6 @@ int main(int argc, char *argv[])
 
         // Basic program flow logic
         //----------------------------------------------------------------------------------
-
         // Check for changed gui values
         if (volumeValue != prevVolumeValue)
         {
