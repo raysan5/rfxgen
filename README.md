@@ -17,6 +17,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
  - Export generated waves with configurable sample-rate and bits-per-sample
  - Export to `.wav`, `.raw` data or `.h` code file (byte array)
  - Five unique GUI styles: **Light**, **Jungle**, **Candy**, **Lavanda** and **Cyber**
+ - **Completely free and open-source**
  
 ### rFXGen Standalone Additional Features
 
@@ -26,7 +27,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
 
 ## rFXGen Screenshot
 
-![rFXGen light interface](screenshots/rfxgen_v200_light_shot01.png)
+![rFXGen light interface](screenshots/rfxgen_v250_cyber_shot01.png)
  
 ## rFXGen Usage
 
