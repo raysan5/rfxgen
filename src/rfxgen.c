@@ -683,7 +683,6 @@ int main(int argc, char *argv[])
 
             // GUI: About Window
             //--------------------------------------------------------------------------------
-            windowAboutState.position = (Vector2){ screenWidth/2 - (float)windowAboutState.windowWidth/2, screenHeight/2 - (float)windowAboutState.windowHeight/2 };
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
 
