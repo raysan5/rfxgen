@@ -527,6 +527,9 @@ int main(int argc, char *argv[])
                 SetMouseScale(1.0f, 1.0f);
             }
         }
+        
+        // WARNING: Some windows should lock the main screen controls when shown
+        if (windowAboutState.windowActive || windowExitActive || showLoadFileDialog || showSaveFileDialog || showExportFileDialog) GuiLock();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -540,9 +543,6 @@ int main(int argc, char *argv[])
         // Render all screen to texture (for scaling)
         BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-
-            // Some windows should lockall the main tool controls when shown
-            if (windowAboutState.windowActive || windowExitActive || showLoadFileDialog || showSaveFileDialog || showExportFileDialog) GuiLock();
 
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
