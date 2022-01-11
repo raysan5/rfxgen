@@ -23,6 +23,8 @@
 
 .PHONY: all clean
 
+# Define required environment variables
+#------------------------------------------------------------------------------------------------
 # Define required variables
 PROJECT_NAME          ?= project_name
 PROJECT_VERSION       ?= 1.0
@@ -52,39 +54,39 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
     # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
-        PLATFORM_OS=WINDOWS
+        PLATFORM_OS = WINDOWS
     else
-        UNAMEOS=$(shell uname)
+        UNAMEOS = $(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=LINUX
+            PLATFORM_OS = LINUX
         endif
         ifeq ($(UNAMEOS),FreeBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),OpenBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),NetBSD)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),DragonFly)
-            PLATFORM_OS=BSD
+            PLATFORM_OS = BSD
         endif
         ifeq ($(UNAMEOS),Darwin)
-            PLATFORM_OS=OSX
+            PLATFORM_OS = OSX
         endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS=$(shell uname)
+    UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS=LINUX
+        PLATFORM_OS = LINUX
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-    UNAMEOS=$(shell uname)
+    UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS=LINUX
+        PLATFORM_OS = LINUX
     endif
 endif
 
@@ -98,8 +100,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
 endif
 
-# Define default C compiler: gcc
-# NOTE: define g++ compiler if using C++
+# Define default C compiler: CC
+#------------------------------------------------------------------------------------------------
 CC = gcc
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -126,7 +128,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     CC = emcc
 endif
 
-# Define default make program
+# Define default make program: MAKE
+#------------------------------------------------------------------------------------------------
 MAKE ?= make
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -135,7 +138,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-# Define compiler flags:
+# Define compiler flags: CFLAGS
+#------------------------------------------------------------------------------------------------
 #  -O1                  defines optimization level
 #  -g                   include debug information on compilation
 #  -s                   strip unnecessary data from build
@@ -168,7 +172,8 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
 
-# Define include paths for required headers
+# Define include paths for required headers: INCLUDE_PATHS
+#------------------------------------------------------------------------------------------------
 # NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS += -I. -Iexternal -I$(RAYLIB_INCLUDE_PATH)
 
@@ -190,7 +195,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-# Define library paths containing required libs
+# Define library paths containing required libs: LDFLAGS
+#------------------------------------------------------------------------------------------------
 LDFLAGS = -L. -L$(RAYLIB_LIB_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -253,8 +259,9 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
 endif
 
-# Define any libraries required on linking
-# if you want to link libraries (libname.so or libname.a), use the -lname
+# Define libraries required on linking: LDLIBS
+# NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
+#------------------------------------------------------------------------------------------------
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
@@ -266,7 +273,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+        LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
 
         # On X11 requires also below libraries
         LDLIBS += -lX11
@@ -277,7 +284,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS = -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
         endif
-
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             LDLIBS += -lc
@@ -312,7 +318,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDLIBS = $(RAYLIB_LIB_PATH)/libraylib.a
 endif
 
-# Define all source files required
+# Define source code files required
+#------------------------------------------------------------------------------------------------
 PROJECT_SOURCE_FILES ?= \
     project_game.c \
     screen_logo.c \
@@ -324,6 +331,8 @@ PROJECT_SOURCE_FILES ?= \
 # Define all object files from source files
 OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 
+# Define processes to execute
+#------------------------------------------------------------------------------------------------
 # Default target entry
 # NOTE: We call this Makefile target or Makefile.Android target
 all:
