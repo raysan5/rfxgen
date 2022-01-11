@@ -25,7 +25,10 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define required variables
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_WEB
+PLATFORM              ?= PLATFORM_DESKTOP
+
+# Define project variables
 PROJECT_NAME          ?= project_name
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= .
@@ -33,11 +36,6 @@ PROJECT_BUILD_PATH    ?= .
 RAYLIB_PATH           ?= C:/GitHub/raylib
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_PATH)/src
 RAYLIB_LIB_PATH       ?= $(RAYLIB_PATH)/src
-
-# Define default options
-
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_WEB
-PLATFORM              ?= PLATFORM_DESKTOP
 
 # Build mode for project: DEBUG or RELEASE
 BUILD_MODE            ?= RELEASE
