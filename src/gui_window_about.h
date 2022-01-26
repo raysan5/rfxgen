@@ -124,7 +124,7 @@ void GuiWindowAbout(GuiWindowAboutState *state);
     #define TOOL_RELEASE_DATE   "Dec.2021"
 #endif
 #if !defined(TOOL_LOGO_COLOR)
-    #define TOOL_LOGO_COLOR       0x000000ff
+    #define TOOL_LOGO_COLOR      0x000000ff
 #endif
 
 //----------------------------------------------------------------------------------
@@ -213,14 +213,14 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 78 : 60), 245, 20 }, TOOL_DESCRIPTION);
 
         GuiLine((Rectangle){ state->position.x, state->position.y + 100, (float)state->windowWidth, 20 }, NULL);
-        GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 113, 126, 25 }, lblUsedLibsText);
+        GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 112, 126, 24 }, lblUsedLibsText);
 
         DrawTechIcon((int)state->position.x + 10, (int)state->position.y + 135, 64, "raylib", 10, false, BLACK);
         DrawTechIcon((int)state->position.x + 80, (int)state->position.y + 135, 64, "raygui", 10, false, GRAY);
 
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 135, 80, 15 }, linkraylibText)) { OpenURL("https://www.raylib.com/"); }
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 160, 150, 15 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 180, 150, 15 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 135, 80, 16 }, linkraylibText)) { OpenURL("https://www.raylib.com/"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 160, 150, 16 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 180, 150, 16 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
         
         DrawTextEx(GetFontDefault(), "miniAUDIO", (Vector2){ state->position.x + 12, state->position.y + 205 }, 30, 2, GetColor(0x003800ff));
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 210, 150, 15 }, "github.com/dr-soft/miniaudio")) { OpenURL("https://github.com/dr-soft/miniaudio"); }
@@ -228,13 +228,14 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiLine((Rectangle){ state->position.x, state->position.y + 200 + 30, (float)state->windowWidth, 20 }, NULL);
 
         GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 220 + 28, 289, 20 }, lblCopyrightText);
-        GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 250 + 25, 65, 15 }, lblMoreInfoText);
+        GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 250 + 25, 65, 16 }, lblMoreInfoText);
 
-        if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 250 + 25, 165, 15 }, TextFormat("www.raylibtech.com/%s", TextToLower(TOOL_NAME)))) { OpenURL("https://www.raylibtech.com/"); }
-        if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 270 + 25, 165, 15 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
-        if (GuiLabelButton((Rectangle){ state->position.x + 90 + MeasureTextEx(GuiGetFont(), linkMailText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x + 4, state->position.y + 270 + 25, 165, 15 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
+        float linkMailTextWidth = MeasureTextEx(GuiGetFont(), linkMailText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x;
+        if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 250 + 25, 165, 16 }, TextFormat("www.raylibtech.com/%s", TextToLower(TOOL_NAME)))) { OpenURL("https://www.raylibtech.com/"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 90, state->position.y + 270 + 25, linkMailTextWidth, 16 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
+        if (GuiLabelButton((Rectangle){ state->position.x + 90 + linkMailTextWidth + 4, state->position.y + 270 + 25, MeasureTextEx(GuiGetFont(), linkraylibtechText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x, 16 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
 
-        GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 270 + 25, 65, 15 }, lblSupportText);
+        GuiLabel((Rectangle){ state->position.x + 10, state->position.y + 270 + 25, 65, 16 }, lblSupportText);
         GuiLine((Rectangle){ state->position.x, state->position.y + 285 + 25, (float)state->windowWidth, 20 }, NULL);
         GuiSetStyle(LABEL, TEXT_ALIGNMENT, labelTextAlign);
 
