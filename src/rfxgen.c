@@ -1430,7 +1430,7 @@ static WaveParams LoadWaveParams(const char *fileName)
         if (rfxFile != NULL)
         {
             // Read .rfx file header
-            unsigned char signature[5];
+            unsigned char signature[5] = { 0 };
             fread(signature, 4, sizeof(unsigned char), rfxFile);
 
             // Check for valid .rfx file (FormatCC)
@@ -1439,7 +1439,8 @@ static WaveParams LoadWaveParams(const char *fileName)
                 (signature[2] == 'X') &&
                 (signature[3] == ' '))
             {
-                unsigned short version, length;
+                unsigned short version = 0
+                unsigned short length = 0;
                 fread(&version, 1, sizeof(unsigned short), rfxFile);
                 fread(&length, 1, sizeof(unsigned short), rfxFile);
 
@@ -1965,9 +1966,10 @@ static void PlayWaveCLI(Wave wave)
 // Check if a key has been pressed
 static int kbhit(void)
 {
-    struct termios oldt, newt;
-    int ch;
-    int oldf;
+    struct termios oldt = { 0 }
+    struct termios newt = { 0 };
+    int ch = 0;
+    int oldf = 0;
 
     tcgetattr(STDIN_FILENO, &oldt);
     newt = oldt;
