@@ -548,7 +548,7 @@ int main(int argc, char *argv[])
             // Draw tool name and version, right aligned
             int prevTextAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
             int prevTextPadding = GuiGetStyle(LABEL, TEXT_PADDING);
-            GuiSetStyle(LABEL, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_RIGHT);
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
             GuiSetStyle(LABEL, TEXT_PADDING, 0);
             DrawText(TextFormat("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
             GuiLabel((Rectangle){ 84, 13, 30, 10 }, TextFormat("v%s", toolVersion));
@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
             // Draw left buttons
             prevTextPadding = GuiGetStyle(BUTTON, TEXT_PADDING);
             GuiSetStyle(BUTTON, TEXT_PADDING, 3);
-            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
             if (GuiButton((Rectangle){ 8, 42, 106, 24 }, "#146#Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 70, 106, 24 }, "#145#Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 98, 106, 24 }, "#147#Explosion")) { params[slotActive] = GenExplosion(); regenerate = true; }
@@ -567,14 +567,14 @@ int main(int argc, char *argv[])
             if (GuiButton((Rectangle){ 8, 182, 106, 24 }, "#150#Jump")) { params[slotActive] = GenJump(); regenerate = true; }
             if (GuiButton((Rectangle){ 8, 210, 106, 24 }, "#144#Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
             GuiSetStyle(BUTTON, TEXT_PADDING, prevTextPadding);
-            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
             GuiLine((Rectangle){ 8, 234, 106, 12 }, NULL);
 
             GuiSetStyle(TOGGLE, TEXT_PADDING, 3);
-            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
             params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 106, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
-            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             GuiSetStyle(TOGGLE, TEXT_PADDING, 0);
 
             GuiLine((Rectangle){ 8, 356, 108, 12 }, NULL);
@@ -656,11 +656,11 @@ int main(int argc, char *argv[])
             // Draw status bar
             int textPadding = GuiGetStyle(STATUSBAR, TEXT_PADDING);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, 0);
-            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
+            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, TextFormat("Total Frames: %i", wave[slotActive].frameCount));
             GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, TextFormat("Duration: %i ms", wave[slotActive].frameCount*1000/(wave[slotActive].sampleRate)));
             GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, TextFormat("Size: %i bytes", wave[slotActive].frameCount*wave[slotActive].channels*wavSampleSize/8));
-            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_LEFT);
+            GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, textPadding);
             //----------------------------------------------------------------------------------
 
