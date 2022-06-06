@@ -12,7 +12,7 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       2.5  (28-Dec-2021) Updated to raylib 4.1-dev and raygui 3.1
+*       2.5  (28-Dec-2021) Updated to raylib 4.2-dev and raygui 3.1
 *                          Fixed issue with 32bit float WAV export
 *                          Fixed issue with WaveMutate() convergence
 *                          Removed tool references to ZERO or ONE
@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
         if (IsFileDropped())
         {
             int dropsCount = 0;
-            char **droppedFiles = GetDroppedFiles(&dropsCount);
+            char **droppedFiles = LoadDroppedFiles(&dropsCount);
 
             // Support loading .rfx or .sfs files (wave parameters)
             if (IsFileExtension(droppedFiles[0], ".rfx") ||
@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
             }
             else if (IsFileExtension(droppedFiles[0], ".rgs")) GuiLoadStyle(droppedFiles[0]);
 
-            ClearDroppedFiles();
+            UnloadDroppedFiles();
         }
         //----------------------------------------------------------------------------------
 
