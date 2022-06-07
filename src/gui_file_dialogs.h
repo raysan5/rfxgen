@@ -42,8 +42,10 @@
 //----------------------------------------------------------------------------------
 // Dialog type
 typedef enum DialogType {
-    DIALOG_OPEN = 0,
-    DIALOG_SAVE,
+    DIALOG_OPEN_FILE = 0,
+    DIALOG_OPEN_FILE_MULTI,
+    DIALOG_OPEN_DIRECTORY,
+    DIALOG_SAVE_FILE,
     DIALOG_MESSAGE,
     DIALOG_TEXTINPUT,
     DIALOG_OTHER
@@ -116,19 +118,16 @@ int GuiFileDialog(int dialogType, const char *title, char *fileName, const char 
     int result = -1;
 
 #if defined(CUSTOM_MODAL_DIALOGS)
-    static char tempFileName[256] = { 0 };
-
     switch (dialogType)
     {
-        case DIALOG_OPEN: /* TODO: Load file modal dialog */ break;
-        case DIALOG_SAVE: /* TODO: Load file modal dialog */ break;
-        case DIALOG_MESSAGE: result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(ICON_FILE_OPEN, title), message, filters); break;
-        case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 120, GetScreenHeight()/2 - 60, 240, 120 }, GuiIconText(ICON_FILE_SAVE, title), message, filters, tempFileName); break;
+        case DIALOG_OPEN_FILE: /* TODO: Load file modal dialog */ break;
+        case DIALOG_OPEN_FILE_MULTI: /* TODO: Load multiple files modal dialog */ break;
+        case DIALOG_OPEN_DIRECTORY: /* TODO: Load directory modal dialog */ break;
+        case DIALOG_SAVE_FILE: /* TODO: Load file modal dialog */ break;
+        case DIALOG_MESSAGE: result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 160, GetScreenHeight()/2 - 120, 320, 120 }, GuiIconText(ICON_FILE_OPEN, title), message, filters); break;
+        case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 160, GetScreenHeight()/2 - 120, 320, 120 }, GuiIconText(ICON_FILE_SAVE, title), message, filters, fileName, 512, NULL); break;
         default: break;
     }
-    
-    if ((result == 1) && (tempFileName[0] != '\0')) strcpy(fileName, tempFileName);
-    
 #else   // Use native OS dialogs (tinyfiledialogs)
 
     const char *tempFileName = NULL;
@@ -137,8 +136,10 @@ int GuiFileDialog(int dialogType, const char *title, char *fileName, const char 
     
     switch (dialogType)
     {
-        case DIALOG_OPEN: tempFileName = tinyfd_openFileDialog(title, fileName, filterCount, filterSplit, message, 0); break;
-        case DIALOG_SAVE: tempFileName = tinyfd_saveFileDialog(title, fileName, filterCount, filterSplit, message); break;
+        case DIALOG_OPEN_FILE: tempFileName = tinyfd_openFileDialog(title, fileName, filterCount, filterSplit, message, 0); break;
+        case DIALOG_OPEN_FILE_MULTI: tempFileName = tinyfd_openFileDialog(title, fileName, filterCount, filterSplit, message, 1); break;
+        case DIALOG_OPEN_DIRECTORY: tempFileName = tinyfd_selectFolderDialog(title, fileName); break;
+        case DIALOG_SAVE_FILE: tempFileName = tinyfd_saveFileDialog(title, fileName, filterCount, filterSplit, message); break;
         case DIALOG_MESSAGE: result = tinyfd_messageBox(title, message, "ok", "info", 0); break;
         case DIALOG_TEXTINPUT: tempFileName = tinyfd_inputBox(title, message, ""); break;
         default: break;
