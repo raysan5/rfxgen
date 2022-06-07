@@ -315,7 +315,7 @@
 typedef struct GuiStyleProp {
     unsigned short controlId;
     unsigned short propertyId;
-    int propertyValue;
+    unsigned int propertyValue;
 } GuiStyleProp;
 
 // Gui control state
@@ -378,6 +378,7 @@ typedef enum {
 
 // Gui extended properties depend on control
 // NOTE: RAYGUI_MAX_PROPS_EXTENDED properties (by default 8 properties)
+//----------------------------------------------------------------------------------
 
 // DEFAULT extended properties
 // NOTE: Those properties are common to all controls or global
@@ -850,15 +851,16 @@ typedef enum {
 
 #if !defined(RAYGUI_NO_ICONS) && !defined(RAYGUI_CUSTOM_ICONS)
 
-// Embedded raygui icons, no external file provided
-#define RAYGUI_ICON_SIZE               16          // Size of icons (squared)
+// Embedded icons, no external file provided
+#define RAYGUI_ICON_SIZE               16          // Size of icons in pixels (squared)
 #define RAYGUI_ICON_MAX_ICONS         256          // Maximum number of icons
 #define RAYGUI_ICON_MAX_NAME_LENGTH    32          // Maximum length of icon name id
 
 // Icons data is defined by bit array (every bit represents one pixel)
-// Those arrays are stored as unsigned int data arrays, so every array
-// element defines 32 pixels (bits) of information
-// Number of elemens depend on RAYGUI_ICON_SIZE (by default 16x16 pixels)
+// Those arrays are stored as unsigned int data arrays, so,
+// every array element defines 32 pixels (bits) of information
+// One icon is defined by 8 int, (8 int * 32 bit = 256 bit = 16*16 pixels)
+// NOTE: Number of elemens depend on RAYGUI_ICON_SIZE (by default 16x16 pixels)
 #define RAYGUI_ICON_DATA_ELEMENTS   (RAYGUI_ICON_SIZE*RAYGUI_ICON_SIZE/32)
 
 //----------------------------------------------------------------------------------
@@ -1150,13 +1152,13 @@ typedef enum { BORDER = 0, BASE, TEXT, OTHER } GuiPropertyElement;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static GuiState guiState = STATE_NORMAL;
+static GuiState guiState = STATE_NORMAL;    // Gui global state, if !STATE_NORMAL, forces defined state
 
-static Font guiFont = { 0 };            // Gui current font (WARNING: highly coupled to raylib)
-static bool guiLocked = false;          // Gui lock state (no inputs processed)
-static float guiAlpha = 1.0f;           // Gui element transpacency on drawing
+static Font guiFont = { 0 };                // Gui current font (WARNING: highly coupled to raylib)
+static bool guiLocked = false;              // Gui lock state (no inputs processed)
+static float guiAlpha = 1.0f;               // Gui element transpacency on drawing
 
-static unsigned int guiIconScale = 1;   // Gui icon default scale (if icons enabled)
+static unsigned int guiIconScale = 1;       // Gui icon default scale (if icons enabled)
 
 //----------------------------------------------------------------------------------
 // Style data array for all gui style properties (allocated on data segment by default)
@@ -1172,7 +1174,7 @@ static unsigned int guiIconScale = 1;   // Gui icon default scale (if icons enab
 //----------------------------------------------------------------------------------
 static unsigned int guiStyle[RAYGUI_MAX_CONTROLS*(RAYGUI_MAX_PROPS_BASE + RAYGUI_MAX_PROPS_EXTENDED)] = { 0 };
 
-static bool guiStyleLoaded = false;     // Style loaded flag for lazy style initialization
+static bool guiStyleLoaded = false;         // Style loaded flag for lazy style initialization
 
 //----------------------------------------------------------------------------------
 // Standalone Mode Functions Declaration
@@ -1401,7 +1403,7 @@ void GuiGroupBox(Rectangle bounds, const char *text)
     GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + bounds.height - 1, bounds.width, RAYGUI_GROUPBOX_LINE_THICK }, 0, BLANK, Fade(GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED : LINE_COLOR)), guiAlpha));
     GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + bounds.width - 1, bounds.y, RAYGUI_GROUPBOX_LINE_THICK, bounds.height }, 0, BLANK, Fade(GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED : LINE_COLOR)), guiAlpha));
 
-    GuiLine(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y - GuiGetStyle(DEFAULT, TEXT_SIZE)/2, bounds.width, GuiGetStyle(DEFAULT, TEXT_SIZE) }, text);
+    GuiLine(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y - GuiGetStyle(DEFAULT, TEXT_SIZE)/2, bounds.width, (float)GuiGetStyle(DEFAULT, TEXT_SIZE) }, text);
     //--------------------------------------------------------------------
 }
 
@@ -2021,17 +2023,16 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
 
             int key = GetCharPressed();      // Returns codepoint as Unicode
             int keyCount = (int)strlen(text);
+            int byteSize = 0;
+            const char *textUTF8 = CodepointToUTF8(key, &byteSize);
 
             // Only allow keys in range [32..125]
-            if (keyCount < (textSize - 1))
+            if ((keyCount + byteSize) < textSize)
             {
                 float maxWidth = (bounds.width - (GuiGetStyle(TEXTBOX, TEXT_INNER_PADDING)*2));
 
                 if ((GetTextWidth(text) < (maxWidth - GuiGetStyle(DEFAULT, TEXT_SIZE))) && (key >= 32))
                 {
-                    int byteSize = 0;
-                    const char *textUTF8 = CodepointToUTF8(key, &byteSize);
-
                     for (int i = 0; i < byteSize; i++)
                     {
                         text[keyCount] = textUTF8[i];
@@ -2047,7 +2048,7 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
             {
                 if (IsKeyPressed(KEY_BACKSPACE))
                 {
-                    keyCount--;
+                    while ((keyCount > 0) && ((text[--keyCount] & 0xc0) == 0x80));
                     text[keyCount] = '\0';
                 }
             }
@@ -3356,13 +3357,13 @@ void GuiLoadStyle(const char *fileName)
         {
             short controlId = 0;
             short propertyId = 0;
-            int propertyValue = 0;
+            unsigned int propertyValue = 0;
 
             for (int i = 0; i < propertyCount; i++)
             {
                 fread(&controlId, 1, sizeof(short), rgsFile);
                 fread(&propertyId, 1, sizeof(short), rgsFile);
-                fread(&propertyValue, 1, sizeof(int), rgsFile);
+                fread(&propertyValue, 1, sizeof(unsigned int), rgsFile);
 
                 if (controlId == 0) // DEFAULT control
                 {
@@ -3547,20 +3548,27 @@ const char *GuiIconText(int iconId, const char *text)
     return NULL;
 #else
     static char buffer[1024] = { 0 };
-    memset(buffer, 0, 1024);
-
-    sprintf(buffer, "#%03i#", iconId);
+    static char iconBuffer[6] = { 0 };
 
     if (text != NULL)
     {
+        memset(buffer, 0, 1024);
+        sprintf(buffer, "#%03i#", iconId);
+        
         for (int i = 5; i < 1024; i++)
         {
             buffer[i] = text[i - 5];
             if (text[i - 5] == '\0') break;
         }
+    
+        return buffer;
     }
-
-    return buffer;
+    else 
+    {
+        sprintf(iconBuffer, "#%03i#", iconId & 0x1ff);
+        
+        return iconBuffer;
+    }
 #endif
 }
 
@@ -3724,6 +3732,10 @@ bool GuiCheckIconPixel(int iconId, int x, int y)
 // Gui get text width considering icon
 static int GetTextWidth(const char *text)
 {
+    #if !defined(ICON_TEXT_PADDING)
+        #define ICON_TEXT_PADDING   4
+    #endif
+
     Vector2 size = { 0 };
     int textIconOffset = 0;
 
@@ -3740,9 +3752,12 @@ static int GetTextWidth(const char *text)
                 }
             }
         }
-
-        size = MeasureTextEx(guiFont, text + textIconOffset, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
-        if (textIconOffset > 0) size.x += (RAYGUI_ICON_SIZE - 4);   //ICON_TEXT_PADDING
+        
+        // Make sure guiFont is set, GuiGetStyle() initializes it lazynessly
+        float fontSize = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
+        
+        size = MeasureTextEx(guiFont, text + textIconOffset, fontSize, (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
+        if (textIconOffset > 0) size.x += (RAYGUI_ICON_SIZE - ICON_TEXT_PADDING);
     }
 
     return (int)size.x;
@@ -3834,7 +3849,7 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
         // If text requires an icon, add size to measure
         if (iconId >= 0)
         {
-            textSize.x += RAYGUI_ICON_SIZE;
+            textSize.x += RAYGUI_ICON_SIZE*guiIconScale;
 
             // WARNING: If only icon provided, text could be pointing to EOF character: '\0'
             if ((text != NULL) && (text[0] != '\0')) textSize.x += ICON_TEXT_PADDING;
@@ -3873,8 +3888,8 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
         if (iconId >= 0)
         {
             // NOTE: We consider icon height, probably different than text size
-            GuiDrawIcon(iconId, (int)position.x, (int)(bounds.y + bounds.height/2 - RAYGUI_ICON_SIZE/2 + TEXT_VALIGN_PIXEL_OFFSET(bounds.height)), guiIconScale, tint);
-            position.x += (RAYGUI_ICON_SIZE + ICON_TEXT_PADDING);
+            GuiDrawIcon(iconId, (int)position.x, (int)(bounds.y + bounds.height/2 - RAYGUI_ICON_SIZE*guiIconScale/2 + TEXT_VALIGN_PIXEL_OFFSET(bounds.height)), guiIconScale, tint);
+            position.x += (RAYGUI_ICON_SIZE*guiIconScale + ICON_TEXT_PADDING);
         }
 #endif
         DrawTextEx(guiFont, text, position, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING), tint);
