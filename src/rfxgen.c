@@ -397,21 +397,20 @@ int main(int argc, char *argv[])
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
-            int dropsCount = 0;
-            char **droppedFiles = LoadDroppedFiles(&dropsCount);
+            FilePathList droppedFiles = LoadDroppedFiles();
 
             // Support loading .rfx or .sfs files (wave parameters)
-            if (IsFileExtension(droppedFiles[0], ".rfx") ||
-                IsFileExtension(droppedFiles[0], ".sfs"))
+            if (IsFileExtension(droppedFiles.paths[0], ".rfx") ||
+                IsFileExtension(droppedFiles.paths[0], ".sfs"))
             {
-                params[slotActive] = LoadWaveParams(droppedFiles[0]);
+                params[slotActive] = LoadWaveParams(droppedFiles.paths[0]);
                 regenerate = true;
 
-                SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles[0])));
+                SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles.paths[0])));
             }
-            else if (IsFileExtension(droppedFiles[0], ".rgs")) GuiLoadStyle(droppedFiles[0]);
+            else if (IsFileExtension(droppedFiles.paths[0], ".rgs")) GuiLoadStyle(droppedFiles.paths[0]);
 
-            UnloadDroppedFiles();
+            UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------
 
@@ -703,7 +702,7 @@ int main(int argc, char *argv[])
 #if defined(CUSTOM_MODAL_DIALOGS)
                 int result = GuiFileDialog(DIALOG_MESSAGE, "Load sound file ...", inFileName, "Ok", "Just drag and drop your .rfx sound file!");
 #else
-                int result = GuiFileDialog(DIALOG_OPEN, "Load sound parameters file...", inFileName, "*.rfx;*.sfs", "Sound Param Files (*.rfx, *.sfs)");
+                int result = GuiFileDialog(DIALOG_OPEN_FILE, "Load sound parameters file...", inFileName, "*.rfx;*.sfs", "Sound Param Files (*.rfx, *.sfs)");
 #endif
                 if (result == 1)
                 {
@@ -725,7 +724,7 @@ int main(int argc, char *argv[])
 #if defined(CUSTOM_MODAL_DIALOGS)
                 int result = GuiFileDialog(DIALOG_TEXTINPUT, "Save sound file as...", outFileName, "Ok;Cancel", NULL);
 #else
-                int result = GuiFileDialog(DIALOG_SAVE, "Save sound parameters file...", outFileName, "*.rfx", "Sound Param Files (*.rfx)");
+                int result = GuiFileDialog(DIALOG_SAVE_FILE, "Save sound parameters file...", outFileName, "*.rfx", "Sound Param Files (*.rfx)");
 #endif
                 if (result == 1)
                 {
@@ -760,7 +759,7 @@ int main(int argc, char *argv[])
 #if defined(CUSTOM_MODAL_DIALOGS)
                 int result = GuiFileDialog(DIALOG_TEXTINPUT, "Export wave file...", outFileName, "Ok;Cancel", NULL);
 #else
-                int result = GuiFileDialog(DIALOG_SAVE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
+                int result = GuiFileDialog(DIALOG_SAVE_FILE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
 #endif
                 if (result == 1)
                 {
@@ -1439,7 +1438,7 @@ static WaveParams LoadWaveParams(const char *fileName)
                 (signature[2] == 'X') &&
                 (signature[3] == ' '))
             {
-                unsigned short version = 0
+                unsigned short version = 0;
                 unsigned short length = 0;
                 fread(&version, 1, sizeof(unsigned short), rfxFile);
                 fread(&length, 1, sizeof(unsigned short), rfxFile);
