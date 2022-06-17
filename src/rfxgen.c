@@ -427,6 +427,12 @@ int main(int argc, char *argv[])
         // Show dialog: export wave (.wav, .raw, .h)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) showExportFileDialog = true;
 
+        // Select current sound slot
+        if (IsKeyPressed(KEY_ONE)) slotActive = 0;
+        if (IsKeyPressed(KEY_TWO)) slotActive = 1;
+        if (IsKeyPressed(KEY_THREE)) slotActive = 2;
+        if (IsKeyPressed(KEY_FOUR)) slotActive = 3;
+
         // Toggle window about
         if (IsKeyPressed(KEY_F1)) windowAboutState.windowActive = !windowAboutState.windowActive;
 
