@@ -787,7 +787,7 @@ int main(int argc, char *argv[])
 
                         if (rawFile != NULL)
                         {
-                            fwrite(wave[slotActive].data, 1, wave[slotActive].frameCount*wave[slotActive].channels*wave[slotActive].sampleSize/8, rawFile);  // Write wave data
+                            fwrite(cwave.data, 1, cwave.frameCount*cwave.channels*cwave.sampleSize/8, rawFile);  // Write wave data
                             fclose(rawFile);
                         }
                     }
