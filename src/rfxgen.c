@@ -1,17 +1,21 @@
 /*******************************************************************************************
 *
-*   rFXGen v2.5 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v3.0 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
-*
-*   #define VERSION_ONE
-*       Enable command-line usage and PRO features for the tool
 *
 *   #define CUSTOM_MODAL_DIALOGS
 *       Use custom raygui generated modal dialogs instead of native OS ones
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
+*       3.0  (30-Sep-2022) Updated to raylib 4.2 and raygui 3.2
+*                          UI redesigned to follow raylibtech UI conventions
+*                          Added help window with keboard shortcuts info
+*                          
+*                          Added main toolbar to access File/Tools/Visual options
+*                          Fixed issues when exporting wave to code file
+*                          Added a new gui style: terminal
 *       2.5  (28-Dec-2021) Updated to raylib 4.2-dev and raygui 3.1
 *                          Fixed issue with 32bit float WAV export
 *                          Fixed issue with WaveMutate() convergence
@@ -40,8 +44,8 @@
 *       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 4.0              - Windowing/input management and drawing
-*       raygui 3.1              - Immediate-mode GUI controls with custom styling and icons
+*       raylib 4.2              - Windowing/input management and drawing
+*       raygui 3.2              - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   COMPILATION (Windows - MinGW):
@@ -81,9 +85,9 @@
 
 #define TOOL_NAME               "rFXGen"
 #define TOOL_SHORT_NAME         "rFX"
-#define TOOL_VERSION            "2.5"
+#define TOOL_VERSION            "3.0"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
-#define TOOL_RELEASE_DATE       "Dec.2021"
+#define TOOL_RELEASE_DATE       "Oct.2022"
 #define TOOL_LOGO_COLOR         0x5197d4ff
 
 #include "raylib.h"
@@ -104,11 +108,15 @@
 #define GUI_FILE_DIALOGS_IMPLEMENTATION
 #include "gui_file_dialogs.h"           // GUI: File Dialogs
 
+#define GUI_MAIN_TOOLBAR_IMPLEMENTATION
+#include "gui_main_toolbar.h"           // GUI: Main toolbar panel
+
 // raygui embedded styles
-#include "style_jungle.h"               // raygui style: jungle
-#include "style_candy.h"                // raygui style: candy
-#include "style_lavanda.h"              // raygui style: lavanda
-#include "style_cyber.h"                // raygui style: cyber
+#include "styles/style_jungle.h"        // raygui style: jungle
+#include "styles/style_candy.h"         // raygui style: candy
+#include "styles/style_lavanda.h"       // raygui style: lavanda
+#include "styles/style_cyber.h"         // raygui style: cyber
+#include "styles/style_terminal.h"      // raygui style: terminal
 
 #include <math.h>                       // Required for: sinf(), powf()
 #include <time.h>                       // Required for: clock()
@@ -141,7 +149,7 @@ bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib
   #define LOG(...)
 #endif
 
-#define MAX_WAVE_SLOTS       4          // Number of wave slots for generation
+#define MAX_WAVE_SLOTS       5          // Number of wave slots for generation
 
 // Float random number generation
 #define frnd(range) ((float)GetRandomValue(0, 10000)/10000.0f*range)
@@ -149,7 +157,6 @@ bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 // Wave parameters type (96 bytes)
 typedef struct WaveParams {
 
@@ -205,12 +212,34 @@ static const char *toolName = TOOL_NAME;
 static const char *toolVersion = TOOL_VERSION;
 static const char *toolDescription = TOOL_DESCRIPTION;
 
+#define HELP_LINES_COUNT    16
+
+// Tool help info
+static const char *helpLines[HELP_LINES_COUNT] = {
+    "F1 - Show Help window",
+    "F2 - Show About window",
+    "F3 - Show User window",
+    "LCTRL + N - Reset sound slot",
+    "LCTRL + O - Open sound file (.rfx)",
+    "LCTRL + S - Save sound file (.rfx)",
+    "LCTRL + E - Export wave file",
+    "-Tool Controls",
+    "1-2-3-4-5 - Select current sound slot",
+    "SPACE - Play current sound slot",
+    "P - Toggle autoplay on params change",
+    "-Tool Visuals",
+    "LEFT | RIGHT - Select visual style",
+    "F - Toggle double screen size",
+    NULL,
+    "ESCAPE - Close Window/Exit"
+};
+
 static float volumeValue = 0.6f;        // Master volume
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(VERSION_ONE)
+#if defined(PLATFORM_DESKTOP)
 static void ShowCommandLineInfo(void);                      // Show command line usage info
 static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
 #endif
@@ -234,15 +263,16 @@ static void WaveMutate(WaveParams *params); // Mutate current sound
 
 // Auxiliar functions
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
+static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpLines, int helpLinesCount); // Draw help window with the provided lines
 
-#if defined(VERSION_ONE)
+#if defined(PLATFORM_DESKTOP)
 static void WaitTimePlayer(int ms);             // Simple time wait in milliseconds for the CLI player
 static void PlayWaveCLI(Wave wave);             // Play provided wave through CLI
 #if !defined(_WIN32)
 static int kbhit(void);                         // Check if a key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
-#endif  // VERSION_ONE
+#endif  // PLATFORM_DESKTOP
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -255,7 +285,7 @@ int main(int argc, char *argv[])
 #if !defined(_DEBUG)
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
-#if defined(VERSION_ONE)
+#if defined(PLATFORM_DESKTOP)
     // Command-line usage mode
     //--------------------------------------------------------------------------------------
     if (argc > 1)
@@ -264,8 +294,7 @@ int main(int argc, char *argv[])
             (strcmp(argv[1], "-h") != 0) &&
             (strcmp(argv[1], "--help") != 0))       // One argument (file dropped over executable?)
         {
-            if (IsFileExtension(argv[1], ".rfx") ||
-                IsFileExtension(argv[1], ".sfs"))
+            if (IsFileExtension(argv[1], ".rfx"))   // || IsFileExtension(argv[1], ".sfs"))
             {
                 strcpy(inFileName, argv[1]);        // Read input filename to open with gui interface
             }
@@ -276,7 +305,7 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
-#endif  // VERSION_ONE
+#endif  // PLATFORM_DESKTOP
 #if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
@@ -286,8 +315,8 @@ int main(int argc, char *argv[])
 
     // GUI usage mode - Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 512;
-    const int screenHeight = 512;
+    const int screenWidth = 540;
+    const int screenHeight = 580;
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, TextFormat("%s v%s | %s", toolName, toolVersion, toolDescription));
@@ -297,13 +326,11 @@ int main(int argc, char *argv[])
 
     // GUI: Main Layout
     //-----------------------------------------------------------------------------------
-    bool playOnChangeChecked = true;
-    int sampleRateActive = 1;
-    int sampleSizeActive = 1;
-    int fileTypeActive = 0;
-    int visualStyleActive = 0;
+    bool playOnChange = true;           // Automatically play sound on parameter change
+    bool screenSizeActive = false;      // Scale screen x2 (useful for HighDPI screens)
 
-    bool screenSizeActive = false;
+    bool helpWindowActive = false;      // Show window: help info 
+    bool userWindowActive = false;      // Show window: user registration
     //-----------------------------------------------------------------------------------
 
     // GUI: About Window
@@ -311,10 +338,29 @@ int main(int argc, char *argv[])
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //-----------------------------------------------------------------------------------
 
+    // GUI: Main toolbar panel (file and visualization)
+    //-----------------------------------------------------------------------------------
+    GuiMainToolbarState mainToolbarState = InitGuiMainToolbar();
+    //-----------------------------------------------------------------------------------
+
+    // GUI: Export Window
+    //-----------------------------------------------------------------------------------
+    bool exportWindowActive = false;
+
+    int fileTypeActive = 0;         // ComboBox file type selection
+    int sampleRateActive = 1;       // ComboBox sample rate selection 
+    int sampleSizeActive = 1;       // ComboBox sample size selection
+    int channelsActive = 0;         // ComboBox channels selection
+
+    int exportSampleSize = 32;      // Export wave sample size in bits (bitrate)
+    int exportSampleRate = 44100;   // Export wave sample rate (frequency)
+    int exportChannels = 1;         // Export wave channels
+    //-----------------------------------------------------------------------------------
+
     // GUI: Exit Window
     //-----------------------------------------------------------------------------------
-    bool exitWindow = false;
-    bool windowExitActive = false;
+    bool closeWindow = false;
+    bool exitWindowActive = false;
     //-----------------------------------------------------------------------------------
 
     // GUI: Custom file dialogs
@@ -338,16 +384,13 @@ int main(int argc, char *argv[])
 
         // Default wave values
         wave[i].sampleRate = 44100;
-        wave[i].sampleSize = 32;    // 32 bit -> float
-        wave[i].channels = 1;
+        wave[i].sampleSize = 32;        // 32 bit -> float
+        wave[i].channels = 1;           // 1 channel -> mono
         wave[i].frameCount = 10*wave[i].sampleRate;    // Max frame count for 10 seconds
-        wave[i].data = (float *)calloc(wave[i].frameCount*wave[i].channels, sizeof(float));
+        wave[i].data = (float *)RL_CALLOC(wave[i].frameCount, sizeof(float));
 
         sound[i] = LoadSoundFromWave(wave[i]);
     }
-
-    int wavSampleSize = 16;         // Wave sample size in bits (bitrate)
-    int wavSampleRate = 44100;      // Wave sample rate (frequency)
     //-----------------------------------------------------------------------------------
 
     // Check if a wave parameters file has been provided on command line
@@ -364,14 +407,13 @@ int main(int argc, char *argv[])
         PlaySound(sound[0]);                    // Play generated sound
     }
 
+    bool regenerate = false;                    // Wave regeneration required
+    
     float prevVolumeValue = volumeValue;
     int prevWaveTypeValue[MAX_WAVE_SLOTS] = { params[0].waveTypeValue };
-    int prevVisualStyleActive = visualStyleActive;
-    bool regenerate = false;                    // Wave regeneration required
-    int prevSlotActive = 0, slotActive = 0;     // Wave slot tracking
-
-    Rectangle waveRec = { 8, 428, 496, 58 };        // Wave drawing rectangle box
-    Rectangle slidersRec = { 238, 16, 104, 400 };   // Area defining sliders to allow sound replay when mouse-released
+    
+    Rectangle waveRec = { 12, 484, 516, 64 };       // Wave drawing rectangle box
+    Rectangle slidersRec = { 256, 82, 226, 392 };   // Area defining sliders to allow sound replay when mouse-released
 
     // Set default sound volume
     for (int i = 0; i < MAX_WAVE_SLOTS; i++) SetSoundVolume(sound[i], volumeValue);
@@ -382,28 +424,28 @@ int main(int argc, char *argv[])
 
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
-    RenderTexture2D screenTarget = LoadRenderTexture(512, 512);
+    RenderTexture2D screenTarget = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
     SetTextureFilter(screenTarget.texture, TEXTURE_FILTER_POINT);
 
     SetTargetFPS(60);      // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!exitWindow)    // Detect window close button
+    while (!closeWindow)    // Detect window close button
     {
-        if (WindowShouldClose()) windowExitActive = true;
-        
+#if !defined(PLATFORM_WEB)
+        if (WindowShouldClose()) closeWindow = true;
+#endif
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
         {
             FilePathList droppedFiles = LoadDroppedFiles();
 
-            // Support loading .rfx or .sfs files (wave parameters)
-            if (IsFileExtension(droppedFiles.paths[0], ".rfx") ||
-                IsFileExtension(droppedFiles.paths[0], ".sfs"))
+            // Support loading .rfx files (wave parameters)
+            if (IsFileExtension(droppedFiles.paths[0], ".rfx")) // || IsFileExtension(droppedFiles.paths[0], ".sfs"))
             {
-                params[slotActive] = LoadWaveParams(droppedFiles.paths[0]);
+                params[mainToolbarState.soundSlotActive] = LoadWaveParams(droppedFiles.paths[0]);
                 regenerate = true;
 
                 SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles.paths[0])));
@@ -416,38 +458,101 @@ int main(int argc, char *argv[])
 
         // Keyboard shortcuts
         //------------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[slotActive]);  // Play current sound
+        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[mainToolbarState.soundSlotActive]);  // Play current sound
 
         // Show dialog: save sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) showSaveFileDialog = true;
 
-        // Show dialog: load sound (.rfx, .sfs)
+        // Show dialog: load sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) showLoadFileDialog = true;
 
         // Show dialog: export wave (.wav, .raw, .h)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) showExportFileDialog = true;
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) exportWindowActive = true;
 
         // Select current sound slot
-        if (IsKeyPressed(KEY_ONE)) slotActive = 0;
-        if (IsKeyPressed(KEY_TWO)) slotActive = 1;
-        if (IsKeyPressed(KEY_THREE)) slotActive = 2;
-        if (IsKeyPressed(KEY_FOUR)) slotActive = 3;
+        if (IsKeyPressed(KEY_ONE)) mainToolbarState.soundSlotActive = 0;
+        else if (IsKeyPressed(KEY_TWO)) mainToolbarState.soundSlotActive = 1;
+        else if (IsKeyPressed(KEY_THREE)) mainToolbarState.soundSlotActive = 2;
+        else if (IsKeyPressed(KEY_FOUR)) mainToolbarState.soundSlotActive = 3;
+        else if (IsKeyPressed(KEY_FIVE)) mainToolbarState.soundSlotActive = 4;
+
+        // Select visual style
+        if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
+        else if (IsKeyPressed(KEY_RIGHT)) mainToolbarState.visualStyleActive++;
+        if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = 5;
+        else if (mainToolbarState.visualStyleActive > 5) mainToolbarState.visualStyleActive = 0;
+
+#if !defined(PLATFORM_WEB)
+        // Toggle screen size (x2) mode
+        if (IsKeyPressed(KEY_F)) screenSizeActive = !screenSizeActive;
+#endif
+        // Toggle play on change option
+        if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
+
+        // Toggle window help
+        if (IsKeyPressed(KEY_F1)) helpWindowActive = !helpWindowActive;
 
         // Toggle window about
-        if (IsKeyPressed(KEY_F1)) windowAboutState.windowActive = !windowAboutState.windowActive;
+        if (IsKeyPressed(KEY_F2)) windowAboutState.windowActive = !windowAboutState.windowActive;
+
+        // Toggle window registered user
+        //if (IsKeyPressed(KEY_F3)) userWindowActive = !userWindowActive;
 
         // Show closing window on ESC
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
+            else if (helpWindowActive) helpWindowActive = false;
+            else if (exportWindowActive) exportWindowActive = false;
         #if !defined(PLATFORM_WEB)
-            else windowExitActive = !windowExitActive;
+            else exitWindowActive = !exitWindowActive;
         #else
             else if (showLoadFileDialog) showLoadFileDialog = false;
             else if (showSaveFileDialog) showSaveFileDialog = false;
             else if (showExportFileDialog) showExportFileDialog = false;
         #endif
         }
+        //----------------------------------------------------------------------------------
+
+        // Main toolbar logic
+        //----------------------------------------------------------------------------------
+        // File options logic
+        if (mainToolbarState.btnNewFilePressed)
+        {
+            // Reload current slot
+            UnloadSound(sound[mainToolbarState.soundSlotActive]);
+            UnloadWave(wave[mainToolbarState.soundSlotActive]);
+            
+            wave[mainToolbarState.soundSlotActive].data = (float *)RL_CALLOC(wave[mainToolbarState.soundSlotActive].frameCount, sizeof(float));
+            sound[mainToolbarState.soundSlotActive] = LoadSoundFromWave(wave[mainToolbarState.soundSlotActive]);
+        }
+        else if (mainToolbarState.btnLoadFilePressed) showLoadFileDialog = true;
+        else if (mainToolbarState.btnSaveFilePressed) showSaveFileDialog = true;
+        else if (mainToolbarState.btnExportFilePressed) exportWindowActive = true;
+
+        if (mainToolbarState.visualStyleActive != mainToolbarState.prevVisualStyleActive)
+        {
+            GuiLoadStyleDefault();
+
+            switch (mainToolbarState.visualStyleActive)
+            {
+                case 1: GuiLoadStyleJungle(); break;
+                case 2: GuiLoadStyleCandy(); break;
+                case 3: GuiLoadStyleLavanda(); break;
+                case 4: GuiLoadStyleCyber(); break;
+                case 5: GuiLoadStyleTerminal(); break;
+                default: break;
+            }
+
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+
+            mainToolbarState.prevVisualStyleActive = mainToolbarState.visualStyleActive;
+        }
+
+        // Help options logic
+        if (mainToolbarState.btnHelpPressed) helpWindowActive = true;               // Help button logic
+        if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true; // About window button logic
+        if (mainToolbarState.btnUserPressed) userWindowActive = true;               // User button logic
         //----------------------------------------------------------------------------------
 
         // Basic program flow logic
@@ -459,57 +564,41 @@ int main(int argc, char *argv[])
             prevVolumeValue = volumeValue;
         }
 
-        // Check gui combo box selected options
-        if (sampleRateActive == 0) wavSampleRate = 22050;
-        else if (sampleRateActive == 1) wavSampleRate = 44100;
-
-        if (sampleSizeActive == 0) wavSampleSize = 8;
-        else if (sampleSizeActive == 1) wavSampleSize = 16;
-        else if (sampleSizeActive == 2) wavSampleSize = 32;
-
-        if (params[slotActive].waveTypeValue != prevWaveTypeValue[slotActive]) regenerate = true;
-        prevWaveTypeValue[slotActive] = params[slotActive].waveTypeValue;
-
-        // Set new gui style if changed
-        if (visualStyleActive != prevVisualStyleActive)
-        {
-            GuiLoadStyleDefault();
-
-            switch (visualStyleActive)
-            {
-                case 1: GuiLoadStyleJungle(); break;
-                case 2: GuiLoadStyleCandy(); break;
-                case 3: GuiLoadStyleLavanda(); break;
-                case 4: GuiLoadStyleCyber(); break;
-                default: break;
-            }
-
-            prevVisualStyleActive = visualStyleActive;
-        }
-
-        if (!windowAboutState.windowActive && !windowExitActive)    // Avoid wave regeneration on Window About active
+        // Check wave type combobox selection to regenerate wave
+        if (params[mainToolbarState.soundSlotActive].waveTypeValue != prevWaveTypeValue[mainToolbarState.soundSlotActive]) regenerate = true;
+        prevWaveTypeValue[mainToolbarState.soundSlotActive] = params[mainToolbarState.soundSlotActive].waveTypeValue;
+        
+        // Avoid wave regeneration when some window is active
+        if (!windowAboutState.windowActive && 
+            !helpWindowActive && 
+            !showLoadFileDialog &&
+            !showSaveFileDialog &&
+            !showExportFileDialog &&
+            !exportWindowActive && 
+            !exitWindowActive)
         {
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
-            // CASE2: Mouse is moving sliders and mouse is released (checks against all sliders box - a bit crappy solution...)
+            // CASE2: Mouse is moving sliders and mouse is released (checks against slidersRec)
             if (regenerate || ((CheckCollisionPointRec(GetMousePosition(), slidersRec)) && (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))))
             {
-                UnloadWave(wave[slotActive]);
-                UnloadSound(sound[slotActive]);
+                UnloadWave(wave[mainToolbarState.soundSlotActive]);
+                UnloadSound(sound[mainToolbarState.soundSlotActive]);
                 
-                wave[slotActive] = GenerateWave(params[slotActive]);        // Generate new wave from parameters
-                sound[slotActive] = LoadSoundFromWave(wave[slotActive]);    // Reload sound from new wave
+                wave[mainToolbarState.soundSlotActive] = GenerateWave(params[mainToolbarState.soundSlotActive]);        // Generate new wave from parameters
+                sound[mainToolbarState.soundSlotActive] = LoadSoundFromWave(wave[mainToolbarState.soundSlotActive]);    // Reload sound from new wave
 
-                if ((regenerate || playOnChangeChecked) && !GuiIsLocked())  PlaySound(sound[slotActive]);
+                if ((regenerate || playOnChange) && !GuiIsLocked()) PlaySound(sound[mainToolbarState.soundSlotActive]);
 
                 regenerate = false;
             }
         }
 
-        if (slotActive != prevSlotActive)
+        // Check slot change to play next one selected
+        if (mainToolbarState.soundSlotActive != mainToolbarState.prevSoundSlotActive)
         {
-            PlaySound(sound[slotActive]);
-            prevSlotActive = slotActive;
+            PlaySound(sound[mainToolbarState.soundSlotActive]);
+            mainToolbarState.prevSoundSlotActive = mainToolbarState.soundSlotActive;
         }
 
         // Change window size to x2
@@ -533,7 +622,14 @@ int main(int argc, char *argv[])
         }
         
         // WARNING: Some windows should lock the main screen controls when shown
-        if (windowAboutState.windowActive || windowExitActive || showLoadFileDialog || showSaveFileDialog || showExportFileDialog) GuiLock();
+        if (windowAboutState.windowActive || 
+            helpWindowActive ||
+            userWindowActive ||
+            exitWindowActive || 
+            exportWindowActive ||
+            showLoadFileDialog || 
+            showSaveFileDialog || 
+            showExportFileDialog) GuiLock();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -541,144 +637,111 @@ int main(int argc, char *argv[])
         // Render wave data to texture
         BeginTextureMode(waveTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-            DrawWave(&wave[slotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+            DrawWave(&wave[mainToolbarState.soundSlotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
         EndTextureMode();
 
         // Render all screen to texture (for scaling)
         BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
+            // GUI: Main toolbar panel
+            //----------------------------------------------------------------------------------
+            GuiMainToolbar(&mainToolbarState);
+            //----------------------------------------------------------------------------------
+
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
-            // Draw tool name and version, right aligned
-            int prevTextAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
-            int prevTextPadding = GuiGetStyle(LABEL, TEXT_PADDING);
-            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
-            GuiSetStyle(LABEL, TEXT_PADDING, 0);
-            DrawText(TextFormat("%s", toolName), 37, 18, 20, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
-            GuiLabel((Rectangle){ 84, 13, 30, 10 }, TextFormat("v%s", toolVersion));
-            GuiSetStyle(LABEL, TEXT_ALIGNMENT, prevTextAlignment);
-            GuiSetStyle(LABEL, TEXT_PADDING, prevTextPadding);
-
             // Draw left buttons
-            prevTextPadding = GuiGetStyle(BUTTON, TEXT_PADDING);
+            int prevTextPadding = GuiGetStyle(BUTTON, TEXT_PADDING);
             GuiSetStyle(BUTTON, TEXT_PADDING, 3);
             GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-            if (GuiButton((Rectangle){ 8, 42, 106, 24 }, "#146#Pickup/Coin")) { params[slotActive] = GenPickupCoin(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 70, 106, 24 }, "#145#Laser/Shoot")) { params[slotActive] = GenLaserShoot(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 98, 106, 24 }, "#147#Explosion")) { params[slotActive] = GenExplosion(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 126, 106, 24 }, "#148#PowerUp")) { params[slotActive] = GenPowerup(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 154, 106, 24 }, "#152#Hit/Hurt")) { params[slotActive] = GenHitHurt(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 182, 106, 24 }, "#150#Jump")) { params[slotActive] = GenJump(); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 210, 106, 24 }, "#144#Blip/Select")) { params[slotActive] = GenBlipSelect(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 48, 108, 24 }, "#131#Play Sound")) PlaySound(sound[mainToolbarState.soundSlotActive]);
+
+            if (GuiButton((Rectangle){ 12, 88, 108, 24 }, "#146#Pickup/Coin")) { params[mainToolbarState.soundSlotActive] = GenPickupCoin(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 116, 108, 24 }, "#145#Laser/Shoot")) { params[mainToolbarState.soundSlotActive] = GenLaserShoot(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 144, 108, 24 }, "#147#Explosion")) { params[mainToolbarState.soundSlotActive] = GenExplosion(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 172, 108, 24 }, "#148#PowerUp")) { params[mainToolbarState.soundSlotActive] = GenPowerup(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 200, 108, 24 }, "#152#Hit/Hurt")) { params[mainToolbarState.soundSlotActive] = GenHitHurt(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 228, 108, 24 }, "#150#Jump")) { params[mainToolbarState.soundSlotActive] = GenJump(); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 256, 108, 24 }, "#144#Blip/Select")) { params[mainToolbarState.soundSlotActive] = GenBlipSelect(); regenerate = true; }
             GuiSetStyle(BUTTON, TEXT_PADDING, prevTextPadding);
             GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
-            GuiLine((Rectangle){ 8, 234, 106, 12 }, NULL);
+            GuiLine((Rectangle){ 12, 248 + 32, 108, 16 }, NULL);
 
             GuiSetStyle(TOGGLE, TEXT_PADDING, 3);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-            params[slotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 8, 250, 106, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[slotActive].waveTypeValue);
+            params[mainToolbarState.soundSlotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 12, 248 + 32 + 16, 108, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[mainToolbarState.soundSlotActive].waveTypeValue);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             GuiSetStyle(TOGGLE, TEXT_PADDING, 0);
 
-            GuiLine((Rectangle){ 8, 356, 108, 12 }, NULL);
+            GuiLine((Rectangle){ 12, 248 + 32 + 16 + 4*24 + 3*2, 108, 16 }, NULL);
 
-            if (GuiButton((Rectangle){ 8, 368, 106, 24 }, "#75#Mutate")) { WaveMutate(&params[slotActive]); regenerate = true; }
-            if (GuiButton((Rectangle){ 8, 396, 106, 24 }, "#77#Randomize")) { params[slotActive] = GenRandomize(); regenerate = true; }
-
-            GuiGroupBox((Rectangle){ 122, 12, 268, 22 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 33, 268, 69 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 101, 268, 104 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 204, 268, 37 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 240, 268, 36 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 275, 268, 23 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 297, 268, 39 }, NULL);
-            GuiGroupBox((Rectangle){ 122, 335, 268, 86 }, NULL);
+            if (GuiButton((Rectangle){ 12, 414, 108, 24 }, "#75#Mutate")) { WaveMutate(&params[mainToolbarState.soundSlotActive]); regenerate = true; }
+            if (GuiButton((Rectangle){ 12, 414 + 24 + 4, 108, 24 }, "#77#Randomize")) { params[mainToolbarState.soundSlotActive] = GenRandomize(); regenerate = true; }
 
             // Parameters sliders
             //--------------------------------------------------------------------------------
-            volumeValue = GuiSliderBar((Rectangle){ 246, 18, 100, 10 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), volumeValue, 0, 1);
+            Vector2 paramsPos = { 260, 56 };
 
-            params[slotActive].attackTimeValue = GuiSliderBar((Rectangle){ 246, 38, 100, 10 }, "ATTACK TIME", TextFormat("%.2f", params[slotActive].attackTimeValue), params[slotActive].attackTimeValue, 0, 1);
-            params[slotActive].sustainTimeValue = GuiSliderBar((Rectangle){ 246, 54, 100, 10 }, "SUSTAIN TIME", TextFormat("%.2f", params[slotActive].sustainTimeValue), params[slotActive].sustainTimeValue, 0, 1);
-            params[slotActive].sustainPunchValue = GuiSliderBar((Rectangle){ 246, 70, 100, 10 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[slotActive].sustainPunchValue), params[slotActive].sustainPunchValue, 0, 1);
-            params[slotActive].decayTimeValue = GuiSliderBar((Rectangle){ 246, 87, 100, 10 }, "DECAY TIME", TextFormat("%.2f", params[slotActive].decayTimeValue), params[slotActive].decayTimeValue, 0, 1);
-            params[slotActive].startFrequencyValue = GuiSliderBar((Rectangle){ 246, 107, 100, 10 }, "START FREQUENCY", TextFormat("%.2f", params[slotActive].startFrequencyValue), params[slotActive].startFrequencyValue, 0, 1);
-            params[slotActive].minFrequencyValue = GuiSliderBar((Rectangle){ 246, 124, 100, 10 }, "MIN FREQUENCY", TextFormat("%.2f", params[slotActive].minFrequencyValue), params[slotActive].minFrequencyValue, 0, 1);
-            params[slotActive].slideValue = GuiSliderBar((Rectangle){ 246, 140, 100, 10 }, "SLIDE", TextFormat("%.2f", params[slotActive].slideValue), params[slotActive].slideValue, -1, 1);
-            params[slotActive].deltaSlideValue = GuiSliderBar((Rectangle){ 246, 157, 100, 10 }, "DELTA SLIDE", TextFormat("%.2f", params[slotActive].deltaSlideValue), params[slotActive].deltaSlideValue, -1, 1);
-            params[slotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ 246, 173, 100, 10 }, "VIBRATO DEPTH", TextFormat("%.2f", params[slotActive].vibratoDepthValue), params[slotActive].vibratoDepthValue, 0, 1);
-            params[slotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ 246, 189, 100, 10 }, "VIBRATO SPEED", TextFormat("%.2f", params[slotActive].vibratoSpeedValue), params[slotActive].vibratoSpeedValue, 0, 1);
-            params[slotActive].changeAmountValue = GuiSliderBar((Rectangle){ 246, 209, 100, 10 }, "CHANGE AMOUNT", TextFormat("%.2f", params[slotActive].changeAmountValue), params[slotActive].changeAmountValue, -1, 1);
-            params[slotActive].changeSpeedValue = GuiSliderBar((Rectangle){ 246, 225, 100, 10 }, "CHANGE SPEED", TextFormat("%.2f", params[slotActive].changeSpeedValue), params[slotActive].changeSpeedValue, 0, 1);
-            params[slotActive].squareDutyValue = GuiSliderBar((Rectangle){ 246, 245, 100, 10 }, "SQUARE DUTY", TextFormat("%.2f", params[slotActive].squareDutyValue), params[slotActive].squareDutyValue, 0, 1);
-            params[slotActive].dutySweepValue = GuiSliderBar((Rectangle){ 246, 261, 100, 10 }, "DUTY SWEEP", TextFormat("%.2f", params[slotActive].dutySweepValue), params[slotActive].dutySweepValue, -1, 1);
-            params[slotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ 246, 281, 100, 10 }, "REPEAT SPEED", TextFormat("%.2f", params[slotActive].repeatSpeedValue), params[slotActive].repeatSpeedValue, 0, 1);
-            params[slotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ 246, 304, 100, 10 }, "PHASER OFFSET", TextFormat("%.2f", params[slotActive].phaserOffsetValue), params[slotActive].phaserOffsetValue, -1, 1);
-            params[slotActive].phaserSweepValue = GuiSliderBar((Rectangle){ 246, 320, 100, 10 }, "PHASER SWEEP", TextFormat("%.2f", params[slotActive].phaserSweepValue), params[slotActive].phaserSweepValue, -1, 1);
-            params[slotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ 246, 340, 100, 10 }, "LPF CUTOFF", TextFormat("%.2f", params[slotActive].lpfCutoffValue), params[slotActive].lpfCutoffValue, 0, 1);
-            params[slotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ 246, 356, 100, 10 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].lpfCutoffSweepValue), params[slotActive].lpfCutoffSweepValue, -1, 1);
-            params[slotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ 246, 372, 100, 10 }, "LPF RESONANCE", TextFormat("%.2f", params[slotActive].lpfResonanceValue), params[slotActive].lpfResonanceValue, 0, 1);
-            params[slotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ 246, 388, 100, 10 }, "HPF CUTOFF", TextFormat("%.2f", params[slotActive].hpfCutoffValue), params[slotActive].hpfCutoffValue, 0, 1);
-            params[slotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ 246, 404, 100, 10 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[slotActive].hpfCutoffSweepValue), params[slotActive].hpfCutoffSweepValue, -1, 1);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y - 8, 398, 24 }, NULL);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 24, 398, 16*4 + 8 }, NULL);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 95, 398, 16*2 + 8 + 1 }, NULL);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 135, 398, 16*4 + 8 + 2 }, NULL);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 208, 398, 16*4 + 8 + 1 }, NULL);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 280, 398, 16*3 + 8 }, NULL);
+            GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 335, 398, 16*5 + 8 + 1 }, NULL);
+
+            volumeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y - 2, 220, 12 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), volumeValue, 0, 1);
+
+            params[mainToolbarState.soundSlotActive].attackTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 30, 220, 12 }, "ATTACK TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].attackTimeValue), params[mainToolbarState.soundSlotActive].attackTimeValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].sustainTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainTimeValue), params[mainToolbarState.soundSlotActive].sustainTimeValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].sustainPunchValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainPunchValue), params[mainToolbarState.soundSlotActive].sustainPunchValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].decayTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DECAY TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].decayTimeValue), params[mainToolbarState.soundSlotActive].decayTimeValue, 0, 1);
+            
+            params[mainToolbarState.soundSlotActive].startFrequencyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "START FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].startFrequencyValue), params[mainToolbarState.soundSlotActive].startFrequencyValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].minFrequencyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "MIN FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].minFrequencyValue), params[mainToolbarState.soundSlotActive].minFrequencyValue, 0, 1);
+            
+            params[mainToolbarState.soundSlotActive].slideValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].slideValue), params[mainToolbarState.soundSlotActive].slideValue, -1, 1);
+            params[mainToolbarState.soundSlotActive].deltaSlideValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DELTA SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].deltaSlideValue), params[mainToolbarState.soundSlotActive].deltaSlideValue, -1, 1);
+            params[mainToolbarState.soundSlotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO DEPTH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoDepthValue), params[mainToolbarState.soundSlotActive].vibratoDepthValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoSpeedValue), params[mainToolbarState.soundSlotActive].vibratoSpeedValue, 0, 1);
+            
+            params[mainToolbarState.soundSlotActive].changeAmountValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "CHANGE AMOUNT", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeAmountValue), params[mainToolbarState.soundSlotActive].changeAmountValue, -1, 1);
+            params[mainToolbarState.soundSlotActive].changeSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "CHANGE SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeSpeedValue), params[mainToolbarState.soundSlotActive].changeSpeedValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].squareDutyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SQUARE DUTY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].squareDutyValue), params[mainToolbarState.soundSlotActive].squareDutyValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].dutySweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DUTY SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].dutySweepValue), params[mainToolbarState.soundSlotActive].dutySweepValue, -1, 1);
+           
+            params[mainToolbarState.soundSlotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "REPEAT SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].repeatSpeedValue), params[mainToolbarState.soundSlotActive].repeatSpeedValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER OFFSET", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserOffsetValue), params[mainToolbarState.soundSlotActive].phaserOffsetValue, -1, 1);
+            params[mainToolbarState.soundSlotActive].phaserSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserSweepValue), params[mainToolbarState.soundSlotActive].phaserSweepValue, -1, 1);
+            
+            params[mainToolbarState.soundSlotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "LPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffValue), params[mainToolbarState.soundSlotActive].lpfCutoffValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue), params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue, -1, 1);
+            params[mainToolbarState.soundSlotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF RESONANCE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfResonanceValue), params[mainToolbarState.soundSlotActive].lpfResonanceValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "HPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].hpfCutoffValue), params[mainToolbarState.soundSlotActive].hpfCutoffValue, 0, 1);
+            params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue), params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue, -1, 1);
             //--------------------------------------------------------------------------------
 
-            playOnChangeChecked = GuiCheckBox((Rectangle){ 398, 16, 14, 14 }, "Play on change", playOnChangeChecked);
-            if (GuiButton((Rectangle){ 398, 36, 106, 24 }, "#131#Play Sound")) PlaySound(sound[slotActive]);
+            // Draw Wave form
+            //--------------------------------------------------------------------------------
+            DrawTextureEx(waveTarget.texture, (Vector2) { waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
+            DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
+            DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+            //--------------------------------------------------------------------------------
 
-            GuiLabel((Rectangle){ 404, 68, 25, 25 }, "Slot:");
-
-            int tooglePadding = GuiGetStyle(TOGGLE, GROUP_PADDING);
-            GuiSetStyle(TOGGLE, GROUP_PADDING, 2);
-            slotActive = GuiToggleGroup((Rectangle){ 433, 72, 16, 16 }, "1;2;3;4", slotActive);
-            GuiSetStyle(TOGGLE, GROUP_PADDING, tooglePadding);
-
-            GuiLine((Rectangle){ 398, 93, 106, 16 }, NULL);
-
-            if (GuiButton((Rectangle){ 398, 110, 106, 24 }, "#1#Load Sound")) showLoadFileDialog = true;
-            if (GuiButton((Rectangle){ 398, 138, 106, 24 }, "#2#Save Sound")) showSaveFileDialog = true;
-
-            GuiLine((Rectangle){ 398, 162, 106, 16 }, NULL);
-
-            sampleRateActive = GuiComboBox((Rectangle){ 398, 178, 106, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
-            sampleSizeActive = GuiComboBox((Rectangle){ 398, 206, 106, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
-            fileTypeActive = GuiComboBox((Rectangle){ 398, 234, 106, 24 }, "WAV;RAW;CODE", fileTypeActive);
-
-            if (GuiButton((Rectangle){ 398, 264, 106, 24 }, "#7#Export Wave")) showExportFileDialog = true;
-
-            GuiLine((Rectangle){ 398, 288, 106, 16 }, NULL);
-
-            GuiLabel((Rectangle){ 398, 300, 106, 20 }, "Visual Style:");
-            visualStyleActive = GuiComboBox((Rectangle){ 398, 320, 106, 24 }, "default;Jungle;Candy;Lavanda;Cyber", visualStyleActive);
-#if !defined(PLATFORM_WEB)
-            screenSizeActive = GuiToggle((Rectangle){ 398, 348, 106, 24 }, "Screen Size x2", screenSizeActive);
-#endif
-            GuiLine((Rectangle){ 398, 372, 106, 20 }, NULL);
-
-            if (GuiButton((Rectangle){ 398, 396, 106, 24 }, "#191#ABOUT")) windowAboutState.windowActive = true;
-
-            // Draw status bar
+            // GUI: Status bar
+            //----------------------------------------------------------------------------------
             int textPadding = GuiGetStyle(STATUSBAR, TEXT_PADDING);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, 0);
             GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
-            GuiStatusBar((Rectangle){ 0, 492, 181, 20 }, TextFormat("Total Frames: %i", wave[slotActive].frameCount));
-            GuiStatusBar((Rectangle){ 180, 492, 158, 20 }, TextFormat("Duration: %i ms", wave[slotActive].frameCount*1000/(wave[slotActive].sampleRate)));
-            GuiStatusBar((Rectangle){ 336, 492, 176, 20 }, TextFormat("Size: %i bytes", wave[slotActive].frameCount*wave[slotActive].channels*wavSampleSize/8));
+            GuiStatusBar((Rectangle){ 0, screenHeight - 24, 190, 24 }, TextFormat("Total Frames: %i", wave[mainToolbarState.soundSlotActive].frameCount));
+            GuiStatusBar((Rectangle){ 190 - 1, screenHeight - 24, 170, 24 }, TextFormat("Duration: %i ms", wave[mainToolbarState.soundSlotActive].frameCount*1000/(wave[mainToolbarState.soundSlotActive].sampleRate)));
+            GuiStatusBar((Rectangle){ 190 + 170 - 2, screenHeight - 24, screenWidth - (190 + 170 - 2), 24 }, TextFormat("Size: %i bytes", wave[mainToolbarState.soundSlotActive].frameCount *wave[mainToolbarState.soundSlotActive].channels *exportSampleSize/8));
             GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
             GuiSetStyle(STATUSBAR, TEXT_PADDING, textPadding);
             //----------------------------------------------------------------------------------
 
-            // Draw Wave form
-            //--------------------------------------------------------------------------------
-            DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
-            
-            // TODO: FEATURE: Draw playing progress rectangle
-
-            DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
-            DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
-            //--------------------------------------------------------------------------------
-            
             // NOTE: If some overlap window is open and main window is locked, we draw a background rectangle
             if (GuiIsLocked()) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
             
@@ -690,14 +753,56 @@ int main(int argc, char *argv[])
             GuiWindowAbout(&windowAboutState);
             //--------------------------------------------------------------------------------
 
+            // GUI: Help Window
+            //----------------------------------------------------------------------------------------
+            Rectangle helpWindowBounds = { (float)screenWidth/2 - 330/2, (float)screenHeight/2 - 400.0f/2, 330, 0 };
+            if (helpWindowActive) helpWindowActive = GuiHelpWindow(helpWindowBounds, GuiIconText(ICON_HELP, TextFormat("%s Shortcuts", TOOL_NAME)), helpLines, HELP_LINES_COUNT);
+            //----------------------------------------------------------------------------------------
+
+            // GUI: Export Window
+            //----------------------------------------------------------------------------------------
+            if (exportWindowActive)
+            {
+                Rectangle messageBox = { (float)screenWidth/2 - 248/2, (float)screenHeight/2 - 150, 248, 208 };
+                int result = GuiMessageBox(messageBox, "#7#Export Wave File", " ", "#7# Export Wave");
+
+                GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12, 106, 24 }, "File Format:");
+                GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 24 + 8, 106, 24 }, "Sample Rate:");
+                GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 48 + 16, 106, 24 }, "Sample Size:");
+                GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 72 + 24, 106, 24 }, "Channels:");
+                
+                fileTypeActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;RAW;CODE", fileTypeActive);
+                sampleRateActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
+                sampleSizeActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
+                channelsActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 72 + 24, 124, 24 }, "Mono;Stereo", channelsActive);
+
+                if (result == 1)    // Export button pressed
+                {
+                    // Update export option from combobox selections
+                    if (sampleRateActive == 0) exportSampleRate = 22050;
+                    else if (sampleRateActive == 1) exportSampleRate = 44100;
+
+                    if (sampleSizeActive == 0) exportSampleSize = 8;
+                    else if (sampleSizeActive == 1) exportSampleSize = 16;
+                    else if (sampleSizeActive == 2) exportSampleSize = 32;
+
+                    exportChannels = channelsActive + 1;
+
+                    exportWindowActive = false;
+                    showExportFileDialog = true;
+                }
+                else if (result == 0) exportWindowActive = false;
+            }
+            //----------------------------------------------------------------------------------
+
             // GUI: Exit Window
             //----------------------------------------------------------------------------------------
-            if (windowExitActive)
+            if (exitWindowActive)
             {
-                int result = GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+                int result = GuiMessageBox((Rectangle) { (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
-                if ((result == 0) || (result == 2)) windowExitActive = false;
-                else if (result == 1) exitWindow = true;
+                if ((result == 0) || (result == 2)) exitWindowActive = false;
+                else if (result == 1) closeWindow = true;
             }
             //----------------------------------------------------------------------------------------
 
@@ -708,12 +813,12 @@ int main(int argc, char *argv[])
 #if defined(CUSTOM_MODAL_DIALOGS)
                 int result = GuiFileDialog(DIALOG_MESSAGE, "Load sound file ...", inFileName, "Ok", "Just drag and drop your .rfx sound file!");
 #else
-                int result = GuiFileDialog(DIALOG_OPEN_FILE, "Load sound parameters file...", inFileName, "*.rfx;*.sfs", "Sound Param Files (*.rfx, *.sfs)");
+                int result = GuiFileDialog(DIALOG_OPEN_FILE, "Load sound parameters file...", inFileName, "*.rfx", "Sound Param Files (*.rfx)");
 #endif
                 if (result == 1)
                 {
                     // Load parameters file
-                    params[slotActive] = LoadWaveParams(inFileName);
+                    params[mainToolbarState.soundSlotActive] = LoadWaveParams(inFileName);
                     SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(inFileName)));
                     regenerate = true;
                 }
@@ -737,7 +842,7 @@ int main(int argc, char *argv[])
                     // Save file: outFileName
                     // Check for valid extension and make sure it is
                     if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".rfx")) strcat(outFileName, ".rfx\0");
-                    SaveWaveParams(params[slotActive], outFileName);    // Save wave parameters
+                    SaveWaveParams(params[mainToolbarState.soundSlotActive], outFileName);    // Save wave parameters
 
                 #if defined(PLATFORM_WEB)
                     // Download file from MEMFS (emscripten memory filesystem)
@@ -770,8 +875,8 @@ int main(int argc, char *argv[])
                 if (result == 1)
                 {
                     // Export file: outFileName
-                    Wave cwave = WaveCopy(wave[slotActive]);
-                    WaveFormat(&cwave, wavSampleRate, wavSampleSize, 1);        // Before exporting wave data, we format it as desired
+                    Wave cwave = WaveCopy(wave[mainToolbarState.soundSlotActive]);
+                    WaveFormat(&cwave, exportSampleRate, exportSampleSize, exportChannels);   // Before exporting wave data, we format it as desired
 
                     if (fileTypeActive == 0) 
                     {
@@ -828,15 +933,15 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------------
     for (int i = 0; i < MAX_WAVE_SLOTS; i++)
     {
-        UnloadSound(sound[i]);
-        UnloadWave(wave[i]);
+        UnloadSound(sound[i]);  // Unload sounds
+        UnloadWave(wave[i]);    // Unload wave slots (free done internally)
     }
 
     UnloadRenderTexture(screenTarget);
     UnloadRenderTexture(waveTarget);
 
-    CloseAudioDevice();     // Close audio device
-    CloseWindow();          // Close window and OpenGL context
+    CloseAudioDevice();         // Close audio device
+    CloseWindow();              // Close window and OpenGL context
     //----------------------------------------------------------------------------------------
 
     return 0;
@@ -845,7 +950,7 @@ int main(int argc, char *argv[])
 //--------------------------------------------------------------------------------------------
 // Module functions definition
 //--------------------------------------------------------------------------------------------
-#if defined(VERSION_ONE)
+#if defined(PLATFORM_DESKTOP)
 // Show command line usage info
 static void ShowCommandLineInfo(void)
 {
@@ -866,7 +971,7 @@ static void ShowCommandLineInfo(void)
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
-    printf("                                      Supported extensions: .rfx, .sfs, .wav, .ogg, .flac, .mp3\n\n");
+    printf("                                      Supported extensions: .rfx, .wav, .ogg, .flac, .mp3\n\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
@@ -921,7 +1026,6 @@ static void ProcessCommandLine(int argc, char *argv[])
             if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
                 if (IsFileExtension(argv[i + 1], ".rfx") ||
-                    IsFileExtension(argv[i + 1], ".sfs") ||
                     IsFileExtension(argv[i + 1], ".wav") ||
                     IsFileExtension(argv[i + 1], ".ogg") ||
                     IsFileExtension(argv[i + 1], ".flac") ||
@@ -1019,7 +1123,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
         Wave wave = { 0 };
 
-        if (IsFileExtension(inFileName, ".rfx") || IsFileExtension(inFileName, ".sfs"))
+        if (IsFileExtension(inFileName, ".rfx")) // || IsFileExtension(inFileName, ".sfs"))
         {
             WaveParams params = LoadWaveParams(inFileName);
             wave = GenerateWave(params);
@@ -1063,7 +1167,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
     if (showUsageInfo) ShowCommandLineInfo();
 }
-#endif      // VERSION_ONE
+#endif      // PLATFORM_DESKTOP
 
 //--------------------------------------------------------------------------------------------
 // Load/Save/Export functions
@@ -1221,7 +1325,7 @@ static Wave GenerateWave(WaveParams params)
 
     // NOTE: We reserve enough space for up to 10 seconds of wave audio at given sample rate
     // By default we use float size samples, they are converted to desired sample size at the end
-    float *buffer = (float *)calloc(MAX_WAVE_LENGTH_SECONDS*WAVE_SAMPLE_RATE, sizeof(float));
+    float *buffer = (float *)RL_CALLOC(MAX_WAVE_LENGTH_SECONDS*WAVE_SAMPLE_RATE, sizeof(float));
     bool generatingSample = true;
     int sampleCount = 0;
 
@@ -1415,10 +1519,10 @@ static Wave GenerateWave(WaveParams params)
 
     // NOTE: Wave can be converted to desired format after generation
 
-    genWave.data = (float *)calloc(genWave.frameCount*genWave.channels, sizeof(float));
+    genWave.data = (float *)RL_CALLOC(genWave.frameCount*genWave.channels, sizeof(float));
     memcpy(genWave.data, buffer, genWave.frameCount*genWave.channels*sizeof(float));
 
-    free(buffer);
+    RL_FREE(buffer);
 
     return genWave;
 }
@@ -1461,8 +1565,12 @@ static WaveParams LoadWaveParams(const char *fileName)
             fclose(rfxFile);
         }
     }
+    /*
     else if (IsFileExtension(fileName, ".sfs"))
     {
+        // NOTE: It seem .sfs loading has some issues,
+        // I can't see the point to keep supporting this format
+
         FILE *sfsFile = fopen(fileName, "rb");
 
         if (sfsFile == NULL) return params;
@@ -1522,6 +1630,7 @@ static WaveParams LoadWaveParams(const char *fileName)
 
         fclose(sfsFile);
     }
+    */
 
     return params;
 }
@@ -1896,7 +2005,31 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
     }
 }
 
-#if defined(VERSION_ONE)
+// Draw help window with the provided lines
+static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpLines, int helpLinesCount)
+{
+    int nextLineY = 0;
+
+    // Calculate window height if not externally provided a desired height
+    if (bounds.height == 0) bounds.height = (float)(helpLinesCount*24 + 24);
+
+    int helpWindowActive = !GuiWindowBox(bounds, title);
+    nextLineY += (24 + 2);
+
+    for (int i = 0; i < helpLinesCount; i++)
+    {
+        if (helpLines[i] == NULL) GuiLine((Rectangle) { bounds.x, bounds.y + nextLineY, 330, 12 }, helpLines[i]);
+        else if (helpLines[i][0] == '-') GuiLine((Rectangle) { bounds.x, bounds.y + nextLineY, 330, 24 }, helpLines[i] + 1);
+        else GuiLabel((Rectangle) { bounds.x + 12, bounds.y + nextLineY, 0, 24 }, helpLines[i]);
+
+        if (helpLines[i] == NULL) nextLineY += 12;
+        else nextLineY += 24;
+    }
+
+    return helpWindowActive;
+}
+
+#if defined(PLATFORM_DESKTOP)
 // Simple time wait in milliseconds
 static void WaitTimePlayer(int ms)
 {
@@ -1997,4 +2130,4 @@ static int kbhit(void)
     return 0;
 }
 #endif
-#endif      // VERSION_ONE
+#endif      // PLATFORM_DESKTOP
