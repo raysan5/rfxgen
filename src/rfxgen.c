@@ -434,9 +434,8 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!closeWindow)    // Detect window close button
     {
-#if !defined(PLATFORM_WEB)
         if (WindowShouldClose()) closeWindow = true;
-#endif
+
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
