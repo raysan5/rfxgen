@@ -11,17 +11,17 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
 
  - Predefined **sound presets** (Coin, Shoot, Explosion, PowerUp...)
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
- - Up to **4 save slots** to store generated sound (temporary save)
- - Load `.rfx` sounds or import `.sfs` files (compatible with sfxr)
- - Save `.rfx` sounds with generation parameters (**104 bytes only**)
- - Export generated waves with configurable sample-rate and bits-per-sample
- - Export to `.wav`, `.raw` data or `.h` code file (byte array)
- - Five unique GUI styles: **Light**, **Jungle**, **Candy**, **Lavanda** and **Cyber**
+ - Up to **5 sound slots** to store generated sound (temporary save)
+ - Load `.rfx` files with sound generation parameters
+ - Save `.rfx` files with sound generation parameters (**104 bytes only**)
+ - Export wave data as `.wav`, `.raw` data or `.h` code file (byte array)
+ - Configurable sample-rate, bits-per-sample and channels on export
+ - Multiple GUI styles with support for custom ones (`.rgs`)
  - **Completely free and open-source**
  
 ### rFXGen Standalone Additional Features
 
- - Command-line support for `.rfx`/`.sfs` to `.wav` batch conversion
+ - Command-line support for `.rfx` to `.wav` batch conversion
  - Command-line audio player for `.wav`, `.ogg`, `.mp3` and `.flac`
  - **Completely portable (single-file, no-dependencies)**
 
