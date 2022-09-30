@@ -2105,7 +2105,7 @@ static void PlayWaveCLI(Wave wave)
 // Check if a key has been pressed
 static int kbhit(void)
 {
-    struct termios oldt = { 0 }
+    struct termios oldt = { 0 };
     struct termios newt = { 0 };
     int ch = 0;
     int oldf = 0;
