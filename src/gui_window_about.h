@@ -139,7 +139,7 @@ static const char *lblUsedLibsText = "Powered by:";
 static const char *linkraylibText = "www.raylib.com";
 static const char *linkGitraylibText = "github.com/raysan5/raylib";
 static const char *linkGitrayguiText = "github.com/raysan5/raygui";
-static const char *lblCopyrightText = "Copyright (c) 2021 raylib technologies.";
+static const char *lblCopyrightText = "Copyright (c) 2022 raylib technologies.";
 static const char *linkraylibtechText = "[@raylibtech]";
 static const char *lblMoreInfoText = "More info:";
 static const char *linkMailText = "ray@raylibtech.com";
@@ -187,7 +187,7 @@ GuiWindowAboutState InitGuiWindowAbout(void)
     state.windowActive = false;
 
     // Custom variables initialization
-    state.windowWidth = 360;
+    state.windowWidth = 380;
     state.windowHeight = 340 + 25;
     state.position = (Vector2){ GetScreenWidth()/2 - state.windowWidth/2, GetScreenHeight()/2 - state.windowHeight/2 };
 
@@ -222,8 +222,9 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 160, 150, 16 }, linkGitraylibText)) { OpenURL("https://github.com/raysan5/raylib"); }
         if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 180, 150, 16 }, linkGitrayguiText)) { OpenURL("https://github.com/raysan5/raygui"); }
         
-        DrawTextEx(GetFontDefault(), "miniAUDIO", (Vector2){ state->position.x + 12, state->position.y + 205 }, 30, 2, GetColor(0x003800ff));
-        if (GuiLabelButton((Rectangle){ state->position.x + 155, state->position.y + 210, 150, 15 }, "github.com/dr-soft/miniaudio")) { OpenURL("https://github.com/dr-soft/miniaudio"); }
+        DrawTextEx(GetFontDefault(), "MINIAUDIO", (Vector2){ state->position.x + 13, state->position.y + 206 }, 30, 2, GREEN);
+        DrawTextEx(GetFontDefault(), "MINIAUDIO", (Vector2){ state->position.x + 12, state->position.y + 205 }, 30, 2, GetColor(0x003800ff));
+        if (GuiLabelButton((Rectangle){ state->position.x + 174, state->position.y + 210, 150, 15 }, "github.com/mackron/miniaudio")) { OpenURL("https://github.com/dr-soft/miniaudio"); }
 
         GuiLine((Rectangle){ state->position.x, state->position.y + 200 + 30, (float)state->windowWidth, 20 }, NULL);
 
