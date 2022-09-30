@@ -88,7 +88,7 @@
 #define TOOL_SHORT_NAME         "rFX"
 #define TOOL_VERSION            "3.0"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
-#define TOOL_RELEASE_DATE       "Sep.2022"
+#define TOOL_RELEASE_DATE       "Oct.2022"
 #define TOOL_LOGO_COLOR         0x5197d4ff
 
 #include "raylib.h"
@@ -110,7 +110,7 @@
 #include "gui_file_dialogs.h"           // GUI: File Dialogs
 
 #define GUI_MAIN_TOOLBAR_IMPLEMENTATION
-#include "gui_main_toolbar.h"           // GUI: Main toolbar panel
+#include "gui_main_toolbar.h"           // GUI: Main toolbar
 
 // raygui embedded styles
 #include "styles/style_jungle.h"        // raygui style: jungle
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
     RenderTexture2D screenTarget = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
     SetTextureFilter(screenTarget.texture, TEXTURE_FILTER_POINT);
 
-    SetTargetFPS(60);      // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -601,7 +601,8 @@ int main(int argc, char *argv[])
             mainToolbarState.prevSoundSlotActive = mainToolbarState.soundSlotActive;
         }
 
-        // Change window size to x2
+        // Screen scale logic (x2)
+        //----------------------------------------------------------------------------------
         if (screenSizeActive)
         {
             // Screen size x2
