@@ -11,9 +11,10 @@
 *   VERSIONS HISTORY:
 *       3.0  (30-Sep-2022) Updated to raylib 4.2 and raygui 3.2
 *                          UI redesigned to follow raylibtech UI conventions
-*                          Added help window with keboard shortcuts info
-*                          
 *                          Added main toolbar to access File/Tools/Visual options
+*                          Added help window with keboard shortcuts info
+*                          Added one extra sound slot and key selection
+*                          Removed support for .sfs files (import issues)
 *                          Fixed issues when exporting wave to code file
 *                          Added a new gui style: terminal
 *       2.5  (28-Dec-2021) Updated to raylib 4.2-dev and raygui 3.1
@@ -87,7 +88,7 @@
 #define TOOL_SHORT_NAME         "rFX"
 #define TOOL_VERSION            "3.0"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
-#define TOOL_RELEASE_DATE       "Oct.2022"
+#define TOOL_RELEASE_DATE       "Sep.2022"
 #define TOOL_LOGO_COLOR         0x5197d4ff
 
 #include "raylib.h"
