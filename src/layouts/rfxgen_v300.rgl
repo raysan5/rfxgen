@@ -1,0 +1,85 @@
+#
+# rgl layout text file (v2.5) - raygui layout file generated using rGuiLayout
+#
+# Number of controls:     67
+#
+# Ref. window:    r <x> <y> <width> <height>
+# Anchor info:    a <id> <name> <posx> <posy> <enabled>
+# Control info:   c <id> <type> <name> <rectangle> <anchor_id> <text>
+#
+r 48 48 500 520
+a 000 anchor00 48 48 1
+a 001 anchor01 0 0 1
+a 002 anchor02 120 8 1
+a 003 anchor03 -48 -48 0
+a 004 anchor04 -48 -48 0
+a 005 anchor05 -48 -48 0
+a 006 anchor06 -48 -48 0
+a 007 anchor07 -48 -48 0
+c 000 5 PickupCoin 8 8 100 24 1 #146#Pickup/Coin
+c 001 5 LaserShoot 8 40 100 24 1 #145#Laser/Shoo
+c 002 5 Explosion 8 72 100 24 1 #147#Explosion
+c 003 5 Powerup 8 104 100 24 1 #148#PowerUp
+c 004 5 HitHurt 8 136 100 24 1 #152#Hit/Hurt
+c 005 5 Jump 8 168 100 24 1 #150#Jump
+c 006 5 BlipSelect 8 200 100 24 1 #144#Blip/Select
+c 007 2 line01 8 224 100 12 1 
+c 008 8 waveType01 679 228 100 24 1 Square;Sawtooth
+c 009 8 waveType02 8 272 100 24 1 Sawtooth
+c 010 8 waveType03 8 304 100 24 1 Sinewave
+c 011 8 waveType04 8 336 100 24 1 Noise
+c 012 2 line02 8 368 102 12 1 
+c 013 5 Mutate 8 384 100 24 1 Mutate
+c 014 5 Randomize 8 416 100 24 1 Randomize
+c 015 1 group01 0 0 368 24 2 
+c 016 1 group02 0 24 368 72 2 
+c 017 1 group03 0 96 368 111 2 
+c 018 1 group04 0 208 368 40 2 
+c 019 1 group05 0 248 368 32 2 
+c 020 1 group06 0 280 368 24 2 
+c 021 1 group07 0 304 368 40 2 
+c 022 1 group08 0 344 368 88 2 
+c 023 17 volume 120 8 240 12 2 VOLUME
+c 024 17 attackTime 120 32 240 12 2 ATTACK TIME
+c 025 17 sustainTime 120 48 240 12 2 SUSTAIN TIME
+c 026 17 sustainPunch 120 64 240 12 2 SUSTAIN PUNCH
+c 027 17 decayTime 120 80 240 12 2 DECAY TIME
+c 028 17 startFrequency 120 104 240 12 2 START FREQUENCY
+c 029 17 minFrequency 120 120 240 12 2 MIN FREQUENCY
+c 030 17 slide 120 136 240 12 2 SLIDE
+c 031 17 deltaSlide 120 152 240 12 2 DELTA SLIDE
+c 032 17 vibratoDepth 120 168 240 12 2 VIBRATO DEPTH
+c 033 17 vibratoSpeed 120 184 240 12 2 VIBRATO SPEED
+c 034 17 changeAmount 120 208 240 12 2 CHANGE AMOUNT
+c 035 17 changeSpeed 120 224 240 12 2 CHANGE SPEED
+c 036 17 squareDuty 120 248 240 12 2 SQUARE DUTY
+c 037 17 dutySweep 120 264 240 12 2 DUTY SWEEP
+c 038 17 repeatSpeed 120 288 240 12 2 REPEAT SPEED
+c 039 17 phaserOffset 120 312 240 12 2 PHASER OFFSET
+c 040 17 phaserSweep 120 328 240 12 2 PHASER SWEEP
+c 041 17 lpfCutoff 120 352 240 12 2 LPF CUTOFF
+c 042 17 lpfCutoffSweep 120 368 240 12 2 LPF CUTOFF SWEEP
+c 043 17 lpfResonance 120 384 240 12 2 LPF RESONANCE
+c 044 17 hpfCutoff 120 400 240 12 2 HPF CUTOFF
+c 045 17 hpfCutoffSweep 120 416 240 12 2 HPF CUTOFF SWEEP
+c 046 7 playOnChange 0 536 16 16 1 Play on change
+c 047 5 BtnPlaySound 104 536 100 24 1 Play Sound
+c 048 4 lblSlot 208 536 25 25 1 Slot:
+c 049 8 slot01 232 544 22 16 1 1
+c 050 8 slot02 256 552 16 16 1 2
+c 051 8 slot03 280 544 16 16 1 3
+c 052 8 slot04 304 544 16 16 1 4
+c 053 5 BtnLoadSound 328 536 100 24 1 Load Sound
+c 054 5 BtnSaveSound 328 568 100 24 1 Save Sound
+c 055 10 sampleRate 440 536 100 24 1 22050 Hz;44100 Hz
+c 056 10 sampleSize 440 568 100 24 1 8 bit;16 bit;32 bit
+c 057 10 fileType 440 600 100 24 1 WAV;RAW;CODE
+c 058 5 BtnExportWave 440 632 100 24 1 Export Wave
+c 059 4 lblVisualStyle 552 536 100 20 1 Visual Style:
+c 060 10 visualStyle 624 536 100 24 1 Light;Dark;Candy
+c 061 5 BtnAbout 736 536 100 24 1 ABOUT
+c 062 19 soundInfo 0 500 201 20 1 SOUND INFO: Num samples:
+c 063 19 duration 200 500 126 20 1 Duration
+c 064 19 waveSize 324 500 176 20 1 Wave size
+c 065 23 Wave 8 448 484 64 1 WAVE
+c 066 9 ToggleGroup066 56 288 120 24 0 ONE\nTWO\nTHREE
