@@ -65,7 +65,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2022 raylib technologies (@raylibtech).
+*   Copyright (c) 2014-2022 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -434,6 +434,8 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!closeWindow)    // Detect window close button
     {
+        // WARNING: ASINCIFY requires this line, 
+        // it contains the call to emscripten_sleep() for PLATFORM_WEB
         if (WindowShouldClose()) closeWindow = true;
 
         // Dropped files logic
