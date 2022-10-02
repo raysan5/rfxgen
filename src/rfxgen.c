@@ -147,10 +147,9 @@ bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib
 
 // Simple log system to avoid printf() calls if required
 // NOTE: Avoiding those calls, also avoids const strings memory usage
+#define SUPPORT_LOG_INFO
 #if defined(SUPPORT_LOG_INFO)
-  #ifndef LOG
-    #define LOG(...) printf(__VA_ARGS__)
-  #endif
+  #define LOG(...) printf(__VA_ARGS__)
 #else
   #define LOG(...)
 #endif
