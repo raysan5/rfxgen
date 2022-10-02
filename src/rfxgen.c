@@ -135,7 +135,11 @@
 #endif
 
 #define RFXGEN_IMPLEMENTATION
-#define RFXGEN_LOG(...) printf(__VA_ARGS__)
+#define RFXGEN_RAND GetRandomValue
+#define RFXGEN_SRAND SetRandomSeed
+#define RFXGEN_CALLOC RL_CALLOC
+#define RFXGET_FREE RL_FREE
+#define RFXGET_ISFILEEXTENSION IsFileExtension
 #include "rfxgen.h"
 
 //----------------------------------------------------------------------------------
@@ -190,11 +194,14 @@ static float volumeValue = 0.6f;        // Master volume
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+
 #if defined(PLATFORM_DESKTOP)
 static void ShowCommandLineInfo(void);                      // Show command line usage info
 static void ProcessCommandLine(int argc, char *argv[]);     // Process command line input
 #endif
 
+// Auxiliar functions
+static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
 static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpLines, int helpLinesCount); // Draw help window with the provided lines
 
 #if defined(PLATFORM_DESKTOP)
@@ -1102,6 +1109,39 @@ static void ProcessCommandLine(int argc, char *argv[])
     if (showUsageInfo) ShowCommandLineInfo();
 }
 #endif      // PLATFORM_DESKTOP
+
+
+//--------------------------------------------------------------------------------------------
+// Auxiliar functions
+//--------------------------------------------------------------------------------------------
+// Draw wave data
+// NOTE: For proper visualization, MSAA x4 is recommended but it could be costly for the GPU
+// Alternative: Rendered to a bigger texture and scale down with bilinear/trilinear texture filtering
+static void DrawWave(Wave *wave, Rectangle bounds, Color color)
+{
+    float sample = 0.0f;
+    float sampleNext = 0.0f;
+    float currentSample = 0.0f;
+    float sampleIncrement = (float)wave->frameCount*wave->channels/(float)(bounds.width*2);
+    float sampleScale = (float)bounds.height;
+
+    for (int i = 1; i < bounds.width*2 - 1; i++)
+    {
+        sample = ((float *)wave->data)[(int)currentSample]*sampleScale;
+        sampleNext = ((float *)wave->data)[(int)(currentSample + sampleIncrement)]*sampleScale;
+
+        if (sample > bounds.height/2) sample = bounds.height/2;
+        else if (sample < -bounds.height/2) sample = -bounds.height/2;
+
+        if (sampleNext > bounds.height/2) sampleNext = bounds.height/2;
+        else if (sampleNext < -bounds.height/2) sampleNext = -bounds.height/2;
+
+        DrawLineV((Vector2){ (float)bounds.x + (float)i/2.0f, (float)(bounds.y + bounds.height/2) + sample },
+                  (Vector2){ (float)bounds.x + (float)i/2.0f, (float)(bounds.y  + bounds.height/2) + sampleNext }, color);
+
+        currentSample += sampleIncrement;
+    }
+}
 
 // Draw help window with the provided lines
 static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpLines, int helpLinesCount)
