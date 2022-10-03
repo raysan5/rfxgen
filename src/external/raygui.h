@@ -3538,7 +3538,7 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE, 16);
     GuiSetStyle(SCROLLBAR, SCROLL_PADDING, 0);
     GuiSetStyle(SCROLLBAR, SCROLL_SPEED, 12);
-    GuiSetStyle(LISTVIEW, LIST_ITEMS_HEIGHT, 24);
+    GuiSetStyle(LISTVIEW, LIST_ITEMS_HEIGHT, 28);
     GuiSetStyle(LISTVIEW, LIST_ITEMS_SPACING, 2);
     GuiSetStyle(LISTVIEW, SCROLLBAR_WIDTH, 12);
     GuiSetStyle(LISTVIEW, SCROLLBAR_SIDE, SCROLLBAR_RIGHT_SIDE);
@@ -3548,7 +3548,18 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(COLORPICKER, HUEBAR_SELECTOR_HEIGHT, 8);
     GuiSetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW, 2);
 
-    guiFont = GetFontDefault();     // Initialize default font
+    if (guiFont.texture.id != GetFontDefault().texture.id)
+    {
+        // Unload previous font texture
+        UnloadTexture(guiFont.texture);
+
+        // Setup default raylib font
+        guiFont = GetFontDefault(); 
+
+        // Setup default raylib font rectangle
+        Rectangle whiteChar = { 41, 46, 2, 8 };
+        SetShapesTexture(guiFont.texture, whiteChar);
+    }
 }
 
 // Get text with icon id prepended
