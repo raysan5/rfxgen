@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v3.0 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v3.1-dev - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -9,6 +9,7 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
+*       3-1-dev (2023?)    Move sound generator to a header-only library     
 *       3.0  (30-Sep-2022) Updated to raylib 4.2 and raygui 3.2
 *                          UI redesigned to follow raylibtech UI conventions
 *                          Added main toolbar to access File/Tools/Visual options
