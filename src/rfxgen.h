@@ -70,7 +70,11 @@ extern "C" {            // Prevents name mangling of functions
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #if !defined(RFXGEN_GEN_SAMPLE_RATE)
-    #define RFXGEN_GEN_SAMPLE_RATE      44100     // Default sample rate
+    #define RFXGEN_GEN_SAMPLE_RATE 44100    // Default sample rate
+#endif
+
+#define RFXGEN_GEN_SAMPLE_SIZE 32           // The sample size of generated waves (32 bit -> float)
+#define RFXGEN_GEN_CHANNELS 1               // The number of channels that are generated for waves (only 1)
 #endif
 
 //----------------------------------------------------------------------------------
