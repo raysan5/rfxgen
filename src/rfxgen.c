@@ -87,7 +87,7 @@
 
 #define TOOL_NAME               "rFXGen"
 #define TOOL_SHORT_NAME         "rFX"
-#define TOOL_VERSION            "3.0"
+#define TOOL_VERSION            "3.1-dev"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
 #define TOOL_RELEASE_DATE       "Oct.2022"
 #define TOOL_LOGO_COLOR         0x5197d4ff
@@ -341,7 +341,13 @@ int main(int argc, char *argv[])
         UnloadSound(sound[0]);
 
         params[0] = LoadWaveParams(inFileName); // Load wave parameters from .rfx
-        wave[0] = GenerateWave(params[0]);      // Generate wave from parameters
+        
+        // NOTE: GenerateWave() returns data as 32bit float, 1 channel by default
+        wave[0].sampleRate = RFXGEN_GEN_SAMPLE_RATE;
+        wave[0].sampleSize = 32;
+        wave[0].channels = 1;
+        wave[0].data = GenerateWave(params[0], &wave[0].frameCount);
+        
         sound[0] = LoadSoundFromWave(wave[0]);  // Load sound from new wave
 
         PlaySound(sound[0]);                    // Play generated sound
@@ -534,7 +540,13 @@ int main(int argc, char *argv[])
                 UnloadWave(wave[mainToolbarState.soundSlotActive]);
                 UnloadSound(sound[mainToolbarState.soundSlotActive]);
                 
-                wave[mainToolbarState.soundSlotActive] = GenerateWave(params[mainToolbarState.soundSlotActive]);        // Generate new wave from parameters
+                // Generate new wave from parameters
+                // NOTE: GenerateWave() returns data as 32bit float, 1 channel by default
+                wave[mainToolbarState.soundSlotActive].sampleRate = RFXGEN_GEN_SAMPLE_RATE;
+                wave[mainToolbarState.soundSlotActive].sampleSize = 32;
+                wave[mainToolbarState.soundSlotActive].channels = 1;
+                wave[mainToolbarState.soundSlotActive].data = GenerateWave(params[mainToolbarState.soundSlotActive], &wave[mainToolbarState.soundSlotActive].frameCount);
+
                 sound[mainToolbarState.soundSlotActive] = LoadSoundFromWave(wave[mainToolbarState.soundSlotActive]);    // Reload sound from new wave
 
                 if ((regenerate || playOnChange) && !GuiIsLocked()) PlaySound(sound[mainToolbarState.soundSlotActive]);
@@ -1075,7 +1087,12 @@ static void ProcessCommandLine(int argc, char *argv[])
         if (IsFileExtension(inFileName, ".rfx")) // || IsFileExtension(inFileName, ".sfs"))
         {
             WaveParams params = LoadWaveParams(inFileName);
-            wave = GenerateWave(params);
+
+            // NOTE: GenerateWave() returns data as 32bit float, 1 channel by default
+            wave.sampleRate = RFXGEN_GEN_SAMPLE_RATE;
+            wave.sampleSize = 32;
+            wave.channels = 1;
+            wave.data = GenerateWave(params, &wave.frameCount);
         }
         else if (IsFileExtension(inFileName, ".wav") ||
                  IsFileExtension(inFileName, ".ogg") ||
