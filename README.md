@@ -27,7 +27,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
 
 ## rFXGen Screenshot
 
-![rFXGen Cyber UI style](screenshots/rfxgen_v250_cyber_shot01.png)
+![rFXGen Cyber UI style](screenshots/rfxgen_v300_cyber_shot01.png)
  
 ## rFXGen Usage
 
