@@ -13,7 +13,7 @@
 *       3.0  (30-Sep-2022) Updated to raylib 4.2 and raygui 3.2
 *                          UI redesigned to follow raylibtech UI conventions
 *                          Added main toolbar to access File/Tools/Visual options
-*                          Added help window with keboard shortcuts info
+*                          Added help window with keyboard shortcuts info
 *                          Added one extra sound slot and key selection
 *                          Removed support for .sfs files (import issues)
 *                          Fixed issues when exporting wave to code file
@@ -402,7 +402,11 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[mainToolbarState.soundSlotActive]);  // Play current sound
 
         // Show dialog: save sound (.rfx)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) showSaveFileDialog = true;
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) 
+        {
+            strcpy(outFileName, "sound.rfx");
+            showSaveFileDialog = true;
+        }
 
         // Show dialog: load sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) showLoadFileDialog = true;
@@ -468,7 +472,11 @@ int main(int argc, char *argv[])
             sound[mainToolbarState.soundSlotActive] = LoadSoundFromWave(wave[mainToolbarState.soundSlotActive]);
         }
         else if (mainToolbarState.btnLoadFilePressed) showLoadFileDialog = true;
-        else if (mainToolbarState.btnSaveFilePressed) showSaveFileDialog = true;
+        else if (mainToolbarState.btnSaveFilePressed)
+        {
+            strcpy(outFileName, "sound.rfx");
+            showSaveFileDialog = true;
+        }
         else if (mainToolbarState.btnExportFilePressed) exportWindowActive = true;
 
         if (mainToolbarState.visualStyleActive != mainToolbarState.prevVisualStyleActive)
@@ -773,9 +781,8 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (showSaveFileDialog)
             {
-                strcpy(outFileName, "sound.rfx");
 #if defined(CUSTOM_MODAL_DIALOGS)
-                int result = GuiFileDialog(DIALOG_TEXTINPUT, "Save sound file as...", outFileName, "Ok;Cancel", NULL);
+                int result = GuiTextInputBox((Rectangle){ screenWidth/2 - 280/2, screenHeight/2 - 112/2 - 30, 280, 112 }, "#2#Save sound file as...", NULL, "#2#Save", outFileName, 512, NULL);
 #else
                 int result = GuiFileDialog(DIALOG_SAVE_FILE, "Save sound parameters file...", outFileName, "*.rfx", "Sound Param Files (*.rfx)");
 #endif
@@ -801,17 +808,17 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (showExportFileDialog)
             {
+#if defined(CUSTOM_MODAL_DIALOGS)
+                //int result = GuiFileDialog(DIALOG_TEXTINPUT, "Export wave file...", outFileName, "Ok;Cancel", NULL);
+                int result = GuiTextInputBox((Rectangle){ screenWidth/2 - 280/2, screenHeight/2 - 112/2 - 30, 280, 112 }, "#7#Export wave file...", NULL, "#7#Export", outFileName, 512, NULL);
+#else
                 // Consider different supported file types
                 char fileTypeFilters[64] = { 0 };
-                strcpy(outFileName, "sound");
 
                 if (fileTypeActive == 0) { strcpy(fileTypeFilters, "*.wav"); strcat(outFileName, ".wav"); }
                 else if (fileTypeActive == 1) { strcpy(fileTypeFilters, "*.raw"); strcat(outFileName, ".raw"); }
                 else if (fileTypeActive == 2) { strcpy(fileTypeFilters, "*.h"); strcat(outFileName, ".h"); }
-
-#if defined(CUSTOM_MODAL_DIALOGS)
-                int result = GuiFileDialog(DIALOG_TEXTINPUT, "Export wave file...", outFileName, "Ok;Cancel", NULL);
-#else
+                
                 int result = GuiFileDialog(DIALOG_SAVE_FILE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
 #endif
                 if (result == 1)
