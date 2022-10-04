@@ -185,7 +185,7 @@ static const char *helpLines[HELP_LINES_COUNT] = {
     "P - Toggle autoplay on params change",
     "-Tool Visuals",
     "LEFT | RIGHT - Select visual style",
-    "F - Toggle double screen size",
+    "LCTRL + F - Toggle double screen size",
     NULL,
     "ESCAPE - Close Window/Exit"
 };
@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
 
 #if !defined(PLATFORM_WEB)
         // Toggle screen size (x2) mode
-        if (IsKeyPressed(KEY_F)) screenSizeActive = !screenSizeActive;
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_F)) screenSizeActive = !screenSizeActive;
 #endif
         // Toggle play on change option
         if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
