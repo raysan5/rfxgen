@@ -323,9 +323,9 @@ int main(int argc, char *argv[])
         ResetWaveParams(&params[i]);
 
         // Default wave values
-        wave[i].sampleRate = 44100;
-        wave[i].sampleSize = 32;        // 32 bit -> float
-        wave[i].channels = 1;           // 1 channel -> mono
+        wave[i].sampleRate = RFXGEN_GEN_SAMPLE_RATE;
+        wave[i].sampleSize = RFXGEN_GEN_SAMPLE_SIZE;
+        wave[i].channels = RFXGEN_GEN_CHANNELS;
         wave[i].frameCount = 10*wave[i].sampleRate;    // Max frame count for 10 seconds
         wave[i].data = (float *)RL_CALLOC(wave[i].frameCount, sizeof(float));
 
@@ -1090,8 +1090,8 @@ static void ProcessCommandLine(int argc, char *argv[])
 
             // NOTE: GenerateWave() returns data as 32bit float, 1 channel by default
             wave.sampleRate = RFXGEN_GEN_SAMPLE_RATE;
-            wave.sampleSize = 32;
-            wave.channels = 1;
+            wave.sampleSize = RFXGEN_GEN_SAMPLE_SIZE;
+            wave.channels = RFXGEN_GEN_CHANNELS;
             wave.data = GenerateWave(params, &wave.frameCount);
         }
         else if (IsFileExtension(inFileName, ".wav") ||
