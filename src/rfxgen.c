@@ -9,7 +9,7 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       3-1-dev (2023?)    Move sound generator to a header-only library     
+*       3-1-dev (2023?)    Move sound generator to a header-only library
 *       3.0  (30-Sep-2022) Updated to raylib 4.2 and raygui 3.2
 *                          UI redesigned to follow raylibtech UI conventions
 *                          Added main toolbar to access File/Tools/Visual options
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
     bool playOnChange = true;           // Automatically play sound on parameter change
     bool screenSizeActive = false;      // Scale screen x2 (useful for HighDPI screens)
 
-    bool helpWindowActive = false;      // Show window: help info 
+    bool helpWindowActive = false;      // Show window: help info
     bool userWindowActive = false;      // Show window: user registration
     //-----------------------------------------------------------------------------------
 
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
     bool exportWindowActive = false;
 
     int fileTypeActive = 0;         // ComboBox file type selection
-    int sampleRateActive = 1;       // ComboBox sample rate selection 
+    int sampleRateActive = 1;       // ComboBox sample rate selection
     int sampleSizeActive = 1;       // ComboBox sample size selection
     int channelsActive = 0;         // ComboBox channels selection
 
@@ -341,23 +341,23 @@ int main(int argc, char *argv[])
         UnloadSound(sound[0]);
 
         params[0] = LoadWaveParams(inFileName); // Load wave parameters from .rfx
-        
+
         // NOTE: GenerateWave() returns data as 32bit float, 1 channel by default
         wave[0].sampleRate = RFXGEN_GEN_SAMPLE_RATE;
         wave[0].sampleSize = 32;
         wave[0].channels = 1;
         wave[0].data = GenerateWave(params[0], &wave[0].frameCount);
-        
+
         sound[0] = LoadSoundFromWave(wave[0]);  // Load sound from new wave
 
         PlaySound(sound[0]);                    // Play generated sound
     }
 
     bool regenerate = false;                    // Wave regeneration required
-    
+
     float prevVolumeValue = volumeValue;
     int prevWaveTypeValue[MAX_WAVE_SLOTS] = { params[0].waveTypeValue };
-    
+
     Rectangle waveRec = { 12, 484, 516, 64 };       // Wave drawing rectangle box
     Rectangle slidersRec = { 256, 82, 226, 392 };   // Area defining sliders to allow sound replay when mouse-released
 
@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
     // Main game loop
     while (!closeWindow)    // Detect window close button
     {
-        // WARNING: ASINCIFY requires this line, 
+        // WARNING: ASINCIFY requires this line,
         // it contains the call to emscripten_sleep() for PLATFORM_WEB
         if (WindowShouldClose()) closeWindow = true;
 
@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[mainToolbarState.soundSlotActive]);  // Play current sound
 
         // Show dialog: save sound (.rfx)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) 
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S))
         {
             strcpy(outFileName, "sound.rfx");
             showSaveFileDialog = true;
@@ -473,7 +473,7 @@ int main(int argc, char *argv[])
             // Reload current slot
             UnloadSound(sound[mainToolbarState.soundSlotActive]);
             UnloadWave(wave[mainToolbarState.soundSlotActive]);
-            
+
             wave[mainToolbarState.soundSlotActive].data = (float *)RL_CALLOC(wave[mainToolbarState.soundSlotActive].frameCount, sizeof(float));
             sound[mainToolbarState.soundSlotActive] = LoadSoundFromWave(wave[mainToolbarState.soundSlotActive]);
         }
@@ -522,14 +522,14 @@ int main(int argc, char *argv[])
         // Check wave type combobox selection to regenerate wave
         if (params[mainToolbarState.soundSlotActive].waveTypeValue != prevWaveTypeValue[mainToolbarState.soundSlotActive]) regenerate = true;
         prevWaveTypeValue[mainToolbarState.soundSlotActive] = params[mainToolbarState.soundSlotActive].waveTypeValue;
-        
+
         // Avoid wave regeneration when some window is active
-        if (!windowAboutState.windowActive && 
-            !helpWindowActive && 
+        if (!windowAboutState.windowActive &&
+            !helpWindowActive &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
             !showExportFileDialog &&
-            !exportWindowActive && 
+            !exportWindowActive &&
             !exitWindowActive)
         {
             // Consider two possible cases to regenerate wave and update sound:
@@ -539,7 +539,7 @@ int main(int argc, char *argv[])
             {
                 UnloadWave(wave[mainToolbarState.soundSlotActive]);
                 UnloadSound(sound[mainToolbarState.soundSlotActive]);
-                
+
                 // Generate new wave from parameters
                 // NOTE: GenerateWave() returns data as 32bit float, 1 channel by default
                 wave[mainToolbarState.soundSlotActive].sampleRate = RFXGEN_GEN_SAMPLE_RATE;
@@ -582,15 +582,15 @@ int main(int argc, char *argv[])
                 SetMouseScale(1.0f, 1.0f);
             }
         }
-        
+
         // WARNING: Some windows should lock the main screen controls when shown
-        if (windowAboutState.windowActive || 
+        if (windowAboutState.windowActive ||
             helpWindowActive ||
             userWindowActive ||
-            exitWindowActive || 
+            exitWindowActive ||
             exportWindowActive ||
-            showLoadFileDialog || 
-            showSaveFileDialog || 
+            showLoadFileDialog ||
+            showSaveFileDialog ||
             showExportFileDialog) GuiLock();
         //----------------------------------------------------------------------------------
 
@@ -660,24 +660,24 @@ int main(int argc, char *argv[])
             params[mainToolbarState.soundSlotActive].sustainTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainTimeValue), params[mainToolbarState.soundSlotActive].sustainTimeValue, 0, 1);
             params[mainToolbarState.soundSlotActive].sustainPunchValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainPunchValue), params[mainToolbarState.soundSlotActive].sustainPunchValue, 0, 1);
             params[mainToolbarState.soundSlotActive].decayTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DECAY TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].decayTimeValue), params[mainToolbarState.soundSlotActive].decayTimeValue, 0, 1);
-            
+
             params[mainToolbarState.soundSlotActive].startFrequencyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "START FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].startFrequencyValue), params[mainToolbarState.soundSlotActive].startFrequencyValue, 0, 1);
             params[mainToolbarState.soundSlotActive].minFrequencyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "MIN FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].minFrequencyValue), params[mainToolbarState.soundSlotActive].minFrequencyValue, 0, 1);
-            
+
             params[mainToolbarState.soundSlotActive].slideValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].slideValue), params[mainToolbarState.soundSlotActive].slideValue, -1, 1);
             params[mainToolbarState.soundSlotActive].deltaSlideValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DELTA SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].deltaSlideValue), params[mainToolbarState.soundSlotActive].deltaSlideValue, -1, 1);
             params[mainToolbarState.soundSlotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO DEPTH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoDepthValue), params[mainToolbarState.soundSlotActive].vibratoDepthValue, 0, 1);
             params[mainToolbarState.soundSlotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoSpeedValue), params[mainToolbarState.soundSlotActive].vibratoSpeedValue, 0, 1);
-            
+
             params[mainToolbarState.soundSlotActive].changeAmountValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "CHANGE AMOUNT", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeAmountValue), params[mainToolbarState.soundSlotActive].changeAmountValue, -1, 1);
             params[mainToolbarState.soundSlotActive].changeSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "CHANGE SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeSpeedValue), params[mainToolbarState.soundSlotActive].changeSpeedValue, 0, 1);
             params[mainToolbarState.soundSlotActive].squareDutyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SQUARE DUTY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].squareDutyValue), params[mainToolbarState.soundSlotActive].squareDutyValue, 0, 1);
             params[mainToolbarState.soundSlotActive].dutySweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DUTY SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].dutySweepValue), params[mainToolbarState.soundSlotActive].dutySweepValue, -1, 1);
-           
+
             params[mainToolbarState.soundSlotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "REPEAT SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].repeatSpeedValue), params[mainToolbarState.soundSlotActive].repeatSpeedValue, 0, 1);
             params[mainToolbarState.soundSlotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER OFFSET", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserOffsetValue), params[mainToolbarState.soundSlotActive].phaserOffsetValue, -1, 1);
             params[mainToolbarState.soundSlotActive].phaserSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserSweepValue), params[mainToolbarState.soundSlotActive].phaserSweepValue, -1, 1);
-            
+
             params[mainToolbarState.soundSlotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "LPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffValue), params[mainToolbarState.soundSlotActive].lpfCutoffValue, 0, 1);
             params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue), params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue, -1, 1);
             params[mainToolbarState.soundSlotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF RESONANCE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfResonanceValue), params[mainToolbarState.soundSlotActive].lpfResonanceValue, 0, 1);
@@ -706,7 +706,7 @@ int main(int argc, char *argv[])
 
             // NOTE: If some overlap window is open and main window is locked, we draw a background rectangle
             if (GuiIsLocked()) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
-            
+
             // WARNING: Before drawing the windows, we unlock them
             GuiUnlock();
 
@@ -732,7 +732,7 @@ int main(int argc, char *argv[])
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 24 + 8, 106, 24 }, "Sample Rate:");
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 48 + 16, 106, 24 }, "Sample Size:");
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 72 + 24, 106, 24 }, "Channels:");
-                
+
                 fileTypeActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;RAW;CODE", fileTypeActive);
                 sampleRateActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
                 sampleSizeActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
@@ -830,7 +830,7 @@ int main(int argc, char *argv[])
                 if (fileTypeActive == 0) { strcpy(fileTypeFilters, "*.wav"); strcat(outFileName, ".wav"); }
                 else if (fileTypeActive == 1) { strcpy(fileTypeFilters, "*.raw"); strcat(outFileName, ".raw"); }
                 else if (fileTypeActive == 2) { strcpy(fileTypeFilters, "*.h"); strcat(outFileName, ".h"); }
-                
+
                 int result = GuiFileDialog(DIALOG_SAVE_FILE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
 #endif
                 if (result == 1)
@@ -839,7 +839,7 @@ int main(int argc, char *argv[])
                     Wave cwave = WaveCopy(wave[mainToolbarState.soundSlotActive]);
                     WaveFormat(&cwave, exportSampleRate, exportSampleSize, exportChannels);   // Before exporting wave data, we format it as desired
 
-                    if (fileTypeActive == 0) 
+                    if (fileTypeActive == 0)
                     {
                         // Check for valid extension and make sure it is
                         if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
@@ -881,7 +881,7 @@ int main(int argc, char *argv[])
 
         BeginDrawing();
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-            
+
             // Draw render texture to screen
             if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Rectangle){ 0, 0, (float)screenTarget.texture.width*2, (float)screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
