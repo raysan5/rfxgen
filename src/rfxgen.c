@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v3.1-dev - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v3.1 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
@@ -48,7 +48,7 @@
 *
 *   DEPENDENCIES:
 *       raylib 4.2              - Windowing/input management and drawing
-*       raygui 3.2              - Immediate-mode GUI controls with custom styling and icons
+*       raygui 3.5-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   COMPILATION (Windows - MinGW):
