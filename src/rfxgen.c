@@ -9,27 +9,28 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       3-1-dev (2023?)     Move sound generator to a header-only library
-*                          
-*       3.0  (30-Sep-2022)  Updated to raylib 4.2 and raygui 3.2
-*                           UI redesigned to follow raylibtech UI conventions
-*                           Added main toolbar to access File/Tools/Visual options
-*                           Added help window with keyboard shortcuts info
-*                           Added one extra sound slot and key selection
-*                           Removed support for .sfs files (import issues)
-*                           Fixed issues when exporting wave to code file
-*                           Added a new gui style: terminal
-*       2.5  (28-Dec-2021)  Updated to raylib 4.2-dev and raygui 3.1
-*                           Fixed issue with 32bit float WAV export
-*                           Fixed issue with WaveMutate() convergence
-*                           Removed tool references to ZERO or ONE
-*                           Reviewed code naming conventions
-*                           Added a new gui style: lavanda
+*       3.1  (06-Sep-2022)  REDESIGNED: Sound generator as a header-only library: rfxgen.h
+*                           ADDED: Sponsor window for tools support
+*                           Updated to raygui 3.5-dev
+*       3.0  (30-Sep-2022)  UI redesigned to follow raylibtech UI conventions
+*                           ADDED: Main toolbar to access File/Tools/Visual options
+*                           ADDED: Help window with keyboard shortcuts info
+*                           ADDED: One extra sound slot and key selection
+*                           REMOVED: Support for .sfs files (import issues)
+*                           REVIEWED: Issues when exporting wave to code file
+*                           ADDED: a new gui style: terminal
+*                           Updated to raylib 4.2 and raygui 3.2
+*       2.5  (28-Dec-2021)  REVIEWED: Issue with 32bit float WAV export
+*                           REVIEWED: Issue with WaveMutate() convergence
+*                           REVIEWED: Code naming conventions
+*                           REMOVED: Tool references to ZERO or ONE
+*                           ADDED: New gui style: lavanda
+*                           Updated to raylib 4.2-dev and raygui 3.1
 *       2.3  (20-Dec-2020)  Updated to raylib 3.5
 *       2.2  (23-Feb-2019)  Updated to raylib 3.0, raygui 2.7 and adapted for web
-*       2.1  (09-Sep-2019)  Ported to latest raygui 2.6
-*                           Support custom file dialogs (on non-DESKTOP platforms)
-*                           Slight screen resize to adapt to new styles fonts
+*       2.1  (09-Sep-2019)  ADDED: Support custom file dialogs (on non-DESKTOP platforms)
+*                           REVIEWED: Screen resize to adapt to new styles fonts
+*                           Updated to raygui 2.6
 *       2.0  (xx-Nov-2018)  GUI redesigned, CLI improvements
 *       1.8  (10-Oct-2018)  Functions renaming, code reorganized, better consistency...
 *       1.5  (23-Sep-2018)  Support .wav export to code and sound playing on command line
@@ -38,7 +39,6 @@
 *       1.2  (16-Mar-2018)  Working on some code improvements and GUI review
 *       1.1  (01-Oct-2017)  Code review, simplified
 *       1.0  (18-Mar-2017)  First release
-*       0.9x (XX-Jan-2017)  Review complete file...
 *       0.95 (14-Sep-2016)  Reviewed comments and .rfx format
 *       0.9  (12-Sep-2016)  Defined WaveParams struct and command line functionality
 *       0.8  (09-Sep-2016)  Added open/save file dialogs using tinyfiledialogs library
@@ -182,7 +182,7 @@ static const char *toolDescription = TOOL_DESCRIPTION;
 static const char *helpLines[HELP_LINES_COUNT] = {
     "F1 - Show Help window",
     "F2 - Show About window",
-    "F3 - Show Sponsors window",
+    "F3 - Show Sponsor window",
     "-File Controls",
     "LCTRL + N - Reset sound slot",
     "LCTRL + O - Open sound file (.rfx)",
@@ -454,13 +454,13 @@ int main(int argc, char *argv[])
         // Toggle play on change option
         if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
 
-        // Toggle window help
+        // Toggle window: help
         if (IsKeyPressed(KEY_F1)) helpWindowActive = !helpWindowActive;
 
-        // Toggle window about
+        // Toggle window: about
         if (IsKeyPressed(KEY_F2)) windowAboutState.windowActive = !windowAboutState.windowActive;
 
-        // Toggle window registered user
+        // Toggle window: sponsor
         if (IsKeyPressed(KEY_F3)) windowSponsorState.windowActive = !windowSponsorState.windowActive;
 
         // Show closing window on ESC
