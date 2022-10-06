@@ -210,7 +210,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         
         bool singleLine = true;
         GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 55 : 35), 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
-        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 78 : 60), 245, 20 }, TOOL_DESCRIPTION);
+        GuiLabel((Rectangle){ state->position.x + 85, state->position.y + (singleLine? 78 : 60), (float)state->windowWidth, 20 }, TOOL_DESCRIPTION);
 
         GuiLine((Rectangle){ state->position.x, state->position.y + 100, (float)state->windowWidth, 20 }, NULL);
         GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 112, 126, 24 }, lblUsedLibsText);

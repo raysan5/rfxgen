@@ -62,10 +62,6 @@
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
-#if defined(__cplusplus)
-extern "C" {            // Prevents name mangling of functions
-#endif
-
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -75,7 +71,6 @@ extern "C" {            // Prevents name mangling of functions
 
 #define RFXGEN_GEN_SAMPLE_SIZE 32           // The sample size of generated waves (32 bit -> float)
 #define RFXGEN_GEN_CHANNELS 1               // The number of channels that are generated for waves (only 1)
-#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -132,6 +127,10 @@ typedef struct WaveParams {
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 
+#if defined(__cplusplus)
+extern "C" {            // Prevents name mangling of functions
+#endif
+
 // Load/Save/Export data functions
 RLAPI WaveParams LoadWaveParams(const char *fileName);                 // Load wave parameters from file
 RLAPI void SaveWaveParams(WaveParams params, const char *fileName);    // Save wave parameters to file
@@ -153,7 +152,7 @@ RLAPI void WaveMutate(WaveParams *params); // Mutate current sound
 }
 #endif
 
-#endif // RFXGEN_H
+#endif      // RFXGEN_H
 
 /***********************************************************************************
 *

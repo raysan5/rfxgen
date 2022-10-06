@@ -9,41 +9,42 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       3-1-dev (2023?)    Move sound generator to a header-only library
-*       3.0  (30-Sep-2022) Updated to raylib 4.2 and raygui 3.2
-*                          UI redesigned to follow raylibtech UI conventions
-*                          Added main toolbar to access File/Tools/Visual options
-*                          Added help window with keyboard shortcuts info
-*                          Added one extra sound slot and key selection
-*                          Removed support for .sfs files (import issues)
-*                          Fixed issues when exporting wave to code file
-*                          Added a new gui style: terminal
-*       2.5  (28-Dec-2021) Updated to raylib 4.2-dev and raygui 3.1
-*                          Fixed issue with 32bit float WAV export
-*                          Fixed issue with WaveMutate() convergence
-*                          Removed tool references to ZERO or ONE
-*                          Reviewed code naming conventions
-*                          Added a new gui style: lavanda
-*       2.3  (20-Dec-2020) Updated to raylib 3.5
-*       2.2  (23-Feb-2019) Updated to raylib 3.0, raygui 2.7 and adapted for web
-*       2.1  (09-Sep-2019) Ported to latest raygui 2.6
-*                          Support custom file dialogs (on non-DESKTOP platforms)
-*                          Slight screen resize to adapt to new styles fonts
-*       2.0  (xx-Nov-2018) GUI redesigned, CLI improvements
-*       1.8  (10-Oct-2018) Functions renaming, code reorganized, better consistency...
-*       1.5  (23-Sep-2018) Support .wav export to code and sound playing on command line
-*       1.4  (15-Sep-2018) Redesigned command line and comments
-*       1.3  (15-May-2018) Reimplemented gui using rGuiLayout
-*       1.2  (16-Mar-2018) Working on some code improvements and GUI review
-*       1.1  (01-Oct-2017) Code review, simplified
-*       1.0  (18-Mar-2017) First release
-*       0.9x (XX-Jan-2017) Review complete file...
-*       0.95 (14-Sep-2016) Reviewed comments and .rfx format
-*       0.9  (12-Sep-2016) Defined WaveParams struct and command line functionality
-*       0.8  (09-Sep-2016) Added open/save file dialogs using tinyfiledialogs library
-*       0.7  (04-Sep-2016) Program variables renaming for consistency, code reorganized
-*       0.6  (30-Aug-2016) Interface redesigned (reduced size) and new features added (wave drawing)
-*       0.5  (27-Aug-2016) Completed port and adaptation from sfxr (only sound generation and playing)
+*       3-1-dev (2023?)     Move sound generator to a header-only library
+*                          
+*       3.0  (30-Sep-2022)  Updated to raylib 4.2 and raygui 3.2
+*                           UI redesigned to follow raylibtech UI conventions
+*                           Added main toolbar to access File/Tools/Visual options
+*                           Added help window with keyboard shortcuts info
+*                           Added one extra sound slot and key selection
+*                           Removed support for .sfs files (import issues)
+*                           Fixed issues when exporting wave to code file
+*                           Added a new gui style: terminal
+*       2.5  (28-Dec-2021)  Updated to raylib 4.2-dev and raygui 3.1
+*                           Fixed issue with 32bit float WAV export
+*                           Fixed issue with WaveMutate() convergence
+*                           Removed tool references to ZERO or ONE
+*                           Reviewed code naming conventions
+*                           Added a new gui style: lavanda
+*       2.3  (20-Dec-2020)  Updated to raylib 3.5
+*       2.2  (23-Feb-2019)  Updated to raylib 3.0, raygui 2.7 and adapted for web
+*       2.1  (09-Sep-2019)  Ported to latest raygui 2.6
+*                           Support custom file dialogs (on non-DESKTOP platforms)
+*                           Slight screen resize to adapt to new styles fonts
+*       2.0  (xx-Nov-2018)  GUI redesigned, CLI improvements
+*       1.8  (10-Oct-2018)  Functions renaming, code reorganized, better consistency...
+*       1.5  (23-Sep-2018)  Support .wav export to code and sound playing on command line
+*       1.4  (15-Sep-2018)  Redesigned command line and comments
+*       1.3  (15-May-2018)  Reimplemented gui using rGuiLayout
+*       1.2  (16-Mar-2018)  Working on some code improvements and GUI review
+*       1.1  (01-Oct-2017)  Code review, simplified
+*       1.0  (18-Mar-2017)  First release
+*       0.9x (XX-Jan-2017)  Review complete file...
+*       0.95 (14-Sep-2016)  Reviewed comments and .rfx format
+*       0.9  (12-Sep-2016)  Defined WaveParams struct and command line functionality
+*       0.8  (09-Sep-2016)  Added open/save file dialogs using tinyfiledialogs library
+*       0.7  (04-Sep-2016)  Program variables renaming for consistency, code reorganized
+*       0.6  (30-Aug-2016)  Interface redesigned (reduced size) and new features added (wave drawing)
+*       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
 *       raylib 4.2              - Windowing/input management and drawing
@@ -95,30 +96,37 @@
 #include "raylib.h"
 
 #if defined(PLATFORM_WEB)
-    #define CUSTOM_MODAL_DIALOGS        // Force custom modal dialogs usage
-    #include <emscripten/emscripten.h>  // Emscripten library - LLVM to JavaScript compiler
+    #define CUSTOM_MODAL_DIALOGS            // Force custom modal dialogs usage
+    #include <emscripten/emscripten.h>      // Emscripten library - LLVM to JavaScript compiler
 #endif
 
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"                     // Required for: IMGUI controls
+#include "raygui.h"                         // Required for: IMGUI controls
 
-#undef RAYGUI_IMPLEMENTATION            // Avoid including raygui implementation again
+#undef RAYGUI_IMPLEMENTATION                // Avoid including raygui implementation again
 
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
-#include "gui_window_about.h"           // GUI: About Window
+#include "gui_window_about.h"               // GUI: About Window
+
+#define GUI_WINDOW_SPONSOR_IMPLEMENTATION
+#include "gui_window_sponsor.h"             // GUI: Sponsor Window
 
 #define GUI_FILE_DIALOGS_IMPLEMENTATION
-#include "gui_file_dialogs.h"           // GUI: File Dialogs
+#include "gui_file_dialogs.h"               // GUI: File Dialogs
 
 #define GUI_MAIN_TOOLBAR_IMPLEMENTATION
-#include "gui_main_toolbar.h"           // GUI: Main toolbar
+#include "gui_main_toolbar.h"               // GUI: Main toolbar
 
 // raygui embedded styles
-#include "styles/style_jungle.h"        // raygui style: jungle
-#include "styles/style_candy.h"         // raygui style: candy
-#include "styles/style_lavanda.h"       // raygui style: lavanda
-#include "styles/style_cyber.h"         // raygui style: cyber
-#include "styles/style_terminal.h"      // raygui style: terminal
+// NOTE: Following same order as selector
+#include "styles/style_dark.h"              // raygui style: dark
+#include "styles/style_jungle.h"            // raygui style: jungle
+#include "styles/style_candy.h"             // raygui style: candy
+#include "styles/style_lavanda.h"           // raygui style: lavanda
+#include "styles/style_cyber.h"             // raygui style: cyber
+#include "styles/style_terminal.h"          // raygui style: terminal
+#include "styles/style_ashes.h"             // raygui style: ashes
+#include "styles/style_bluish.h"            // raygui style: bluish
 
 #include <math.h>                       // Required for: sinf(), powf()
 #include <time.h>                       // Required for: clock()
@@ -153,10 +161,10 @@ bool __stdcall FreeConsole(void);       // Close console from code (kernel32.lib
 // Simple log system to avoid printf() calls if required
 // NOTE: Avoiding those calls, also avoids const strings memory usage
 #define SUPPORT_LOG_INFO
-#if defined(SUPPORT_LOG_INFO)
-  #define LOG(...) printf(__VA_ARGS__)
+#if defined(SUPPORT_LOG_INFO) && defined(_DEBUG)
+    #define LOG(...) printf(__VA_ARGS__)
 #else
-  #define LOG(...)
+    #define LOG(...)
 #endif
 
 #define MAX_WAVE_SLOTS       5          // Number of wave slots for generation
@@ -168,13 +176,14 @@ static const char *toolName = TOOL_NAME;
 static const char *toolVersion = TOOL_VERSION;
 static const char *toolDescription = TOOL_DESCRIPTION;
 
-#define HELP_LINES_COUNT    16
+#define HELP_LINES_COUNT    17
 
 // Tool help info
 static const char *helpLines[HELP_LINES_COUNT] = {
     "F1 - Show Help window",
     "F2 - Show About window",
-    "F3 - Show User window",
+    "F3 - Show Sponsors window",
+    "-File Controls",
     "LCTRL + N - Reset sound slot",
     "LCTRL + O - Open sound file (.rfx)",
     "LCTRL + S - Save sound file (.rfx)",
@@ -276,6 +285,11 @@ int main(int argc, char *argv[])
     // GUI: About Window
     //-----------------------------------------------------------------------------------
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
+    //-----------------------------------------------------------------------------------
+    
+    // GUI: Sponsor Window
+    //-----------------------------------------------------------------------------------
+    GuiWindowSponsorState windowSponsorState = InitGuiWindowSponsor();
     //-----------------------------------------------------------------------------------
 
     // GUI: Main toolbar panel (file and visualization)
@@ -430,8 +444,8 @@ int main(int argc, char *argv[])
         // Select visual style
         if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
         else if (IsKeyPressed(KEY_RIGHT)) mainToolbarState.visualStyleActive++;
-        if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = 5;
-        else if (mainToolbarState.visualStyleActive > 5) mainToolbarState.visualStyleActive = 0;
+        if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = 9;
+        else if (mainToolbarState.visualStyleActive > 9) mainToolbarState.visualStyleActive = 0;
 
 #if !defined(PLATFORM_WEB)
         // Toggle screen size (x2) mode
@@ -447,15 +461,16 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_F2)) windowAboutState.windowActive = !windowAboutState.windowActive;
 
         // Toggle window registered user
-        //if (IsKeyPressed(KEY_F3)) userWindowActive = !userWindowActive;
+        if (IsKeyPressed(KEY_F3)) windowSponsorState.windowActive = !windowSponsorState.windowActive;
 
         // Show closing window on ESC
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
+            else if (windowSponsorState.windowActive) windowSponsorState.windowActive = false;
             else if (helpWindowActive) helpWindowActive = false;
             else if (exportWindowActive) exportWindowActive = false;
-        #if !defined(PLATFORM_WEB)
+        #if defined(PLATFORM_DESKTOP)
             else exitWindowActive = !exitWindowActive;
         #else
             else if (showLoadFileDialog) showLoadFileDialog = false;
@@ -487,27 +502,31 @@ int main(int argc, char *argv[])
 
         if (mainToolbarState.visualStyleActive != mainToolbarState.prevVisualStyleActive)
         {
+            // Reset to default internal style
+            // NOTE: Required to unload any previously loaded font texture
             GuiLoadStyleDefault();
 
             switch (mainToolbarState.visualStyleActive)
             {
-                case 1: GuiLoadStyleJungle(); break;
-                case 2: GuiLoadStyleCandy(); break;
-                case 3: GuiLoadStyleLavanda(); break;
-                case 4: GuiLoadStyleCyber(); break;
-                case 5: GuiLoadStyleTerminal(); break;
+                case 1: GuiLoadStyleDark(); break;
+                case 2: GuiLoadStyleJungle(); break;
+                case 3: GuiLoadStyleCandy(); break;
+                case 4: GuiLoadStyleLavanda(); break;
+                case 5: GuiLoadStyleCyber(); break;
+                case 6: GuiLoadStyleTerminal(); break;
+                case 7: GuiLoadStyleAshes(); break;
+                case 8: GuiLoadStyleBluish(); break;
                 default: break;
             }
-
-            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
 
             mainToolbarState.prevVisualStyleActive = mainToolbarState.visualStyleActive;
         }
 
         // Help options logic
-        if (mainToolbarState.btnHelpPressed) helpWindowActive = true;               // Help button logic
-        if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true; // About window button logic
-        if (mainToolbarState.btnUserPressed) userWindowActive = true;               // User button logic
+        if (mainToolbarState.btnHelpPressed) helpWindowActive = true;                   // Help button logic
+        if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true;     // About window button logic
+        if (mainToolbarState.btnSponsorPressed) windowSponsorState.windowActive = true; // User sponsor logic
+        //if (mainToolbarState.btnUserPressed) userWindowActive = true;                 // User button logic
         //----------------------------------------------------------------------------------
 
         // Basic program flow logic
@@ -585,6 +604,7 @@ int main(int argc, char *argv[])
 
         // WARNING: Some windows should lock the main screen controls when shown
         if (windowAboutState.windowActive ||
+            windowSponsorState.windowActive ||
             helpWindowActive ||
             userWindowActive ||
             exitWindowActive ||
@@ -711,9 +731,15 @@ int main(int argc, char *argv[])
             GuiUnlock();
 
             // GUI: About Window
-            //--------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------
             GuiWindowAbout(&windowAboutState);
-            //--------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------
+
+            // GUI: Sponsor Window
+            //----------------------------------------------------------------------------------------
+            windowSponsorState.position = (Vector2){ (float)screenWidth/2 - windowSponsorState.windowWidth/2, (float)screenHeight/2 - windowSponsorState.windowHeight/2 - 20 };
+            GuiWindowSponsor(&windowSponsorState);
+            //----------------------------------------------------------------------------------------
 
             // GUI: Help Window
             //----------------------------------------------------------------------------------------
@@ -1183,7 +1209,7 @@ static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpL
     {
         if (helpLines[i] == NULL) GuiLine((Rectangle) { bounds.x, bounds.y + nextLineY, 330, 12 }, helpLines[i]);
         else if (helpLines[i][0] == '-') GuiLine((Rectangle) { bounds.x, bounds.y + nextLineY, 330, 24 }, helpLines[i] + 1);
-        else GuiLabel((Rectangle) { bounds.x + 12, bounds.y + nextLineY, 0, 24 }, helpLines[i]);
+        else GuiLabel((Rectangle) { bounds.x + 12, bounds.y + nextLineY, bounds.width, 24 }, helpLines[i]);
 
         if (helpLines[i] == NULL) nextLineY += 12;
         else nextLineY += 24;
