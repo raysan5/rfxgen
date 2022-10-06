@@ -69,6 +69,7 @@ typedef struct {
     // Help options
     bool btnHelpPressed;
     bool btnAboutPressed;
+    bool btnSponsorPressed;
     bool btnUserPressed;
     bool btnQuitPressed;
 
@@ -154,6 +155,7 @@ GuiMainToolbarState InitGuiMainToolbar(void)
     // Info options
     state.btnHelpPressed = false;
     state.btnAboutPressed = false;
+    state.btnSponsorPressed = false;
     state.btnUserPressed = false;
     state.btnQuitPressed = false;
 
@@ -196,14 +198,12 @@ void GuiMainToolbar(GuiMainToolbarState *state)
 
     // Visuals options
     GuiLabel((Rectangle){ state->anchorVisuals.x + 8, state->anchorVisuals.y + 8, 60, 24 }, "Style:");
-    state->visualStyleActive = GuiComboBox((Rectangle){ state->anchorVisuals.x + 8 + 40, state->anchorVisuals.y + 8, 104, 24 }, "Light;Jungle;Candy;Lavanda;Cyber;Terminal", state->visualStyleActive);
+    state->visualStyleActive = GuiComboBox((Rectangle){ state->anchorVisuals.x + 8 + 40, state->anchorVisuals.y + 8, 104, 24 }, "Light;Dark;Jungle;Candy;Lavanda;Cyber;Terminal;Ashes;Bluish", state->visualStyleActive);
 
     // Info options
     state->btnHelpPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 72 - 8, state->anchorRight.y + 8, 24, 24 }, "#193#");
     state->btnAboutPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 48 - 4, state->anchorRight.y + 8, 24, 24 }, "#191#");
-    GuiDisable();
-    state->btnUserPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 24, state->anchorRight.y + 8, 24, 24 }, "#149#");
-    GuiEnable();
+    state->btnSponsorPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 24, state->anchorRight.y + 8, 24, 24 }, "#186#");
 }
 
 #endif // GUI_MAIN_TOOLBAR_IMPLEMENTATION
