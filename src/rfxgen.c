@@ -544,6 +544,7 @@ int main(int argc, char *argv[])
 
         // Avoid wave regeneration when some window is active
         if (!windowAboutState.windowActive &&
+            !windowSponsorState.windowActive &&
             !helpWindowActive &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
@@ -568,7 +569,13 @@ int main(int argc, char *argv[])
 
                 sound[mainToolbarState.soundSlotActive] = LoadSoundFromWave(wave[mainToolbarState.soundSlotActive]);    // Reload sound from new wave
 
-                if ((regenerate || playOnChange) && !GuiIsLocked()) PlaySound(sound[mainToolbarState.soundSlotActive]);
+                if ((regenerate || playOnChange) &&
+                    !windowAboutState.windowActive &&
+                    !windowSponsorState.windowActive &&
+                    !helpWindowActive)
+                {
+                    PlaySound(sound[mainToolbarState.soundSlotActive]);
+                }
 
                 regenerate = false;
             }
