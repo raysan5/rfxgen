@@ -80,8 +80,8 @@ extern "C" {            // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 GuiWindowSponsorState InitGuiWindowSponsor(void);
-void GuiWindowSponsorAdd(Texture2D logo, const char *link);
 void GuiWindowSponsor(GuiWindowSponsorState *state);
+void GuiWindowSponsorAdd(GuiWindowSponsorState *state, Texture2D logo, const char *link);
 
 #ifdef __cplusplus
 }

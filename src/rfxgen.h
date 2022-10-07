@@ -135,7 +135,7 @@ extern "C" {            // Prevents name mangling of functions
 RLAPI WaveParams LoadWaveParams(const char *fileName);                 // Load wave parameters from file
 RLAPI void SaveWaveParams(WaveParams params, const char *fileName);    // Save wave parameters to file
 RLAPI void ResetWaveParams(WaveParams *params);                        // Reset wave parameters
-RLAPI float *GenerateWave(WaveParams params, int *frameCount);         // Generate wave data from parameters (32bit, mono)
+RLAPI float *GenerateWave(WaveParams params, unsigned int *frameCount); // Generate wave data from parameters (32bit, mono)
 
 // Sound generation functions
 RLAPI WaveParams GenPickupCoin(void);      // Generate sound: Pickup/Coin
@@ -263,7 +263,7 @@ RLAPI void ResetWaveParams(WaveParams *params)
 
 // Generates new wave from wave parameters
 // NOTE: By default wave is generated as 44100Hz, 32bit float, mono
-RLAPI float *GenerateWave(WaveParams params, int *frameCount)
+RLAPI float *GenerateWave(WaveParams params, unsigned int *frameCount)
 {
     #define RFXGEN_MAX_GEN_BUFFER_LENGTH  10      // Max length for generation buffer: 10 seconds
 
