@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
         else if (IsKeyPressed(KEY_RIGHT)) mainToolbarState.visualStyleActive++;
         if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = 9;
-        else if (mainToolbarState.visualStyleActive > 9) mainToolbarState.visualStyleActive = 0;
+        else if (mainToolbarState.visualStyleActive > 8) mainToolbarState.visualStyleActive = 0;
 
 #if !defined(PLATFORM_WEB)
         // Toggle screen size (x2) mode
