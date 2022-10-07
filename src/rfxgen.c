@@ -11,7 +11,7 @@
 *   VERSIONS HISTORY:
 *       3.1  (06-Sep-2022)  REDESIGNED: Sound generator as a header-only library: rfxgen.h
 *                           ADDED: Sponsor window for tools support
-*                           Updated to raygui 3.5-dev
+*                           Updated to raylib 4.5-dev and raygui 3.5-dev
 *       3.0  (30-Sep-2022)  UI redesigned to follow raylibtech UI conventions
 *                           ADDED: Main toolbar to access File/Tools/Visual options
 *                           ADDED: Help window with keyboard shortcuts info
@@ -47,7 +47,7 @@
 *       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 4.2              - Windowing/input management and drawing
+*       raylib 4.5-dev          - Windowing/input management and drawing
 *       raygui 3.5-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
