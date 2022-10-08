@@ -118,7 +118,8 @@
 #include "gui_main_toolbar.h"               // GUI: Main toolbar
 
 // raygui embedded styles
-// NOTE: Following same order as selector
+// NOTE: Included in the same order as selector
+#define MAX_GUI_STYLES_AVAILABLE   9        // NOTE: Included light style
 #include "styles/style_dark.h"              // raygui style: dark
 #include "styles/style_jungle.h"            // raygui style: jungle
 #include "styles/style_candy.h"             // raygui style: candy
@@ -444,8 +445,8 @@ int main(int argc, char *argv[])
         // Select visual style
         if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
         else if (IsKeyPressed(KEY_RIGHT)) mainToolbarState.visualStyleActive++;
-        if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = 9;
-        else if (mainToolbarState.visualStyleActive > 8) mainToolbarState.visualStyleActive = 0;
+        if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = MAX_GUI_STYLES_AVAILABLE - 1;
+        else if (mainToolbarState.visualStyleActive > (MAX_GUI_STYLES_AVAILABLE - 1)) mainToolbarState.visualStyleActive = 0;
 
 #if !defined(PLATFORM_WEB)
         // Toggle screen size (x2) mode
