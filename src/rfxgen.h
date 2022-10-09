@@ -978,7 +978,7 @@ RLAPI WaveParams GenRandomize(void)
 // Mutate current sound
 RLAPI void WaveMutate(WaveParams *params)
 {
-    SetRandomSeed(0);       // Refresh seed to avoid converging behaviour
+    RFXGEN_SRAND(0);       // Refresh seed to avoid converging behaviour
     
     if (RFXGEN_RAND(0, 1)) params->startFrequencyValue += frnd(0.1f) - 0.05f;        
     //if (RFXGEN_RAND(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
