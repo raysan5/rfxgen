@@ -30,11 +30,4 @@ if(${BUILD_RFXGEN})
     if (${PLATFORM} STREQUAL "Web")
         set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
     endif()
-
-    # MacOS
-    if (APPLE)
-        target_link_libraries(${PROJECT_NAME} "-framework IOKit")
-        target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
-        target_link_libraries(${PROJECT_NAME} "-framework OpenGL")
-    endif()
 endif()
