@@ -767,9 +767,9 @@ int main(int argc, char *argv[])
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 48 + 16, 106, 24 }, "Sample Size:");
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 72 + 24, 106, 24 }, "Channels:");
 
-                fileTypeActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;RAW;CODE", fileTypeActive);
-                sampleRateActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
-                sampleSizeActive = GuiComboBox((Rectangle) { messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
+                fileTypeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;RAW;CODE", fileTypeActive);
+                sampleRateActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
+                sampleSizeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
                 channelsActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 72 + 24, 124, 24 }, "Mono;Stereo", channelsActive);
 
                 if (result == 1)    // Export button pressed
@@ -795,7 +795,7 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (exitWindowActive)
             {
-                int result = GuiMessageBox((Rectangle) { (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+                int result = GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
                 if ((result == 0) || (result == 2)) exitWindowActive = false;
                 else if (result == 1) closeWindow = true;
@@ -1215,9 +1215,9 @@ static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpL
 
     for (int i = 0; i < helpLinesCount; i++)
     {
-        if (helpLines[i] == NULL) GuiLine((Rectangle) { bounds.x, bounds.y + nextLineY, 330, 12 }, helpLines[i]);
-        else if (helpLines[i][0] == '-') GuiLine((Rectangle) { bounds.x, bounds.y + nextLineY, 330, 24 }, helpLines[i] + 1);
-        else GuiLabel((Rectangle) { bounds.x + 12, bounds.y + nextLineY, bounds.width, 24 }, helpLines[i]);
+        if (helpLines[i] == NULL) GuiLine((Rectangle){ bounds.x, bounds.y + nextLineY, 330, 12 }, helpLines[i]);
+        else if (helpLines[i][0] == '-') GuiLine((Rectangle){ bounds.x, bounds.y + nextLineY, 330, 24 }, helpLines[i] + 1);
+        else GuiLabel((Rectangle){ bounds.x + 12, bounds.y + nextLineY, bounds.width, 24 }, helpLines[i]);
 
         if (helpLines[i] == NULL) nextLineY += 12;
         else nextLineY += 24;
