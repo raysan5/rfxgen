@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
     bool playOnChange = true;           // Automatically play sound on parameter change
     bool screenSizeActive = false;      // Scale screen x2 (useful for HighDPI screens)
 
-    bool helpWindowActive = false;      // Show window: help info
+    bool windowHelpActive = false;      // Show window: help info
     bool userWindowActive = false;      // Show window: user registration
     //-----------------------------------------------------------------------------------
 
@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
 
     // GUI: Export Window
     //-----------------------------------------------------------------------------------
-    bool exportWindowActive = false;
+    bool windowExportActive = false;
 
     int fileTypeActive = 0;         // ComboBox file type selection
     int sampleRateActive = 1;       // ComboBox sample rate selection
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
     // GUI: Exit Window
     //-----------------------------------------------------------------------------------
     bool closeWindow = false;
-    bool exitWindowActive = false;
+    bool windowExitActive = false;
     //-----------------------------------------------------------------------------------
 
     // GUI: Custom file dialogs
@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) showLoadFileDialog = true;
 
         // Show dialog: export wave (.wav, .raw, .h)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) exportWindowActive = true;
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) windowExportActive = true;
 
         // Select current sound slot
         if (IsKeyPressed(KEY_ONE)) mainToolbarState.soundSlotActive = 0;
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
 
         // Toggle window: help
-        if (IsKeyPressed(KEY_F1)) helpWindowActive = !helpWindowActive;
+        if (IsKeyPressed(KEY_F1)) windowHelpActive = !windowHelpActive;
 
         // Toggle window: about
         if (IsKeyPressed(KEY_F2)) windowAboutState.windowActive = !windowAboutState.windowActive;
@@ -469,10 +469,10 @@ int main(int argc, char *argv[])
         {
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
             else if (windowSponsorState.windowActive) windowSponsorState.windowActive = false;
-            else if (helpWindowActive) helpWindowActive = false;
-            else if (exportWindowActive) exportWindowActive = false;
+            else if (windowHelpActive) windowHelpActive = false;
+            else if (windowExportActive) windowExportActive = false;
         #if defined(PLATFORM_DESKTOP)
-            else exitWindowActive = !exitWindowActive;
+            else windowExitActive = !windowExitActive;
         #else
             else if (showLoadFileDialog) showLoadFileDialog = false;
             else if (showSaveFileDialog) showSaveFileDialog = false;
@@ -499,7 +499,7 @@ int main(int argc, char *argv[])
             strcpy(outFileName, "sound.rfx");
             showSaveFileDialog = true;
         }
-        else if (mainToolbarState.btnExportFilePressed) exportWindowActive = true;
+        else if (mainToolbarState.btnExportFilePressed) windowExportActive = true;
 
         if (mainToolbarState.visualStyleActive != mainToolbarState.prevVisualStyleActive)
         {
@@ -524,7 +524,7 @@ int main(int argc, char *argv[])
         }
 
         // Help options logic
-        if (mainToolbarState.btnHelpPressed) helpWindowActive = true;                   // Help button logic
+        if (mainToolbarState.btnHelpPressed) windowHelpActive = true;                   // Help button logic
         if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true;     // About window button logic
         if (mainToolbarState.btnSponsorPressed) windowSponsorState.windowActive = true; // User sponsor logic
         //if (mainToolbarState.btnUserPressed) userWindowActive = true;                 // User button logic
@@ -546,12 +546,12 @@ int main(int argc, char *argv[])
         // Avoid wave regeneration when some window is active
         if (!windowAboutState.windowActive &&
             !windowSponsorState.windowActive &&
-            !helpWindowActive &&
+            !windowHelpActive &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
             !showExportFileDialog &&
-            !exportWindowActive &&
-            !exitWindowActive)
+            !windowExportActive &&
+            !windowExitActive)
         {
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -573,7 +573,7 @@ int main(int argc, char *argv[])
                 if ((regenerate || playOnChange) &&
                     !windowAboutState.windowActive &&
                     !windowSponsorState.windowActive &&
-                    !helpWindowActive)
+                    !windowHelpActive)
                 {
                     PlaySound(sound[mainToolbarState.soundSlotActive]);
                 }
@@ -613,10 +613,10 @@ int main(int argc, char *argv[])
         // WARNING: Some windows should lock the main screen controls when shown
         if (windowAboutState.windowActive ||
             windowSponsorState.windowActive ||
-            helpWindowActive ||
+            windowHelpActive ||
             userWindowActive ||
-            exitWindowActive ||
-            exportWindowActive ||
+            windowExitActive ||
+            windowExportActive ||
             showLoadFileDialog ||
             showSaveFileDialog ||
             showExportFileDialog) GuiLock();
@@ -752,12 +752,12 @@ int main(int argc, char *argv[])
             // GUI: Help Window
             //----------------------------------------------------------------------------------------
             Rectangle helpWindowBounds = { (float)screenWidth/2 - 330/2, (float)screenHeight/2 - 400.0f/2, 330, 0 };
-            if (helpWindowActive) helpWindowActive = GuiHelpWindow(helpWindowBounds, GuiIconText(ICON_HELP, TextFormat("%s Shortcuts", TOOL_NAME)), helpLines, HELP_LINES_COUNT);
+            if (windowHelpActive) windowHelpActive = GuiHelpWindow(helpWindowBounds, GuiIconText(ICON_HELP, TextFormat("%s Shortcuts", TOOL_NAME)), helpLines, HELP_LINES_COUNT);
             //----------------------------------------------------------------------------------------
 
             // GUI: Export Window
             //----------------------------------------------------------------------------------------
-            if (exportWindowActive)
+            if (windowExportActive)
             {
                 Rectangle messageBox = { (float)screenWidth/2 - 248/2, (float)screenHeight/2 - 150, 248, 208 };
                 int result = GuiMessageBox(messageBox, "#7#Export Wave File", " ", "#7# Export Wave");
@@ -784,20 +784,20 @@ int main(int argc, char *argv[])
 
                     exportChannels = channelsActive + 1;
 
-                    exportWindowActive = false;
+                    windowExportActive = false;
                     showExportFileDialog = true;
                 }
-                else if (result == 0) exportWindowActive = false;
+                else if (result == 0) windowExportActive = false;
             }
             //----------------------------------------------------------------------------------
 
             // GUI: Exit Window
             //----------------------------------------------------------------------------------------
-            if (exitWindowActive)
+            if (windowExitActive)
             {
                 int result = GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
-                if ((result == 0) || (result == 2)) exitWindowActive = false;
+                if ((result == 0) || (result == 2)) windowExitActive = false;
                 else if (result == 1) closeWindow = true;
             }
             //----------------------------------------------------------------------------------------
@@ -1210,7 +1210,7 @@ static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpL
     // Calculate window height if not externally provided a desired height
     if (bounds.height == 0) bounds.height = (float)(helpLinesCount*24 + 24);
 
-    int helpWindowActive = !GuiWindowBox(bounds, title);
+    int windowHelpActive = !GuiWindowBox(bounds, title);
     nextLineY += (24 + 2);
 
     for (int i = 0; i < helpLinesCount; i++)
@@ -1223,7 +1223,7 @@ static int GuiHelpWindow(Rectangle bounds, const char *title, const char **helpL
         else nextLineY += 24;
     }
 
-    return helpWindowActive;
+    return windowHelpActive;
 }
 
 #if defined(PLATFORM_DESKTOP)
