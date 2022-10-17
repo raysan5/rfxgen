@@ -49,14 +49,12 @@
 //----------------------------------------------------------------------------------
 // Gui window structure declaration
 typedef struct {
-    Vector2 position;
-
     bool windowActive;
 
-    // Custom state variables (depend on development software)
-    // NOTE: This variables should be added manually if required
-    int windowWidth;
-    int windowHeight;
+    Rectangle windowBounds;
+    Vector2 panOffset;
+    bool dragMode;
+    bool supportDrag;
 
     // Sponsors data
     Texture2D sponsorLogo[MAX_SPONSOR_SLOTS];
@@ -123,11 +121,12 @@ GuiWindowSponsorState InitGuiWindowSponsor(void)
     GuiWindowSponsorState state = { 0 };
 
     state.windowActive = false;
-
-    // Custom variables initialization
-    state.windowWidth = MAX_SPONSOR_SLOTS*128 + MAX_SPONSOR_SLOTS*2 + 24 + (MAX_SPONSOR_SLOTS - 1)*8;    // Logo size (3*128) + button border (2) + margin + button spacing
-    state.windowHeight = 282;
-    state.position = (Vector2){ GetScreenWidth()/2 - state.windowWidth/2, GetScreenHeight()/2 - state.windowHeight/2 };
+    
+    int windowWidth = MAX_SPONSOR_SLOTS*128 + MAX_SPONSOR_SLOTS*2 + 24 + (MAX_SPONSOR_SLOTS - 1)*8;    // Logo size (3*128) + button border (2) + margin + button spacing
+    state.windowBounds = (Rectangle){ GetScreenWidth()/2 - windowWidth/2, GetScreenHeight()/2 - 282/2, windowWidth, 282 };
+    state.panOffset = (Vector2){ 0, 0 };
+    state.dragMode = false;
+    state.supportDrag = false;
 
     // Sponsors data initialization
     for (int i = 0; i < MAX_SPONSOR_SLOTS; i++)
@@ -160,38 +159,76 @@ void GuiWindowSponsor(GuiWindowSponsorState *state)
 {
     if (state->windowActive)
     {
-        state->windowActive = !GuiWindowBox((Rectangle){ state->position.x, state->position.y, (float)state->windowWidth, (float)state->windowHeight }, TextFormat("#186#%s Sponsors", TOOL_NAME));
+        // Update window dragging
+        //----------------------------------------------------------------------------------------
+        if (state->supportDrag)
+        {
+            Vector2 mousePosition = GetMousePosition();
+
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                // Window can be dragged from the top window bar
+                if (CheckCollisionPointRec(mousePosition, (Rectangle){ state->windowBounds.x, state->windowBounds.y, (float)state->windowBounds.width, RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT }))
+                {
+                    state->dragMode = true;
+                    state->panOffset.x = mousePosition.x - state->windowBounds.x;
+                    state->panOffset.y = mousePosition.y - state->windowBounds.y;
+                }
+            }
+
+            if (state->dragMode)
+            {
+                state->windowBounds.x = (mousePosition.x - state->panOffset.x);
+                state->windowBounds.y = (mousePosition.y - state->panOffset.y);
+
+                // Check screen limits to avoid moving out of screen
+                if (state->windowBounds.x < 0) state->windowBounds.x = 0;
+                else if (state->windowBounds.x > (GetScreenWidth() - state->windowBounds.width)) state->windowBounds.x = GetScreenWidth() - state->windowBounds.width;
+
+                if (state->windowBounds.y < 40) state->windowBounds.y = 40;
+                else if (state->windowBounds.y > (GetScreenHeight() - state->windowBounds.height - 24)) state->windowBounds.y = GetScreenHeight() - state->windowBounds.height - 24;
+
+                if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) state->dragMode = false;
+            }
+        }
+        //----------------------------------------------------------------------------------------
+
+        // Draw window and controls
+        //----------------------------------------------------------------------------------------
+        state->windowActive = !GuiWindowBox(state->windowBounds, TextFormat("#186#%s Sponsors", TOOL_NAME));
 
         // Draw a background rectangle for convenience
-        GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 24 + 8, state->windowWidth - 24, 24 }, "This tool is sponsored by:");
-        GuiLine((Rectangle){ state->position.x, state->position.y + 24 + 24, (float)state->windowWidth, 20 }, NULL);
-        DrawRectangle((int)state->position.x + 1, (int)state->position.y + 58, state->windowWidth - 2, 128 + 24, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+        GuiLabel((Rectangle){ state->windowBounds.x + 8, state->windowBounds.y + 24 + 8, state->windowBounds.width - 24, 24 }, "This tool is sponsored by:");
+        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 24 + 24, (float)state->windowBounds.width, 20 }, NULL);
+        DrawRectangle((int)state->windowBounds.x + 1, (int)state->windowBounds.y + 58, state->windowBounds.width - 2, 128 + 24, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
 
         GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
         for (int i = 0; i < MAX_SPONSOR_SLOTS; i++)
         {
             if (state->sponsoring[i])
             {
-                if (GuiImageButton((Rectangle){ state->position.x + 12 + (130 + 8)*i, state->position.y + 70, 130, 130 }, state->sponsorLogo[i])) OpenURL(state->sponsorLink[i]);
+                if (GuiImageButton((Rectangle){ state->windowBounds.x + 12 + (130 + 8)*i, state->windowBounds.y + 70, 130, 130 }, state->sponsorLogo[i])) OpenURL(state->sponsorLink[i]);
             }
-            else GuiButton((Rectangle){ state->position.x + 12 + (130 + 8)*i, state->position.y + 70, 130, 130 }, TextFormat("SPONSOR #%i\nLOGO\n+\nLINK", i + 1));
+            else GuiButton((Rectangle){ state->windowBounds.x + 12 + (130 + 8)*i, state->windowBounds.y + 70, 130, 130 }, TextFormat("SPONSOR #%i\nLOGO\n+\nLINK", i + 1));
         }
         GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
 
-        GuiLine((Rectangle){ state->position.x, state->position.y + 200, (float)state->windowWidth, 20 }, NULL);
-        GuiLabel((Rectangle){ state->position.x + 8, state->position.y + 70 + 128 + 16, state->windowWidth - 24, 24 }, TextFormat("Sponsor slots available: %i/%i", state->slotsAvailable, MAX_SPONSOR_SLOTS));
-        GuiLine((Rectangle){ state->position.x, state->position.y + 232, (float)state->windowWidth, 20 }, NULL);
+        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 200, (float)state->windowBounds.width, 20 }, NULL);
+        GuiLabel((Rectangle){ state->windowBounds.x + 8, state->windowBounds.y + 70 + 128 + 16, state->windowBounds.width - 24, 24 }, TextFormat("Sponsor slots available: %i/%i", state->slotsAvailable, MAX_SPONSOR_SLOTS));
+        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 232, (float)state->windowBounds.width, 20 }, NULL);
 
-        DrawRectangle((int)state->position.x + 1, state->position.y + state->windowHeight - 40 + 1, state->windowWidth - 2, 38, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+        DrawRectangle((int)state->windowBounds.x + 1, state->windowBounds.y + state->windowBounds.height - 40 + 1, state->windowBounds.width - 2, 38, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
 
         int buttonTextAlign = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
         if (state->slotsAvailable == 0) GuiDisable();
-        if (GuiButton((Rectangle){ state->position.x + state->windowWidth - 80 - 90, state->position.y + state->windowHeight - 32, 80, 24 }, "#186#Sponsor")) { OpenURL("https://github.com/sponsors/raysan5"); }
+        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80 - 90, state->windowBounds.y + state->windowBounds.height - 32, 80, 24 }, "#186#Sponsor")) { OpenURL("https://github.com/sponsors/raysan5"); }
         GuiEnable();
-        if (GuiButton((Rectangle){ state->position.x + state->windowWidth - 80, state->position.y + state->windowHeight - 32, 70, 24 }, "#159#Close")) state->windowActive = false;
+        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80, state->windowBounds.y + state->windowBounds.height - 32, 70, 24 }, "#159#Close")) state->windowActive = false;
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
+        //----------------------------------------------------------------------------------------
     }
+    //else state->windowBounds = (Rectangle){ GetScreenWidth()/2 - state->windowBounds.width/2, GetScreenHeight()/2 - state->windowBounds.height/2, state->windowBounds.width, state->windowBounds.height };
 }
 
 // Image button control, returns true when clicked
