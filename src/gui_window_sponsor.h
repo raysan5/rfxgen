@@ -198,9 +198,9 @@ void GuiWindowSponsor(GuiWindowSponsorState *state)
         state->windowActive = !GuiWindowBox(state->windowBounds, TextFormat("#186#%s Sponsors", TOOL_NAME));
 
         // Draw a background rectangle for convenience
+        DrawRectangle((int)state->windowBounds.x + 1, (int)state->windowBounds.y + 24, state->windowBounds.width - 2, 34, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
         GuiLabel((Rectangle){ state->windowBounds.x + 8, state->windowBounds.y + 24 + 8, state->windowBounds.width - 24, 24 }, "This tool is sponsored by:");
         GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 24 + 24, (float)state->windowBounds.width, 20 }, NULL);
-        DrawRectangle((int)state->windowBounds.x + 1, (int)state->windowBounds.y + 58, state->windowBounds.width - 2, 128 + 24, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
 
         GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
         for (int i = 0; i < MAX_SPONSOR_SLOTS; i++)
@@ -228,7 +228,7 @@ void GuiWindowSponsor(GuiWindowSponsorState *state)
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
         //----------------------------------------------------------------------------------------
     }
-    //else state->windowBounds = (Rectangle){ GetScreenWidth()/2 - state->windowBounds.width/2, GetScreenHeight()/2 - state->windowBounds.height/2, state->windowBounds.width, state->windowBounds.height };
+    else state->windowBounds = (Rectangle){ GetScreenWidth()/2 - state->windowBounds.width/2, GetScreenHeight()/2 - state->windowBounds.height/2, state->windowBounds.width, state->windowBounds.height };
 }
 
 // Image button control, returns true when clicked
@@ -268,4 +268,4 @@ static bool GuiImageButton(Rectangle bounds, Texture2D texture)
     return pressed;
 }
 
-#endif // GUI_WINDOW_ABOUT_IMPLEMENTATION
+#endif // GUI_WINDOW_SPONSOR_IMPLEMENTATION
