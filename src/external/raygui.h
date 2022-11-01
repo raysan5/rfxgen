@@ -298,6 +298,15 @@
         int format;             // Data format (PixelFormat type)
     } Texture2D;
 
+    // Image, pixel data stored in CPU memory (RAM)
+    typedef struct Image {
+        void *data;             // Image raw data
+        int width;              // Image base width
+        int height;             // Image base height
+        int mipmaps;            // Mipmap levels, 1 by default
+        int format;             // Data format (PixelFormat type)
+    } Image;
+
     // GlyphInfo, font characters glyphs info
     typedef struct GlyphInfo {
         int value;              // Character value (Unicode)
@@ -311,11 +320,13 @@
     // It should be redesigned to be provided by user
     typedef struct Font {
         int baseSize;           // Base size (default chars height)
-        int glyphCount;         // Number of characters
-        Texture2D texture;      // Characters texture atlas
-        Rectangle *recs;        // Characters rectangles in texture
-        GlyphInfo *chars;       // Characters info data
+        int glyphCount;         // Number of glyph characters
+        int glyphPadding;       // Padding around the glyph characters
+        Texture2D texture;      // Texture atlas containing the glyphs
+        Rectangle *recs;        // Rectangles in texture for the glyphs
+        GlyphInfo *glyphs;      // Glyphs info data
     } Font;
+
 #endif
 
 // Style property
@@ -1475,7 +1486,7 @@ void GuiPanel(Rectangle bounds, const char *text)
 // NOTE: Using GuiToggle() for the TABS
 int GuiTabBar(Rectangle bounds, const char **text, int count, int *active)
 {
-#define RAYGUI_TABBAR_ITEM_WIDTH    160
+    #define RAYGUI_TABBAR_ITEM_WIDTH    160
 
     GuiState state = guiState;
 
@@ -2333,7 +2344,7 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
     if (editMode)
     {
         // NOTE: ValueBox internal text is always centered
-        Rectangle cursor = { bounds.x + GetTextWidth(textValue)/2 + bounds.width/2 + 2, bounds.y + 2*GuiGetStyle(VALUEBOX, BORDER_WIDTH), 4, bounds.height - 4*GuiGetStyle(VALUEBOX, BORDER_WIDTH) };
+        Rectangle cursor = { bounds.x + GetTextWidth(textValue)/2 + bounds.width/2 + 1, bounds.y + 2*GuiGetStyle(VALUEBOX, BORDER_WIDTH), 4, bounds.height - 4*GuiGetStyle(VALUEBOX, BORDER_WIDTH) };
         GuiDrawRectangle(cursor, 0, BLANK, Fade(GetColor(GuiGetStyle(VALUEBOX, BORDER_COLOR_PRESSED)), guiAlpha));
     }
 
@@ -3561,9 +3572,9 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(CHECKBOX, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
     GuiSetStyle(TEXTBOX, TEXT_PADDING, 4);
     GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-    GuiSetStyle(VALUEBOX, TEXT_PADDING, 4);
+    GuiSetStyle(VALUEBOX, TEXT_PADDING, 0);
     GuiSetStyle(VALUEBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-    GuiSetStyle(SPINNER, TEXT_PADDING, 4);
+    GuiSetStyle(SPINNER, TEXT_PADDING, 0);
     GuiSetStyle(SPINNER, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
     GuiSetStyle(STATUSBAR, TEXT_PADDING, 8);
     GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
@@ -3830,7 +3841,7 @@ static Rectangle GetTextBounds(int control, Rectangle bounds)
     switch (control)
     {
         case COMBOBOX: bounds.width -= (GuiGetStyle(control, COMBO_BUTTON_WIDTH) + GuiGetStyle(control, COMBO_BUTTON_SPACING)); break;
-        case VALUEBOX: break;   // NOTE: ValueBox text value always centered, text padding applies to label
+        //case VALUEBOX: break;   // NOTE: ValueBox text value always centered, text padding applies to label
         default:
         {
             if (GuiGetStyle(control, TEXT_ALIGNMENT) == TEXT_ALIGN_RIGHT) textBounds.x -= GuiGetStyle(control, TEXT_PADDING);
@@ -4242,7 +4253,9 @@ static int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     bool isVertical = (bounds.width > bounds.height)? false : true;
 
     // The size (width or height depending on scrollbar type) of the spinner buttons
-    const int spinnerSize = GuiGetStyle(SCROLLBAR, ARROWS_VISIBLE)? (isVertical? (int)bounds.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH) : (int)bounds.height - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH)) : 0;
+    const int spinnerSize = GuiGetStyle(SCROLLBAR, ARROWS_VISIBLE)? 
+        (isVertical? (int)bounds.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH) : 
+        (int)bounds.height - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH)) : 0;
 
     // Arrow buttons [<] [>] [∧] [∨]
     Rectangle arrowUpLeft = { 0 };
@@ -4262,7 +4275,10 @@ static int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     int sliderSize = GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE);
 
     // Calculate rectangles for all of the components
-    arrowUpLeft = RAYGUI_CLITERAL(Rectangle){ (float)bounds.x + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)spinnerSize, (float)spinnerSize };
+    arrowUpLeft = RAYGUI_CLITERAL(Rectangle){ 
+        (float)bounds.x + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), 
+        (float)bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), 
+        (float)spinnerSize, (float)spinnerSize };
 
     if (isVertical)
     {
@@ -4271,7 +4287,7 @@ static int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
         sliderSize = (sliderSize >= scrollbar.height)? ((int)scrollbar.height - 2) : sliderSize;     // Make sure the slider won't get outside of the scrollbar
         slider = RAYGUI_CLITERAL(Rectangle){ (float)bounds.x + GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_PADDING), (float)scrollbar.y + (int)(((float)(value - minValue)/range)*(scrollbar.height - sliderSize)), (float)bounds.width - 2*(GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_PADDING)), (float)sliderSize };
     }
-    else
+    else    // horizontal
     {
         arrowDownRight = RAYGUI_CLITERAL(Rectangle){ (float)bounds.x + bounds.width - spinnerSize - GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH), (float)spinnerSize, (float)spinnerSize };
         scrollbar = RAYGUI_CLITERAL(Rectangle){ arrowUpLeft.x + arrowUpLeft.width, bounds.y + GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_PADDING), bounds.width - arrowUpLeft.width - arrowDownRight.width - 2*GuiGetStyle(SCROLLBAR, BORDER_WIDTH), bounds.height - 2*(GuiGetStyle(SCROLLBAR, BORDER_WIDTH) + GuiGetStyle(SCROLLBAR, SCROLL_PADDING)) };
@@ -4332,14 +4348,18 @@ static int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     if (GuiGetStyle(SCROLLBAR, ARROWS_VISIBLE))
     {
 #if defined(RAYGUI_NO_ICONS)
-        GuiDrawText(isVertical? "^" : "<", RAYGUI_CLITERAL(Rectangle){ arrowUpLeft.x, arrowUpLeft.y, isVertical? bounds.width : bounds.height, isVertical ? bounds.width : bounds.height },
+        GuiDrawText(isVertical? "^" : "<", 
+            RAYGUI_CLITERAL(Rectangle){ arrowUpLeft.x, arrowUpLeft.y, isVertical? bounds.width : bounds.height, isVertical? bounds.width : bounds.height },
             TEXT_ALIGN_CENTER, Fade(GetColor(GuiGetStyle(DROPDOWNBOX, TEXT + (state*3))), guiAlpha));
-        GuiDrawText(isVertical? "v" : ">", RAYGUI_CLITERAL(Rectangle){ arrowDownRight.x, arrowDownRight.y, isVertical? bounds.width : bounds.height, isVertical ? bounds.width : bounds.height },
+        GuiDrawText(isVertical? "v" : ">", 
+            RAYGUI_CLITERAL(Rectangle){ arrowDownRight.x, arrowDownRight.y, isVertical? bounds.width : bounds.height, isVertical? bounds.width : bounds.height },
             TEXT_ALIGN_CENTER, Fade(GetColor(GuiGetStyle(DROPDOWNBOX, TEXT + (state*3))), guiAlpha));
 #else
-        GuiDrawText(isVertical? "#121#" : "#118#", RAYGUI_CLITERAL(Rectangle){ arrowUpLeft.x, arrowUpLeft.y, isVertical? bounds.width : bounds.height, isVertical ? bounds.width : bounds.height },
+        GuiDrawText(isVertical? "#121#" : "#118#", 
+            RAYGUI_CLITERAL(Rectangle){ arrowUpLeft.x, arrowUpLeft.y, isVertical? bounds.width : bounds.height, isVertical? bounds.width : bounds.height },
             TEXT_ALIGN_CENTER, Fade(GetColor(GuiGetStyle(SCROLLBAR, TEXT + state*3)), guiAlpha));   // ICON_ARROW_UP_FILL / ICON_ARROW_LEFT_FILL
-        GuiDrawText(isVertical? "#120#" : "#119#", RAYGUI_CLITERAL(Rectangle){ arrowDownRight.x, arrowDownRight.y, isVertical? bounds.width : bounds.height, isVertical ? bounds.width : bounds.height },
+        GuiDrawText(isVertical? "#120#" : "#119#", 
+            RAYGUI_CLITERAL(Rectangle){ arrowDownRight.x, arrowDownRight.y, isVertical? bounds.width : bounds.height, isVertical? bounds.width : bounds.height },
             TEXT_ALIGN_CENTER, Fade(GetColor(GuiGetStyle(SCROLLBAR, TEXT + state*3)), guiAlpha));   // ICON_ARROW_DOWN_FILL / ICON_ARROW_RIGHT_FILL
 #endif
     }
