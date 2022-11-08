@@ -105,6 +105,12 @@
 
 #undef RAYGUI_IMPLEMENTATION                // Avoid including raygui implementation again
 
+#define GUI_MAIN_TOOLBAR_IMPLEMENTATION
+#include "gui_main_toolbar.h"               // GUI: Main toolbar
+
+#define GUI_WINDOW_HELP_IMPLEMENTATION
+#include "gui_window_help.h"                // GUI: Help Window
+
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
 #include "gui_window_about.h"               // GUI: About Window
 
@@ -113,9 +119,6 @@
 
 #define GUI_FILE_DIALOGS_IMPLEMENTATION
 #include "gui_file_dialogs.h"               // GUI: File Dialogs
-
-#define GUI_MAIN_TOOLBAR_IMPLEMENTATION
-#include "gui_main_toolbar.h"               // GUI: Main toolbar
 
 // raygui embedded styles
 // NOTE: Included in the same order as selector
@@ -177,29 +180,6 @@ static const char *toolName = TOOL_NAME;
 static const char *toolVersion = TOOL_VERSION;
 static const char *toolDescription = TOOL_DESCRIPTION;
 
-#define HELP_LINES_COUNT    17
-
-// Tool help info
-static const char *helpLines[HELP_LINES_COUNT] = {
-    "F1 - Show Help window",
-    "F2 - Show About window",
-    "F3 - Show Sponsor window",
-    "-File Controls",
-    "LCTRL + N - Reset sound slot",
-    "LCTRL + O - Open sound file (.rfx)",
-    "LCTRL + S - Save sound file (.rfx)",
-    "LCTRL + E - Export wave file",
-    "-Tool Controls",
-    "1-2-3-4-5 - Select current sound slot",
-    "SPACE - Play current sound slot",
-    "P - Toggle autoplay on params change",
-    "-Tool Visuals",
-    "LEFT | RIGHT - Select visual style",
-    "LCTRL + F - Toggle double screen size",
-    NULL,
-    "ESCAPE - Close Window/Exit"
-};
-
 static float volumeValue = 0.6f;        // Master volume
 
 //----------------------------------------------------------------------------------
@@ -213,7 +193,6 @@ static void ProcessCommandLine(int argc, char *argv[]);     // Process command l
 
 // Auxiliar functions
 static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave data using lines
-static int GuiWindowHelp(Rectangle bounds, const char *title, const char **helpLines, int helpLinesCount); // Draw help window with the provided lines
 
 #if defined(PLATFORM_DESKTOP)
 static void WaitTimePlayer(int ms);             // Simple time wait in milliseconds for the CLI player
@@ -278,9 +257,16 @@ int main(int argc, char *argv[])
     //-----------------------------------------------------------------------------------
     bool playOnChange = true;           // Automatically play sound on parameter change
     bool screenSizeActive = false;      // Scale screen x2 (useful for HighDPI screens)
+    //-----------------------------------------------------------------------------------
 
-    bool windowHelpActive = false;      // Show window: help info
-    bool userWindowActive = false;      // Show window: user registration
+    // GUI: Main toolbar panel (file and visualization)
+    //-----------------------------------------------------------------------------------
+    GuiMainToolbarState mainToolbarState = InitGuiMainToolbar();
+    //-----------------------------------------------------------------------------------
+
+    // GUI: Help Window
+    //-----------------------------------------------------------------------------------
+    GuiWindowHelpState windowHelpState = InitGuiWindowHelp();
     //-----------------------------------------------------------------------------------
 
     // GUI: About Window
@@ -291,11 +277,6 @@ int main(int argc, char *argv[])
     // GUI: Sponsor Window
     //-----------------------------------------------------------------------------------
     GuiWindowSponsorState windowSponsorState = InitGuiWindowSponsor();
-    //-----------------------------------------------------------------------------------
-
-    // GUI: Main toolbar panel (file and visualization)
-    //-----------------------------------------------------------------------------------
-    GuiMainToolbarState mainToolbarState = InitGuiMainToolbar();
     //-----------------------------------------------------------------------------------
 
     // GUI: Export Window
@@ -456,7 +437,7 @@ int main(int argc, char *argv[])
         if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
 
         // Toggle window: help
-        if (IsKeyPressed(KEY_F1)) windowHelpActive = !windowHelpActive;
+        if (IsKeyPressed(KEY_F1)) windowHelpState.windowActive = !windowHelpState.windowActive;
 
         // Toggle window: about
         if (IsKeyPressed(KEY_F2)) windowAboutState.windowActive = !windowAboutState.windowActive;
@@ -469,7 +450,7 @@ int main(int argc, char *argv[])
         {
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
             else if (windowSponsorState.windowActive) windowSponsorState.windowActive = false;
-            else if (windowHelpActive) windowHelpActive = false;
+            else if (windowHelpState.windowActive) windowHelpState.windowActive = false;
             else if (windowExportActive) windowExportActive = false;
         #if defined(PLATFORM_DESKTOP)
             else windowExitActive = !windowExitActive;
@@ -524,10 +505,9 @@ int main(int argc, char *argv[])
         }
 
         // Help options logic
-        if (mainToolbarState.btnHelpPressed) windowHelpActive = true;                   // Help button logic
+        if (mainToolbarState.btnHelpPressed) windowHelpState.windowActive = true;                   // Help button logic
         if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true;     // About window button logic
         if (mainToolbarState.btnSponsorPressed) windowSponsorState.windowActive = true; // User sponsor logic
-        //if (mainToolbarState.btnUserPressed) userWindowActive = true;                 // User button logic
         //----------------------------------------------------------------------------------
 
         // Basic program flow logic
@@ -544,9 +524,9 @@ int main(int argc, char *argv[])
         prevWaveTypeValue[mainToolbarState.soundSlotActive] = params[mainToolbarState.soundSlotActive].waveTypeValue;
 
         // Avoid wave regeneration when some window is active
-        if (!windowAboutState.windowActive &&
+        if (!windowHelpState.windowActive &&
+            !windowAboutState.windowActive &&
             !windowSponsorState.windowActive &&
-            !windowHelpActive &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
             !showExportFileDialog &&
@@ -573,7 +553,7 @@ int main(int argc, char *argv[])
                 if ((regenerate || playOnChange) &&
                     !windowAboutState.windowActive &&
                     !windowSponsorState.windowActive &&
-                    !windowHelpActive)
+                    !windowHelpState.windowActive)
                 {
                     PlaySound(sound[mainToolbarState.soundSlotActive]);
                 }
@@ -611,10 +591,9 @@ int main(int argc, char *argv[])
         }
 
         // WARNING: Some windows should lock the main screen controls when shown
-        if (windowAboutState.windowActive ||
+        if (windowHelpState.windowActive ||
+            windowAboutState.windowActive ||
             windowSponsorState.windowActive ||
-            windowHelpActive ||
-            userWindowActive ||
             windowExitActive ||
             windowExportActive ||
             showLoadFileDialog ||
@@ -737,6 +716,13 @@ int main(int argc, char *argv[])
 
             // WARNING: Before drawing the windows, we unlock them
             GuiUnlock();
+            
+            // GUI: Help Window
+            //----------------------------------------------------------------------------------------
+            windowHelpState.windowBounds.x = (float)screenWidth/2 - windowHelpState.windowBounds.width/2;
+            windowHelpState.windowBounds.y = (float)screenHeight/2 - windowHelpState.windowBounds.height/2 - 20;
+            GuiWindowHelp(&windowHelpState);
+            //----------------------------------------------------------------------------------------
 
             // GUI: About Window
             //----------------------------------------------------------------------------------------
@@ -750,12 +736,6 @@ int main(int argc, char *argv[])
             windowSponsorState.windowBounds.x = (float)screenWidth/2 - windowSponsorState.windowBounds.width/2;
             windowSponsorState.windowBounds.y = (float)screenHeight/2 - windowSponsorState.windowBounds.height/2 - 20;
             GuiWindowSponsor(&windowSponsorState);
-            //----------------------------------------------------------------------------------------
-
-            // GUI: Help Window
-            //----------------------------------------------------------------------------------------
-            Rectangle helpWindowBounds = { (float)screenWidth/2 - 330/2, (float)screenHeight/2 - 400.0f/2, 330, 0 };
-            if (windowHelpActive) windowHelpActive = GuiWindowHelp(helpWindowBounds, GuiIconText(ICON_HELP, TextFormat("%s Shortcuts", TOOL_NAME)), helpLines, HELP_LINES_COUNT);
             //----------------------------------------------------------------------------------------
 
             // GUI: Export Window
@@ -1203,30 +1183,6 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color)
 
         currentSample += sampleIncrement;
     }
-}
-
-// Draw help window with the provided lines
-static int GuiWindowHelp(Rectangle bounds, const char *title, const char **helpLines, int helpLinesCount)
-{
-    int nextLineY = 0;
-
-    // Calculate window height if not externally provided a desired height
-    if (bounds.height == 0) bounds.height = (float)(helpLinesCount*24 + 24);
-
-    int windowHelpActive = !GuiWindowBox(bounds, title);
-    nextLineY += (24 + 2);
-
-    for (int i = 0; i < helpLinesCount; i++)
-    {
-        if (helpLines[i] == NULL) GuiLine((Rectangle){ bounds.x, bounds.y + nextLineY, 330, 12 }, helpLines[i]);
-        else if (helpLines[i][0] == '-') GuiLine((Rectangle){ bounds.x, bounds.y + nextLineY, 330, 24 }, helpLines[i] + 1);
-        else GuiLabel((Rectangle){ bounds.x + 12, bounds.y + nextLineY, bounds.width, 24 }, helpLines[i]);
-
-        if (helpLines[i] == NULL) nextLineY += 12;
-        else nextLineY += 24;
-    }
-
-    return windowHelpActive;
 }
 
 #if defined(PLATFORM_DESKTOP)
