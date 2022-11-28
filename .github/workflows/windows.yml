@@ -22,7 +22,7 @@ jobs:
         path: ${{ env.PROJECT_NAME }}
       
     - name: Checkout raylib repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: raysan5/raylib
         path: raylib
@@ -65,7 +65,7 @@ jobs:
 
     # Issue: Double zip: https://github.com/actions/upload-artifact/issues/39
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ env.PROJECT_RELEASE_PATH }}.zip
         path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
