@@ -50,11 +50,12 @@
 // Gui window structure declaration
 typedef struct {
     bool windowActive;
+    bool supportDrag;
+    bool borderless;
 
     Rectangle windowBounds;
     Vector2 panOffset;
     bool dragMode;
-    bool supportDrag;
 
     // Sponsors data
     Texture2D sponsorLogo[MAX_SPONSOR_SLOTS];
@@ -62,6 +63,8 @@ typedef struct {
     bool sponsoring[MAX_SPONSOR_SLOTS];
 
     int slotsAvailable;
+
+    bool welcomeMode;
 
 } GuiWindowSponsorState;
 
@@ -105,11 +108,20 @@ void GuiWindowSponsorAdd(GuiWindowSponsorState *state, Texture2D logo, const cha
     #define TOOL_NAME           "rTool"
 #endif
 
+#if defined(NO_ALPHA_BLENDING)
+    #define FADE(c,a)   c
+#else
+    #define FADE(c,a)   Fade(c,a)
+#endif
+
 //----------------------------------------------------------------------------------
 // Internal Functions Declaration
 //----------------------------------------------------------------------------------
 // Image button control, returns true when clicked
 static bool GuiImageButton(Rectangle bounds, Texture2D texture);
+
+// Draw rTool generated icon
+static void DrawTechIconSponsor(int posX, int posY, int size, const char *text, int textSize, bool corner, Color color);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -120,13 +132,15 @@ GuiWindowSponsorState InitGuiWindowSponsor(void)
 {
     GuiWindowSponsorState state = { 0 };
 
-    state.windowActive = false;
+    state.windowActive = true;
+    state.welcomeMode = true;
+    state.supportDrag = false;
+    state.borderless = false;
     
     int windowWidth = MAX_SPONSOR_SLOTS*128 + MAX_SPONSOR_SLOTS*2 + 24 + (MAX_SPONSOR_SLOTS - 1)*8;    // Logo size (3*128) + button border (2) + margin + button spacing
-    state.windowBounds = (Rectangle){ GetScreenWidth()/2 - windowWidth/2, GetScreenHeight()/2 - 282/2, windowWidth, 282 };
+    state.windowBounds = (Rectangle){ GetScreenWidth()/2 - windowWidth/2, GetScreenHeight()/2 - 394/2, windowWidth, 394 };
     state.panOffset = (Vector2){ 0, 0 };
     state.dragMode = false;
-    state.supportDrag = false;
 
     // Sponsors data initialization
     for (int i = 0; i < MAX_SPONSOR_SLOTS; i++)
@@ -161,6 +175,9 @@ void GuiWindowSponsor(GuiWindowSponsorState *state)
     {
         // Update window dragging
         //----------------------------------------------------------------------------------------
+        if (state->welcomeMode) state->windowBounds.height = 394;
+        else state->windowBounds.height = 394 - 116;
+
         if (state->supportDrag)
         {
             Vector2 mousePosition = GetMousePosition();
@@ -195,36 +212,60 @@ void GuiWindowSponsor(GuiWindowSponsorState *state)
 
         // Draw window and controls
         //----------------------------------------------------------------------------------------
-        state->windowActive = !GuiWindowBox(state->windowBounds, TextFormat("#186#%s Sponsors", TOOL_NAME));
+        state->windowActive = !GuiWindowBox(state->windowBounds, TextFormat(state->welcomeMode? "#186#Welcome to %s!" : "#186#%s Sponsors", TOOL_NAME));
 
-        // Draw a background rectangle for convenience
-        DrawRectangle((int)state->windowBounds.x + 1, (int)state->windowBounds.y + 24, state->windowBounds.width - 2, 34, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
-        GuiLabel((Rectangle){ state->windowBounds.x + 8, state->windowBounds.y + 24 + 8, state->windowBounds.width - 24, 24 }, "This tool is sponsored by:");
-        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 24 + 24, (float)state->windowBounds.width, 20 }, NULL);
-
+        int offset = 0;
+        if (state->welcomeMode)
+        {
+            // Draw top line info: tool logo, name and description
+            DrawRectangleRec((Rectangle){ state->windowBounds.x + 1, state->windowBounds.y + 24, state->windowBounds.width - 2, 116 }, FADE(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+            DrawTechIconSponsor((int)state->windowBounds.x + 12, (int)state->windowBounds.y + 24 + 10, 96, TOOL_SHORT_NAME, 30, true, GetColor(TOOL_LOGO_COLOR));
+#if defined(TOOL_DESCRIPTION_BREAK)
+            GuiLabel((Rectangle){ state->windowBounds.x + 116, state->windowBounds.y + 48, 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
+            GuiLabel((Rectangle){ state->windowBounds.x + 116, state->windowBounds.y + 88, (float)state->windowBounds.width, 40 }, TOOL_DESCRIPTION_BREAK);
+#else
+            GuiLabel((Rectangle){ state->windowBounds.x + 116, state->windowBounds.y + 68, 200, 30 }, TextFormat("%s %s (%s)", TOOL_NAME, TOOL_VERSION, TOOL_RELEASE_DATE));
+            GuiLabel((Rectangle){ state->windowBounds.x + 116, state->windowBounds.y + 94, (float)state->windowBounds.width, 40 }, TOOL_DESCRIPTION);
+#endif
+            GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 24 + 116, (float)state->windowBounds.width, 1 }, NULL);
+            offset = 116;
+        }
+        
+        GuiLabel((Rectangle){ state->windowBounds.x + 12, state->windowBounds.y + 24 + offset + 6, state->windowBounds.width - 24, 24 }, TextFormat("%s is sponsored by:", TOOL_NAME));
+        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 24 + offset + 24, (float)state->windowBounds.width, 20 }, NULL);
+       
+        DrawRectangleRec((Rectangle){ state->windowBounds.x + 1, state->windowBounds.y + 24 + offset + 35, state->windowBounds.width - 2, 150 }, FADE(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
         GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
         for (int i = 0; i < MAX_SPONSOR_SLOTS; i++)
         {
             if (state->sponsoring[i])
             {
-                if (GuiImageButton((Rectangle){ state->windowBounds.x + 12 + (130 + 8)*i, state->windowBounds.y + 70, 130, 130 }, state->sponsorLogo[i])) OpenURL(state->sponsorLink[i]);
+                if (GuiImageButton((Rectangle){ state->windowBounds.x + 12 + (130 + 8)*i, state->windowBounds.y + offset + 69, 130, 130 }, state->sponsorLogo[i])) OpenURL(state->sponsorLink[i]);
             }
-            else GuiButton((Rectangle){ state->windowBounds.x + 12 + (130 + 8)*i, state->windowBounds.y + 70, 130, 130 }, TextFormat("SPONSOR #%i\nLOGO\n+\nLINK", i + 1));
+            else GuiButton((Rectangle){ state->windowBounds.x + 12 + (130 + 8)*i, state->windowBounds.y + offset + 69, 130, 130 }, TextFormat("SPONSOR #%i\nLOGO\n+\nLINK", i + 1));
         }
         GuiSetStyle(BUTTON, BORDER_WIDTH, 2);
 
-        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 200, (float)state->windowBounds.width, 20 }, NULL);
-        GuiLabel((Rectangle){ state->windowBounds.x + 8, state->windowBounds.y + 70 + 128 + 16, state->windowBounds.width - 24, 24 }, TextFormat("Sponsor slots available: %i/%i", state->slotsAvailable, MAX_SPONSOR_SLOTS));
-        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 232, (float)state->windowBounds.width, 20 }, NULL);
+        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + offset + 199, (float)state->windowBounds.width, 20 }, NULL);
+        GuiLabel((Rectangle){ state->windowBounds.x + 12, state->windowBounds.y + offset + 69 + 128 + 16, state->windowBounds.width - 24, 24 }, TextFormat("Sponsor slots available: %i/%i", state->slotsAvailable, MAX_SPONSOR_SLOTS));
 
-        DrawRectangle((int)state->windowBounds.x + 1, state->windowBounds.y + state->windowBounds.height - 40 + 1, state->windowBounds.width - 2, 38, Fade(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+        DrawRectangleRec((Rectangle){ state->windowBounds.x + 1, state->windowBounds.y + state->windowBounds.height - 40 + 2, state->windowBounds.width - 2, 37 }, FADE(GetColor(GuiGetStyle(DEFAULT, BASE_COLOR_NORMAL)), 0.5f));
+        GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 232 + offset - 2, (float)state->windowBounds.width, 20 }, NULL);
 
         int buttonTextAlign = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
         if (state->slotsAvailable == 0) GuiDisable();
-        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80 - 90, state->windowBounds.y + state->windowBounds.height - 32, 80, 24 }, "#186#Sponsor")) { OpenURL("https://github.com/sponsors/raysan5"); }
+        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 82 - 90, state->windowBounds.y + state->windowBounds.height - 31, 80, 24 }, "#186#Sponsor")) { OpenURL("https://github.com/sponsors/raysan5"); }
         GuiEnable();
-        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80, state->windowBounds.y + state->windowBounds.height - 32, 70, 24 }, "#159#Close")) state->windowActive = false;
+        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 82, state->windowBounds.y + state->windowBounds.height - 31, 70, 24 }, "#159#Close") || !state->windowActive)
+        {
+            state->windowActive = false;
+
+            // First time window is closed switch to regular sponsors window
+            state->welcomeMode = false;
+            state->windowBounds.height = 394 - 116;
+            state->windowBounds.y = GetScreenHeight()/2 - state->windowBounds.height/2;
+        }
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
         //----------------------------------------------------------------------------------------
     }
@@ -256,16 +297,40 @@ static bool GuiImageButton(Rectangle bounds, Texture2D texture)
 
     // Draw control
     //--------------------------------------------------------------------
-    DrawTexturePro(texture, (Rectangle){ 0, 0, texture.width, texture.height }, 
+    DrawTexturePro(texture, (Rectangle){ 0, 0, (float)texture.width, (float)texture.height }, 
         (Rectangle){ bounds.x + GuiGetStyle(BUTTON, BORDER_WIDTH), bounds.y + GuiGetStyle(BUTTON, BORDER_WIDTH), 
                      bounds.width - 2*GuiGetStyle(BUTTON, BORDER_WIDTH), bounds.height - 2*GuiGetStyle(BUTTON, BORDER_WIDTH) }, (Vector2){ 0 }, 0.0f, WHITE);
     
-    GuiDrawRectangle(bounds, GuiGetStyle(BUTTON, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(BUTTON, BORDER + (state*3))), guiAlpha), (state == 0)? BLANK : Fade(GetColor(GuiGetStyle(BUTTON, BASE + (state*3))), 0.2f));
-    
+    //GuiDrawRectangle(bounds, GuiGetStyle(BUTTON, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(BUTTON, BORDER + (state*3))), guiAlpha), (state == 0)? BLANK : GetColor(GuiGetStyle(BUTTON, BASE + (state*3))));
     //GuiDrawText(text, GetTextBounds(BUTTON, bounds), GuiGetStyle(BUTTON, TEXT_ALIGNMENT), Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state*3))), guiAlpha));
     //------------------------------------------------------------------
 
     return pressed;
+}
+
+// Draw rTool generated icon
+static void DrawTechIconSponsor(int posX, int posY, int size, const char *text, int textSize, bool corner, Color color)
+{
+    float borderSize = ceilf((float)size/16.0f);
+    bool offsetY = true;
+
+    // Make sure there is no character with pixels down the text baseline for a perfect y-aligned icon
+    for (int i = 0; text[i] != '\0'; i++) if ((text[i] == 'q') || (text[i] == 'y') || (text[i] == 'p') || (text[i] == 'j') || (text[i] == 'g')) { offsetY = false; break; }
+
+    int textPosX = posX + size - (int)(2.0f*borderSize) - MeasureText(text, textSize);
+    int textPosY = posY + size - (int)(2.0f*borderSize) - textSize + (offsetY? (2*textSize/10) : 0);
+
+    DrawRectangle(posX - 1, posY - 1, size + 2, size + 2, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+    DrawRectangle(posX, posY, size, size, RAYWHITE);
+    DrawRectangleLinesEx((Rectangle){ (float)posX, (float)posY, (float)size, (float)size }, borderSize, color);
+    DrawText(text, textPosX, textPosY, textSize, color);
+
+    if (corner)
+    {
+        DrawTriangle((Vector2){ (float)posX + (float)size - 2*borderSize - (float)size/4, (float)posY + 2*borderSize },
+            (Vector2){ (float)posX + (float)size - 2*borderSize, (float)posY + 2*borderSize + (float)size/4 },
+            (Vector2){ (float)posX + (float)size - 2*borderSize, (float)posY + 2*borderSize }, color);
+    }
 }
 
 #endif // GUI_WINDOW_SPONSOR_IMPLEMENTATION
