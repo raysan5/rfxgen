@@ -9,6 +9,9 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
+*       3.2  (14-Dec-2022)  ADDED: Welcome window with sponsors info
+*                           REDESIGNED: Main toolbar to add tooltips
+*                           REVIEWED: Help window implementation
 *       3.1  (06-Sep-2022)  REDESIGNED: Sound generator as a header-only library: rfxgen.h
 *                           ADDED: Sponsor window for tools support
 *                           Updated to raylib 4.5-dev and raygui 3.5-dev
@@ -613,11 +616,6 @@ int main(int argc, char *argv[])
         BeginTextureMode(screenTarget);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            // GUI: Main toolbar panel
-            //----------------------------------------------------------------------------------
-            GuiMainToolbar(&mainToolbarState);
-            //----------------------------------------------------------------------------------
-
             // rFXGen Layout: controls drawing
             //----------------------------------------------------------------------------------
             // Draw left buttons
@@ -698,6 +696,11 @@ int main(int argc, char *argv[])
             DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
             DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
+
+            // GUI: Main toolbar panel
+            //----------------------------------------------------------------------------------
+            GuiMainToolbar(&mainToolbarState);
+            //----------------------------------------------------------------------------------
 
             // GUI: Status bar
             //----------------------------------------------------------------------------------
