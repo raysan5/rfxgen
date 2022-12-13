@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v3.1 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v3.2 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   CONFIGURATION:
 *
