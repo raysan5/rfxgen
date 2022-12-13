@@ -560,6 +560,11 @@ RAYGUIAPI float GuiColorBarHue(Rectangle bounds, const char *text, float value);
 RAYGUIAPI void GuiLoadStyle(const char *fileName);              // Load style file over global style variable (.rgs)
 RAYGUIAPI void GuiLoadStyleDefault(void);                       // Load style default over global style
 
+// Tooltips management functions
+RAYGUIAPI void GuiEnableTooltip(void);                           // Enable gui tooltips (global state)
+RAYGUIAPI void GuiDisableTooltip(void);                          // Disable gui tooltips (global state)
+RAYGUIAPI void GuiSetTooltip(const char *tooltip);               // Set tooltip string
+
 // Icons functionality
 RAYGUIAPI const char *GuiIconText(int iconId, const char *text); // Get text with icon id prepended (if supported)
 
@@ -1174,6 +1179,10 @@ static float guiAlpha = 1.0f;               // Gui element transpacency on drawi
 
 static unsigned int guiIconScale = 1;       // Gui icon default scale (if icons enabled)
 
+static bool guiTooltip = false;             // Tooltip enabled/disabled
+static const char *guiTooltipPtr = NULL;    // Tooltip string pointer (string provided by user)
+
+
 //----------------------------------------------------------------------------------
 // Style data array for all gui style properties (allocated on data segment by default)
 //
@@ -1270,6 +1279,8 @@ static Vector3 ConvertHSVtoRGB(Vector3 hsv);                    // Convert color
 static Vector3 ConvertRGBtoHSV(Vector3 rgb);                    // Convert color data from RGB to HSV
 
 static int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue);   // Scroll bar control, used by GuiScrollPanel()
+static void GuiTooltip(Rectangle controlRec);                   // Draw tooltip using control rec position
+
 
 //----------------------------------------------------------------------------------
 // Gui Setup Functions Definition
@@ -1495,38 +1506,43 @@ int GuiTabBar(Rectangle bounds, const char **text, int count, int *active)
     if (*active < 0) *active = 0;
     else if (*active > count - 1) *active = count - 1;
 
+    int offsetX = 0;    // Required in case tabs go out of screen
+    offsetX = (*active + 2)*RAYGUI_TABBAR_ITEM_WIDTH - GetScreenWidth();
+    if (offsetX < 0) offsetX = 0;
+
     // Draw control
     //--------------------------------------------------------------------
     for (int i = 0; i < count; i++)
     {
-        tabBounds.x = bounds.x + (RAYGUI_TABBAR_ITEM_WIDTH + 4)*i;
+        tabBounds.x = bounds.x + (RAYGUI_TABBAR_ITEM_WIDTH + 4)*i - offsetX;
 
-        int textAlignment = GuiGetStyle(TOGGLE, TEXT_ALIGNMENT);
-        int textPadding = GuiGetStyle(TOGGLE, TEXT_PADDING);
-        GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-        GuiSetStyle(TOGGLE, TEXT_PADDING, 8);
-        if (i == *active) GuiToggle(tabBounds, GuiIconText(12, text[i]), true);
-        else if (GuiToggle(tabBounds, GuiIconText(12, text[i]), false) == true) *active = i;
-        GuiSetStyle(TOGGLE, TEXT_PADDING, textPadding);
-        GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, textAlignment);
+        if (tabBounds.x < GetScreenWidth())
+        {
+            // Draw tabs as toggle controls
+            int textAlignment = GuiGetStyle(TOGGLE, TEXT_ALIGNMENT);
+            int textPadding = GuiGetStyle(TOGGLE, TEXT_PADDING);
+            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+            GuiSetStyle(TOGGLE, TEXT_PADDING, 8);
+            if (i == *active) GuiToggle(tabBounds, GuiIconText(12, text[i]), true);
+            else if (GuiToggle(tabBounds, GuiIconText(12, text[i]), false) == true) *active = i;
+            GuiSetStyle(TOGGLE, TEXT_PADDING, textPadding);
+            GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, textAlignment);
 
-        // Draw tab close button
-        // NOTE: Only draw close button for curren tab: if (CheckCollisionPointRec(mousePoint, tabBounds))
-        int tempBorderWidth = GuiGetStyle(BUTTON, BORDER_WIDTH);
-        int tempTextAlignment = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
-        GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
-        GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+            // Draw tab close button
+            // NOTE: Only draw close button for curren tab: if (CheckCollisionPointRec(mousePoint, tabBounds))
+            int tempBorderWidth = GuiGetStyle(BUTTON, BORDER_WIDTH);
+            int tempTextAlignment = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
+            GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
+            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 #if defined(RAYGUI_NO_ICONS)
-        if (GuiButton(closeButtonRec, "x")) closing = i;
+            if (GuiButton(closeButtonRec, "x")) closing = i;
 #else
-        if (GuiButton(RAYGUI_CLITERAL(Rectangle){ tabBounds.x + tabBounds.width - 14 - 5, tabBounds.y + 5, 14, 14 }, GuiIconText(ICON_CROSS_SMALL, NULL))) closing = i;
+            if (GuiButton(RAYGUI_CLITERAL(Rectangle){ tabBounds.x + tabBounds.width - 14 - 5, tabBounds.y + 5, 14, 14 }, GuiIconText(ICON_CROSS_SMALL, NULL))) closing = i;
 #endif
-        GuiSetStyle(BUTTON, BORDER_WIDTH, tempBorderWidth);
-        GuiSetStyle(BUTTON, TEXT_ALIGNMENT, tempTextAlignment);
+            GuiSetStyle(BUTTON, BORDER_WIDTH, tempBorderWidth);
+            GuiSetStyle(BUTTON, TEXT_ALIGNMENT, tempTextAlignment);
+        }
     }
-
-    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + bounds.height - 1, bounds.width, 1 }, 0, BLANK, GetColor(GuiGetStyle(TOGGLE, BORDER_COLOR_NORMAL)));
-    //GuiLine(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + bounds.height - 1, bounds.width, 1 }, NULL);
     //--------------------------------------------------------------------
 
     return closing;     // Return closing tab requested
@@ -1706,6 +1722,8 @@ bool GuiButton(Rectangle bounds, const char *text)
     //--------------------------------------------------------------------
     GuiDrawRectangle(bounds, GuiGetStyle(BUTTON, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(BUTTON, BORDER + (state*3))), guiAlpha), Fade(GetColor(GuiGetStyle(BUTTON, BASE + (state*3))), guiAlpha));
     GuiDrawText(text, GetTextBounds(BUTTON, bounds), GuiGetStyle(BUTTON, TEXT_ALIGNMENT), Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state*3))), guiAlpha));
+    
+    if (state == STATE_FOCUSED) GuiTooltip(bounds);
     //------------------------------------------------------------------
 
     return pressed;
@@ -1783,6 +1801,8 @@ bool GuiToggle(Rectangle bounds, const char *text, bool active)
         GuiDrawRectangle(bounds, GuiGetStyle(TOGGLE, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(TOGGLE, BORDER + state*3)), guiAlpha), Fade(GetColor(GuiGetStyle(TOGGLE, BASE + state*3)), guiAlpha));
         GuiDrawText(text, GetTextBounds(TOGGLE, bounds), GuiGetStyle(TOGGLE, TEXT_ALIGNMENT), Fade(GetColor(GuiGetStyle(TOGGLE, TEXT + state*3)), guiAlpha));
     }
+
+    if (state == STATE_FOCUSED) GuiTooltip(bounds);
     //--------------------------------------------------------------------
 
     return active;
@@ -2162,6 +2182,7 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
 
     // Draw cursor
     if (editMode) GuiDrawRectangle(cursor, 0, BLANK, Fade(GetColor(GuiGetStyle(TEXTBOX, BORDER_COLOR_PRESSED)), guiAlpha));
+    else if (state == STATE_FOCUSED) GuiTooltip(bounds);
     //--------------------------------------------------------------------
 
     return pressed;
@@ -3321,6 +3342,20 @@ Vector2 GuiGrid(Rectangle bounds, const char *text, float spacing, int subdivs)
 }
 
 //----------------------------------------------------------------------------------
+// Tooltip management functions
+// NOTE: Tooltips requires some global variables: tooltipPtr
+//----------------------------------------------------------------------------------
+// Enable gui tooltips (global state)
+void GuiEnableTooltip(void) { guiTooltip = true; }
+
+// Disable gui tooltips (global state)
+void GuiDisableTooltip(void) { guiTooltip = false; }
+
+// Set tooltip string
+void GuiSetTooltip(const char *tooltip) { guiTooltipPtr = tooltip; }
+
+
+//----------------------------------------------------------------------------------
 // Styles loading functions
 //----------------------------------------------------------------------------------
 
@@ -4058,6 +4093,27 @@ static void GuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, 
         DrawRectangle((int)rec.x, (int)rec.y + borderWidth, borderWidth, (int)rec.height - 2*borderWidth, borderColor);
         DrawRectangle((int)rec.x + (int)rec.width - borderWidth, (int)rec.y + borderWidth, borderWidth, (int)rec.height - 2*borderWidth, borderColor);
         DrawRectangle((int)rec.x, (int)rec.y + (int)rec.height - borderWidth, (int)rec.width, borderWidth, borderColor);
+    }
+}
+
+// Draw tooltip using control bounds
+static void GuiTooltip(Rectangle controlRec)
+{
+    if (!guiLocked && guiTooltip && (guiTooltipPtr != NULL))
+    {
+        Vector2 textSize = MeasureTextEx(GuiGetFont(), guiTooltipPtr, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING));
+
+        if ((controlRec.x + textSize.x + 16) > GetScreenWidth()) controlRec.x -= (textSize.x + 16 - controlRec.width);
+
+        GuiPanel((Rectangle){ controlRec.x, controlRec.y + controlRec.height + 4, textSize.x + 16, GuiGetStyle(DEFAULT, TEXT_SIZE) + 8 }, NULL);
+
+        int textPadding = GuiGetStyle(LABEL, TEXT_PADDING);
+        int textAlignment = GuiGetStyle(LABEL, TEXT_ALIGNMENT);
+        GuiSetStyle(LABEL, TEXT_PADDING, 0);
+        GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+        GuiLabel((Rectangle){ controlRec.x, controlRec.y + controlRec.height + 4, textSize.x + 16, GuiGetStyle(DEFAULT, TEXT_SIZE) + 8 }, guiTooltipPtr);
+        GuiSetStyle(LABEL, TEXT_ALIGNMENT, textAlignment);
+        GuiSetStyle(LABEL, TEXT_PADDING, textPadding);
     }
 }
 
