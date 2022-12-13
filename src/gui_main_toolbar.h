@@ -32,8 +32,6 @@
 
 #include "raylib.h"
 
-#include <stdint.h>
-
 // WARNING: raygui implementation is expected to be defined before including this header
 
 #ifndef GUI_MAIN_TOOLBAR_H
@@ -66,12 +64,11 @@ typedef struct {
     int prevVisualStyleActive;
     int languageActive;
 
-    // Help options
+    // Info options
     bool btnHelpPressed;
     bool btnAboutPressed;
     bool btnSponsorPressed;
     bool btnUserPressed;
-    bool btnQuitPressed;
 
     // Custom variables
     // TODO.
@@ -157,10 +154,12 @@ GuiMainToolbarState InitGuiMainToolbar(void)
     state.btnAboutPressed = false;
     state.btnSponsorPressed = false;
     state.btnUserPressed = false;
-    state.btnQuitPressed = false;
-
+	
     // Custom variables
     // TODO.
+
+    // Enable tooltips by default
+    GuiEnableTooltip();
 
     return state;
 }
@@ -180,9 +179,13 @@ void GuiMainToolbar(GuiMainToolbarState *state)
     GuiPanel((Rectangle){ state->anchorRight.x, state->anchorRight.y, 104, 40 }, NULL);
 
     // Project/File options
+    GuiSetTooltip("Create new sound (LCTRL+N)");
     state->btnNewFilePressed = GuiButton((Rectangle){ state->anchorFile.x + 12, state->anchorFile.y + 8, 24, 24 }, "#8#");
+    GuiSetTooltip("Load .rfx sound file (LCTRL+O)");
     state->btnLoadFilePressed = GuiButton((Rectangle){ state->anchorFile.x + 12 + 24 + 4, state->anchorFile.y + 8, 24, 24 }, "#5#");
+    GuiSetTooltip("Save .rfx sound file (LCTRL+S)");
     state->btnSaveFilePressed = GuiButton((Rectangle){ state->anchorFile.x + 12 + 48 + 8, state->anchorFile.y + 8, 24, 24 }, "#6#");
+    GuiSetTooltip("Export sound file (LCTRL+E)");
     state->btnExportFilePressed = GuiButton((Rectangle){ state->anchorFile.x + 12 + 72 + 12, state->anchorFile.y + 8, 24, 24 }, "#7#");
 
     // Edit options
@@ -190,6 +193,7 @@ void GuiMainToolbar(GuiMainToolbarState *state)
 
     int tooglePadding = GuiGetStyle(TOGGLE, GROUP_PADDING);
     GuiSetStyle(TOGGLE, GROUP_PADDING, 2);
+    GuiSetTooltip("Select current sound slot");
     state->soundSlotActive = GuiToggleGroup((Rectangle){ state->anchorEdit.x + 12 + 32, state->anchorEdit.y + 8, 16, 24 }, "1;2;3;4;5", state->soundSlotActive);
     GuiSetStyle(TOGGLE, GROUP_PADDING, tooglePadding);
 
@@ -198,12 +202,17 @@ void GuiMainToolbar(GuiMainToolbarState *state)
 
     // Visuals options
     GuiLabel((Rectangle){ state->anchorVisuals.x + 8, state->anchorVisuals.y + 8, 60, 24 }, "Style:");
+    GuiSetTooltip("Select visual UI style");
     state->visualStyleActive = GuiComboBox((Rectangle){ state->anchorVisuals.x + 8 + 40, state->anchorVisuals.y + 8, 104, 24 }, "Light;Dark;Jungle;Candy;Lavanda;Cyber;Terminal;Ashes;Bluish", state->visualStyleActive);
 
     // Info options
+    GuiSetTooltip("Show help window (F1)");
     state->btnHelpPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 72 - 8, state->anchorRight.y + 8, 24, 24 }, "#193#");
+    GuiSetTooltip("Show info window (F2)");
     state->btnAboutPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 48 - 4, state->anchorRight.y + 8, 24, 24 }, "#191#");
+    GuiSetTooltip("Show sponsors window (F3)");
     state->btnSponsorPressed = GuiButton((Rectangle){ state->anchorRight.x + (screenWidth - state->anchorRight.x) - 12 - 24, state->anchorRight.y + 8, 24, 24 }, "#186#");
+    GuiSetTooltip(NULL);
 }
 
 #endif // GUI_MAIN_TOOLBAR_IMPLEMENTATION
