@@ -193,7 +193,7 @@ void GuiMainToolbar(GuiMainToolbarState *state)
 
     int tooglePadding = GuiGetStyle(TOGGLE, GROUP_PADDING);
     GuiSetStyle(TOGGLE, GROUP_PADDING, 2);
-    GuiSetTooltip("Select current sound slot");
+    GuiSetTooltip("Select current sound slot (1,2,3,4,5)");
     state->soundSlotActive = GuiToggleGroup((Rectangle){ state->anchorEdit.x + 12 + 32, state->anchorEdit.y + 8, 16, 24 }, "1;2;3;4;5", state->soundSlotActive);
     GuiSetStyle(TOGGLE, GROUP_PADDING, tooglePadding);
 
