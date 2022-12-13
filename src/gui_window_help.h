@@ -158,6 +158,13 @@ GuiWindowHelpState InitGuiWindowHelp(void)
     // Calculate window height if not specifically defined
     if (state.windowBounds.height == 0) state.windowBounds.height = (float)(state.contentHeight + 24 + 4);
     state.windowBounds.y = GetScreenHeight()/2 - state.windowBounds.height/2;
+
+    // Review size if it does not fit on the screen
+    if (state.windowBounds.height > (GetScreenHeight() - 80))
+    {
+        state.windowBounds.height = GetScreenHeight() - 80;
+        state.windowBounds.y = GetScreenHeight()/2 - state.windowBounds.height/2;
+    }
    
     // Init scroll offset
     state.scrollPanelOffset = (Vector2){ 0, 0 };
