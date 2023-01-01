@@ -70,7 +70,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2022 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2023 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -941,7 +941,7 @@ static void ShowCommandLineInfo(void)
     printf("// powered by raylib v%s and raygui v%s                               //\n", RAYLIB_VERSION, RAYGUI_VERSION);
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2014-2022 raylib technologies (@raylibtech)                    //\n");
+    printf("// Copyright (c) 2014-2023 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -1247,7 +1247,7 @@ static void PlayWaveCLI(Wave wave)
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/rfxgen                         //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2020-2022 raylib technologies (@raylibtech)                    //\n");
+    printf("// Copyright (c) 2020-2023 raylib technologies (@raylibtech)                    //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 
