@@ -52,7 +52,7 @@
 *   DEPENDENCIES:
 *       raylib 4.5-dev          - Windowing/input management and drawing
 *       raygui 3.5-dev          - Immediate-mode GUI controls with custom styling and icons
-*       tinyfiledialogs 3.8.8   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
+*       tinyfiledialogs 3.9.0   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   COMPILATION (Windows - MinGW):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
