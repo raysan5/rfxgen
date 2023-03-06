@@ -9,6 +9,7 @@
 *       NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
+*       3.3  (06-Mar-2023)  ADDED: Support export to QOA file format
 *       3.2  (14-Dec-2022)  ADDED: Welcome window with sponsors info
 *                           REDESIGNED: Main toolbar to add tooltips
 *                           REVIEWED: Help window implementation
@@ -416,7 +417,7 @@ int main(int argc, char *argv[])
         // Show dialog: load sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) showLoadFileDialog = true;
 
-        // Show dialog: export wave (.wav, .raw, .h)
+        // Show dialog: export wave (.wav, .qoa, .raw, .h)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) windowExportActive = true;
 
         // Select current sound slot
@@ -753,9 +754,11 @@ int main(int argc, char *argv[])
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 48 + 16, 106, 24 }, "Sample Size:");
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 72 + 24, 106, 24 }, "Channels:");
 
-                fileTypeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;RAW;CODE", fileTypeActive);
+                fileTypeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;QOA;RAW;CODE", fileTypeActive);
                 sampleRateActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
+                if (fileTypeActive == 1) { sampleSizeActive = 1; GuiDisable(); }
                 sampleSizeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
+                GuiEnable();
                 channelsActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 72 + 24, 124, 24 }, "Mono;Stereo", channelsActive);
 
                 if (result == 1)    // Export button pressed
@@ -772,6 +775,9 @@ int main(int argc, char *argv[])
 
                     windowExportActive = false;
                     showExportFileDialog = true;
+                    
+                    memset(outFileName, 0, 512);
+                    strcpy(outFileName, "sound");
                 }
                 else if (result == 0) windowExportActive = false;
             }
@@ -848,8 +854,9 @@ int main(int argc, char *argv[])
                 char fileTypeFilters[64] = { 0 };
 
                 if (fileTypeActive == 0) { strcpy(fileTypeFilters, "*.wav"); strcat(outFileName, ".wav"); }
-                else if (fileTypeActive == 1) { strcpy(fileTypeFilters, "*.raw"); strcat(outFileName, ".raw"); }
-                else if (fileTypeActive == 2) { strcpy(fileTypeFilters, "*.h"); strcat(outFileName, ".h"); }
+                else if (fileTypeActive == 1) { strcpy(fileTypeFilters, "*.qoa"); strcat(outFileName, ".qoa"); }
+                else if (fileTypeActive == 2) { strcpy(fileTypeFilters, "*.raw"); strcat(outFileName, ".raw"); }
+                else if (fileTypeActive == 3) { strcpy(fileTypeFilters, "*.h"); strcat(outFileName, ".h"); }
 
                 int result = GuiFileDialog(DIALOG_SAVE_FILE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
 #endif
@@ -865,13 +872,13 @@ int main(int argc, char *argv[])
                         if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".wav")) strcat(outFileName, ".wav\0");
                         ExportWave(cwave, outFileName);            // Export wave data as WAV file
                     }
-                    else if (fileTypeActive == 2)
+                    else if (fileTypeActive == 1)   // Export Wave as QOA data
                     {
                         // Check for valid extension and make sure it is
-                        if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".h")) strcat(outFileName, ".h\0");
-                        ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
+                        if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".qoa")) strcat(outFileName, ".qoa\0");
+                        ExportWave(cwave, outFileName);            // Export wave data as QOA file
                     }
-                    else if (fileTypeActive == 1)   // Export Wave as RAW data
+                    else if (fileTypeActive == 2)   // Export Wave as RAW data
                     {
                         // Check for valid extension and make sure it is
                         if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".raw")) strcat(outFileName, ".raw\0");
@@ -883,6 +890,13 @@ int main(int argc, char *argv[])
                             fclose(rawFile);
                         }
                     }
+                    else if (fileTypeActive == 3)   // Export as code file
+                    {
+                        // Check for valid extension and make sure it is
+                        if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".h")) strcat(outFileName, ".h\0");
+                        ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
+                    }
+                    
 
                     UnloadWave(cwave);
 
@@ -954,7 +968,7 @@ static void ShowCommandLineInfo(void)
     printf("    -i, --input <filename.ext>      : Define input file.\n");
     printf("                                      Supported extensions: .rfx, .wav, .ogg, .flac, .mp3\n\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
-    printf("                                      Supported extensions: .wav, .raw, .h\n");
+    printf("                                      Supported extensions: .wav, .qoa, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
     printf("    -f, --format <sample_rate>,<sample_size>,<channels>\n");
     printf("                                    : Define output wave format. Comma separated values.\n");
@@ -1025,6 +1039,7 @@ static void ProcessCommandLine(int argc, char *argv[])
             if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
                 if (IsFileExtension(argv[i + 1], ".wav") ||
+                    IsFileExtension(argv[i + 1], ".qoa") ||
                     IsFileExtension(argv[i + 1], ".raw") ||
                     IsFileExtension(argv[i + 1], ".h"))
                 {
@@ -1126,7 +1141,7 @@ static void ProcessCommandLine(int argc, char *argv[])
         WaveFormat(&wave, sampleRate, sampleSize, channels);
 
         // Export wave data as audio file (.wav) or code file (.h)
-        if (IsFileExtension(outFileName, ".wav")) ExportWave(wave, outFileName);
+        if (IsFileExtension(outFileName, ".wav") || IsFileExtension(outFileName, ".qoa")) ExportWave(wave, outFileName);
         else if (IsFileExtension(outFileName, ".h")) ExportWaveAsCode(wave, outFileName);
         else if (IsFileExtension(outFileName, ".raw"))
         {
