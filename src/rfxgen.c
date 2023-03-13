@@ -51,7 +51,7 @@
 *       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 4.5-dev          - Windowing/input management and drawing
+*       raylib 4.5          - Windowing/input management and drawing
 *       raygui 3.5-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.9.0   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
     //-----------------------------------------------------------------------------------
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //-----------------------------------------------------------------------------------
-    
+
     // GUI: Sponsor Window
     //-----------------------------------------------------------------------------------
     GuiWindowSponsorState windowSponsorState = InitGuiWindowSponsor();
@@ -720,7 +720,7 @@ int main(int argc, char *argv[])
 
             // WARNING: Before drawing the windows, we unlock them
             GuiUnlock();
-            
+
             // GUI: Help Window
             //----------------------------------------------------------------------------------------
             windowHelpState.windowBounds.x = (float)screenWidth/2 - windowHelpState.windowBounds.width/2;
@@ -775,7 +775,7 @@ int main(int argc, char *argv[])
 
                     windowExportActive = false;
                     showExportFileDialog = true;
-                    
+
                     memset(outFileName, 0, 512);
                     strcpy(outFileName, "sound");
                 }
@@ -897,7 +897,7 @@ int main(int argc, char *argv[])
                         if ((GetFileExtension(outFileName) == NULL) || !IsFileExtension(outFileName, ".h")) strcat(outFileName, ".h\0");
                         ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
                     }
-                    
+
 
                     UnloadWave(cwave);
 
