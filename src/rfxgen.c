@@ -2,11 +2,28 @@
 *
 *   rFXGen v3.2 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
-*   CONFIGURATION:
+*   FEATURES:
+*       - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
+*       - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
+*       - Up to 5 sound slots to store generated sound (temporary save)
+*       - Load .rfx files with sound generation parameters
+*       - Save .rfx files with sound generation parameters (104 bytes only)
+*       - Export wave data as .wav, .raw data or .h code file (byte array)
+*       - Configurable sample-rate, bits-per-sample and channels on export
+*       - Multiple GUI styles with support for custom ones (.rgs)
 *
-*   #define CUSTOM_MODAL_DIALOGS
-*       Use custom raygui generated modal dialogs instead of native OS ones
-*       NOTE: Avoids including tinyfiledialogs depencency library
+*   POSSIBLE IMPROVEMENTS:
+*       - Improvement 01
+*       - Improvement 02
+*
+*   LIMITATIONS:
+*       - Limitation 01
+*       - Limitation 02
+*   
+*   CONFIGURATION:
+*       #define CUSTOM_MODAL_DIALOGS
+*           Use custom raygui generated modal dialogs instead of native OS ones
+*           NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
 *       3.3  (06-Mar-2023)  ADDED: Support export to QOA file format
@@ -55,15 +72,17 @@
 *       raygui 3.5-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.9.0   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
-*   COMPILATION (Windows - MinGW):
+*   BUILDING:
+*     - Windows (MinGW-w64):
 *       gcc -o rfxgen.exe rfxgen.c external/tinyfiledialogs.c -s rfxgen_icon -Iexternal /
 *           -lraylib -lopengl32 -lgdi32 -lcomdlg32 -lole32 -std=c99 -Wl,--subsystem,windows
 *
-*   COMPILATION (Linux - GCC):
+*     - Linux (GCC):
 *       gcc -o rfxgen rfxgen.c external/tinyfiledialogs.c -s -Iexternal -no-pie -D_DEFAULT_SOURCE /
 *           -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 *
-*   NOTE: On PLATFORM_ANDROID and PLATFORM_WEB file dialogs are not available
+*   ADDITIONAL NOTES: 
+*       On PLATFORM_ANDROID and PLATFORM_WEB file dialogs are not available
 *
 *   DEVELOPERS:
 *       Ramon Santamaria (@raysan5):   Developer, supervisor, updater and maintainer.
