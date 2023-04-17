@@ -19,7 +19,7 @@
 *   LIMITATIONS:
 *       - Limitation 01
 *       - Limitation 02
-*   
+*
 *   CONFIGURATION:
 *       #define CUSTOM_MODAL_DIALOGS
 *           Use custom raygui generated modal dialogs instead of native OS ones
@@ -81,7 +81,7 @@
 *       gcc -o rfxgen rfxgen.c external/tinyfiledialogs.c -s -Iexternal -no-pie -D_DEFAULT_SOURCE /
 *           -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 *
-*   ADDITIONAL NOTES: 
+*   ADDITIONAL NOTES:
 *       On PLATFORM_ANDROID and PLATFORM_WEB file dialogs are not available
 *
 *   DEVELOPERS:
