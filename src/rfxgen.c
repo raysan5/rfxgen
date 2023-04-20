@@ -69,7 +69,7 @@
 *
 *   DEPENDENCIES:
 *       raylib 4.5          - Windowing/input management and drawing
-*       raygui 3.5-dev          - Immediate-mode GUI controls with custom styling and icons
+*       raygui 3.5              - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.9.0   - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
