@@ -124,6 +124,8 @@
 *           Includes custom ricons.h header defining a set of custom icons,
 *           this file can be generated using rGuiIcons tool
 *
+*       #define RAYGUI_DEBUG_TEXT_BOUNDS
+*           Draw text bounds rectangles for debug
 *
 *   VERSIONS HISTORY:
 *       3.5 (20-Apr-2023) ADDED: GuiTabBar(), based on GuiToggle()
@@ -1483,7 +1485,7 @@ void GuiLine(Rectangle bounds, const char *text)
     else
     {
         Rectangle textBounds = { 0 };
-        textBounds.width = (float)GetTextWidth(text);
+        textBounds.width = (float)GetTextWidth(text) + 2;
         textBounds.height = bounds.height;
         textBounds.x = bounds.x + RAYGUI_LINE_MARGIN_TEXT;
         textBounds.y = bounds.y;
@@ -1773,7 +1775,7 @@ bool GuiLabelButton(Rectangle bounds, const char *text)
 
     // NOTE: We force bounds.width to be all text
     float textWidth = (float)GetTextWidth(text);
-    if (bounds.width < textWidth) bounds.width = textWidth;
+    if ((bounds.width - 2*GuiGetStyle(LABEL, BORDER_WIDTH) - 2*GuiGetStyle(LABEL, TEXT_PADDING)) < textWidth) bounds.width = textWidth + 2*GuiGetStyle(LABEL, BORDER_WIDTH) + 2*GuiGetStyle(LABEL, TEXT_PADDING) + 2;
 
     // Update control
     //--------------------------------------------------------------------
@@ -1887,7 +1889,7 @@ bool GuiCheckBox(Rectangle bounds, const char *text, bool checked)
 
     if (text != NULL)
     {
-        textBounds.width = (float)GetTextWidth(text);
+        textBounds.width = (float)GetTextWidth(text) + 2;
         textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(CHECKBOX, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
@@ -2356,7 +2358,7 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
     Rectangle textBounds = { 0 };
     if (text != NULL)
     {
-        textBounds.width = (float)GetTextWidth(text);
+        textBounds.width = (float)GetTextWidth(text) + 2;
         textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(SPINNER, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
@@ -2432,7 +2434,7 @@ bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, i
     Rectangle textBounds = { 0 };
     if (text != NULL)
     {
-        textBounds.width = (float)GetTextWidth(text);
+        textBounds.width = (float)GetTextWidth(text) + 2;
         textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
         textBounds.x = bounds.x + bounds.width + GuiGetStyle(VALUEBOX, TEXT_PADDING);
         textBounds.y = bounds.y + bounds.height/2 - GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
@@ -3632,9 +3634,10 @@ void GuiLoadStyleDefault(void)
         // Setup default raylib font
         guiFont = GetFontDefault();
 
-        // Setup default raylib font rectangle
-        Rectangle whiteChar = { 41, 46, 2, 8 };
-        SetShapesTexture(guiFont.texture, whiteChar);
+        // NOTE: Default raylib font character 95 is a white square
+        Rectangle whiteChar = guiFont.recs[95];
+        // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
+        SetShapesTexture(guiFont.texture, (Rectangle){ whiteChar.x + 1, whiteChar.y + 1, whiteChar.width - 2, whiteChar.height - 2 });
     }
 }
 
@@ -3795,7 +3798,7 @@ static int GetTextWidth(const char *text)
     {
         if (text[0] == '#')
         {
-            for (int i = 1; (text[i] != '\0') && (i < 5); i++)
+            for (int i = 1; (i < 5) && (text[i] != '\0'); i++)
             {
                 if (text[i] == '#')
                 {
@@ -4055,6 +4058,9 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
             //---------------------------------------------------------------------------------
         }
     }
+#if defined(RAYGUI_DEBUG_TEXT_BOUNDS)
+    GuiDrawRectangle(bounds, 0, WHITE, Fade(RED, 0.4f))
+#endif
 }
 
 // Gui draw rectangle using default raygui plain style with borders

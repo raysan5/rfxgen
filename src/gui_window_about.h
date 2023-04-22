@@ -23,7 +23,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2019-2022 raylib technologies (@raylibtech).
+*   Copyright (c) 2018-2023 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -125,6 +125,12 @@ void GuiWindowAbout(GuiWindowAboutState *state);
     #define TOOL_LOGO_COLOR      0x000000ff
 #endif
 
+#if defined(NO_ALPHA_BLENDING)
+    #define FADE(c,a)   c
+#else
+    #define FADE(c,a)   Fade(c,a)
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -137,7 +143,7 @@ static const char *lblUsedLibsText = "Powered by:";
 static const char *linkraylibText = "www.raylib.com";
 static const char *linkGitraylibText = "github.com/raysan5/raylib";
 static const char *linkGitrayguiText = "github.com/raysan5/raygui";
-static const char *lblCopyrightText = "Copyright (c) 2022 raylib technologies.";
+static const char *lblCopyrightText = "Copyright (c) 2023 raylib technologies.";
 static const char *linkraylibtechText = "[@raylibtech]";
 static const char *lblMoreInfoText = "More info:";
 static const char *linkMailText = "ray@raylibtech.com";
