@@ -828,7 +828,7 @@ typedef enum {
     ICON_REG_EXP                  = 216,
     ICON_FOLDER                   = 217,
     ICON_FILE                     = 218,
-    ICON_219                      = 219,
+    ICON_SAND_TIMER               = 219,
     ICON_220                      = 220,
     ICON_221                      = 221,
     ICON_222                      = 222,
@@ -1141,7 +1141,7 @@ static unsigned int guiIcons[RAYGUI_ICON_MAX_ICONS*RAYGUI_ICON_DATA_ELEMENTS] = 
     0x00000000, 0x02000000, 0x07000a80, 0x07001fc0, 0x02000a80, 0x00300030, 0x00000000, 0x00000000,      // ICON_REG_EXP
     0x00000000, 0x0042007e, 0x40027fc2, 0x40024002, 0x40024002, 0x40024002, 0x7ffe4002, 0x00000000,      // ICON_FOLDER
     0x3ff00000, 0x201c2010, 0x20042004, 0x20042004, 0x20042004, 0x20042004, 0x20042004, 0x00003ffc,      // ICON_FILE
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_219
+    0x1ff00000, 0x20082008, 0x17d02fe8, 0x05400ba0, 0x09200540, 0x23881010, 0x2fe827c8, 0x00001ff0,      // ICON_SAND_TIMER
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_220
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_221
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_222
@@ -2120,7 +2120,7 @@ bool GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMo
 bool GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
 {
     #define AUTO_CURSOR_COOLDOWN  40        // Frames to wait for autocursor movement
-    #define AUTO_CURSOR_DELAY      3        // Frames delay for autocursor movement
+    #define AUTO_CURSOR_DELAY      1        // Frames delay for autocursor movement
     
     GuiState state = guiState;
     bool pressed = false;
@@ -2190,6 +2190,8 @@ bool GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
             int textLength = (int)strlen(text);     // Get current text length
             int codepoint = GetCharPressed();       // Get Unicode codepoint
             if (multiline && IsKeyPressed(KEY_ENTER)) codepoint = (int)'\n';
+
+            if (textBoxCursorIndex > textLength) textBoxCursorIndex = textLength;
             
             // Encode codepoint as UTF-8
             int codepointSize = 0;
@@ -2333,7 +2335,8 @@ bool GuiTextBoxMulti(Rectangle bounds, char *text, int bufferSize, bool editMode
     GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT_VERTICAL, 1);
     GuiSetStyle(TEXTBOX, TEXT_MULTILINE, 1);
 
-    pressed = GuiTextBox(bounds, text, bufferSize, editMode);   // TODO: Implement methods to calculate cursor position properly
+    // TODO: Implement methods to calculate cursor position properly
+    pressed = GuiTextBox(bounds, text, bufferSize, editMode);
 
     GuiSetStyle(TEXTBOX, TEXT_MULTILINE, 0);
     GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT_VERTICAL, 0);
@@ -2396,7 +2399,6 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
 
     // Draw control
     //--------------------------------------------------------------------
-    // TODO: Set Spinner properties for ValueBox
     pressed = GuiValueBox(spinner, NULL, &tempValue, minValue, maxValue, editMode);
 
     // Draw value selector custom buttons
@@ -3199,7 +3201,7 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
     Rectangle textBounds = { 0 };
     if (message != NULL)
     {
-        int textSize = GetTextWidth(message);
+        int textSize = GetTextWidth(message) + 2;
 
         textBounds.x = bounds.x + bounds.width/2 - textSize/2;
         textBounds.y = bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + messageInputHeight/4 - (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
@@ -3250,6 +3252,8 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
         buttonBounds.x += (buttonBounds.width + RAYGUI_MESSAGEBOX_BUTTON_PADDING);
     }
 
+    if (btnIndex >= 0) textEditMode = false;
+
     GuiSetStyle(BUTTON, TEXT_ALIGNMENT, prevBtnTextAlignment);
     //--------------------------------------------------------------------
 
@@ -3289,9 +3293,6 @@ Vector2 GuiGrid(Rectangle bounds, const char *text, float spacing, int subdivs)
 
     // Draw control
     //--------------------------------------------------------------------
-
-    // TODO: Draw background panel?
-
     switch (state)
     {
         case STATE_NORMAL:
@@ -3605,7 +3606,7 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(COMBOBOX, COMBO_BUTTON_SPACING, 2);
     GuiSetStyle(DROPDOWNBOX, ARROW_PADDING, 16);
     GuiSetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING, 2);
-    GuiSetStyle(TEXTBOX, TEXT_LINES_SPACING, 4);
+    GuiSetStyle(TEXTBOX, TEXT_LINES_SPACING, (int)((float)GuiGetStyle(DEFAULT, TEXT_SIZE)*1.5f));
     GuiSetStyle(TEXTBOX, TEXT_INNER_PADDING, 4);
     GuiSetStyle(SPINNER, SPIN_BUTTON_WIDTH, 24);
     GuiSetStyle(SPINNER, SPIN_BUTTON_SPACING, 2);
@@ -3637,7 +3638,7 @@ void GuiLoadStyleDefault(void)
         // NOTE: Default raylib font character 95 is a white square
         Rectangle whiteChar = guiFont.recs[95];
         // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding on MSAA filtering
-        SetShapesTexture(guiFont.texture, (Rectangle){ whiteChar.x + 1, whiteChar.y + 1, whiteChar.width - 2, whiteChar.height - 2 });
+        SetShapesTexture(guiFont.texture, RAYGUI_CLITERAL(Rectangle){ whiteChar.x + 1, whiteChar.y + 1, whiteChar.width - 2, whiteChar.height - 2 });
     }
 }
 
@@ -3857,10 +3858,10 @@ static Rectangle GetTextBounds(int control, Rectangle bounds)
     textBounds.height = bounds.height - 2*GuiGetStyle(control, BORDER_WIDTH) - 2*GuiGetStyle(control, TEXT_PADDING);
 
     // Consider TEXT_PADDING properly, depends on control type and TEXT_ALIGNMENT
+    // TODO: Special cases (no label): COMBOBOX, DROPDOWNBOX, LISTVIEW (scrollbar?)
+    // More special cases (label on side): CHECKBOX, SLIDER, VALUEBOX, SPINNER
     switch (control)
     {
-        //case TEXTBOX: break;    // TODO: Consider multi-line text?
-        //case VALUEBOX: break;   // NOTE: ValueBox text value always centered, text padding applies to label
         default:
         {
             if (GuiGetStyle(control, TEXT_ALIGNMENT) == TEXT_ALIGN_RIGHT) textBounds.x -= GuiGetStyle(control, TEXT_PADDING);
@@ -3868,9 +3869,6 @@ static Rectangle GetTextBounds(int control, Rectangle bounds)
         }
         break;
     }
-
-    // TODO: Special cases (no label): COMBOBOX, DROPDOWNBOX, LISTVIEW (scrollbar?)
-    // More special cases (label on side): CHECKBOX, SLIDER, VALUEBOX, SPINNER
 
     return textBounds;
 }
@@ -3972,7 +3970,7 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
             //---------------------------------------------------------------------------------
             Vector2 position = { bounds.x, bounds.y };
 
-            // TODO: We get text size after icon has been processed
+            // NOTE: We get text size after icon has been processed
             // WARNING: GetTextWidth() also processes text icon to get width! -> Really needed?
             int textSizeX = GetTextWidth(lines[i]);
 
@@ -4054,12 +4052,13 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
                 }
             }
 
-            posOffsetY += (float)GuiGetStyle(DEFAULT, TEXT_SIZE)*1.5f;    // TODO: GuiGetStyle(DEFAULT, TEXT_LINE_SPACING)?
+            // TODO: Allow users to set line spacing for text: GuiSetStyle(TEXTBOX, TEXT_LINES_SPACING, x)
+            posOffsetY += (float)GuiGetStyle(DEFAULT, TEXT_SIZE)*1.5f;
             //---------------------------------------------------------------------------------
         }
     }
 #if defined(RAYGUI_DEBUG_TEXT_BOUNDS)
-    GuiDrawRectangle(bounds, 0, WHITE, Fade(RED, 0.4f))
+    GuiDrawRectangle(bounds, 0, WHITE, Fade(RED, 0.4f));
 #endif
 }
 
@@ -4114,7 +4113,7 @@ static const char **GuiTextSplit(const char *text, char delimiter, int *count, i
     //      2. Maximum size of text to split is RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE
     // NOTE: Those definitions could be externally provided if required
 
-    // WARNING: HACK: TODO: Review!
+    // TODO: HACK: GuiTextSplit() - Review how textRows are returned to user
     // textRow is an externally provided array of integers that stores row number for every splitted string
 
     #if !defined(RAYGUI_TEXTSPLIT_MAX_ITEMS)
