@@ -27,12 +27,15 @@
 *
 *   VERSIONS HISTORY:
 *       3.3  (06-Mar-2023)  ADDED: Support export to QOA file format
+*
 *       3.2  (14-Dec-2022)  ADDED: Welcome window with sponsors info
 *                           REDESIGNED: Main toolbar to add tooltips
 *                           REVIEWED: Help window implementation
+*
 *       3.1  (06-Sep-2022)  REDESIGNED: Sound generator as a header-only library: rfxgen.h
 *                           ADDED: Sponsor window for tools support
 *                           Updated to raylib 4.5-dev and raygui 3.5-dev
+*
 *       3.0  (30-Sep-2022)  UI redesigned to follow raylibtech UI conventions
 *                           ADDED: Main toolbar to access File/Tools/Visual options
 *                           ADDED: Help window with keyboard shortcuts info
@@ -41,17 +44,20 @@
 *                           REVIEWED: Issues when exporting wave to code file
 *                           ADDED: a new gui style: terminal
 *                           Updated to raylib 4.2 and raygui 3.2
+*
 *       2.5  (28-Dec-2021)  REVIEWED: Issue with 32bit float WAV export
 *                           REVIEWED: Issue with WaveMutate() convergence
 *                           REVIEWED: Code naming conventions
 *                           REMOVED: Tool references to ZERO or ONE
 *                           ADDED: New gui style: lavanda
 *                           Updated to raylib 4.2-dev and raygui 3.1
+*
 *       2.3  (20-Dec-2020)  Updated to raylib 3.5
 *       2.2  (23-Feb-2019)  Updated to raylib 3.0, raygui 2.7 and adapted for web
 *       2.1  (09-Sep-2019)  ADDED: Support custom file dialogs (on non-DESKTOP platforms)
 *                           REVIEWED: Screen resize to adapt to new styles fonts
 *                           Updated to raygui 2.6
+*
 *       2.0  (xx-Nov-2018)  GUI redesigned, CLI improvements
 *       1.8  (10-Oct-2018)  Functions renaming, code reorganized, better consistency...
 *       1.5  (23-Sep-2018)  Support .wav export to code and sound playing on command line
