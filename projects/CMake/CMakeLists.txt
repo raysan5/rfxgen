@@ -18,10 +18,33 @@ set(RFXGEN_SRC ${RFXGEN_ROOT}/src)
 if(${BUILD_RFXGEN})
     find_package(Raylib)
 
-    add_executable(${PROJECT_NAME}
-        ${RFXGEN_SRC}/rfxgen.c
-        ${RFXGEN_SRC}/external/tinyfiledialogs.c
-    )
+    if (APPLE)
+        add_executable(${PROJECT_NAME}
+                MACOSX_BUNDLE
+                ${RFXGEN_SRC}/rfxgen.c
+                ${RFXGEN_SRC}/external/tinyfiledialogs.c
+                ${RFXGEN_ROOT}/logo/rfxgen.icns
+                )
+
+        set_property(SOURCE "${RFXGEN_ROOT}/logo/rfxgen.icns"
+                PROPERTY MACOSX_PACKAGE_LOCATION Resources)
+
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+                BUNDLE True
+                MACOSX_BUNDLE_GUI_IDENTIFIER com.raylibtech.${PROJECT_NAME}
+                MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+                MACOSX_BUNDLE_BUNDLE_VERSION "3.3"
+                MACOSX_BUNDLE_ICON_FILE rfxgen.icns
+                MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2015-2023 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)"
+                MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/macos/rfxgen.plist.in
+                )
+
+    else()
+        add_executable(${PROJECT_NAME}
+            ${RFXGEN_SRC}/rfxgen.c
+            ${RFXGEN_SRC}/external/tinyfiledialogs.c
+        )
+    endif()
 
     target_include_directories(${PROJECT_NAME} PUBLIC ${RFXGEN_SRC}/external)
     target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
