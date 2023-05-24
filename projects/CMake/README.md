@@ -4,9 +4,9 @@ This allows building [rFXGen](https://raylibtech.itch.io/rfxgen) with [CMake](ht
 
 ## Usage
 
-To compile the example, use one of the following dependending on your build target...
+To compile the project, use one of the following dependending on your build target...
 
-### Desktop
+### Desktop (Windows, Linux, macOS)
 
 Use the following to build for desktop:
 
@@ -15,7 +15,7 @@ cmake -B build
 cmake --build build
 ```
 
-### Web
+### Web (HTML5 - emscripten)
 
 Compiling for the web requires the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html):
 
