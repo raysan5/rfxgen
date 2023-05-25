@@ -1,24 +1,24 @@
 /*******************************************************************************************
 *
-*   rFXGen v3.2 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v3.5 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   FEATURES:
 *       - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
 *       - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
 *       - Up to 5 sound slots to store generated sound (temporary save)
-*       - Load .rfx files with sound generation parameters
-*       - Save .rfx files with sound generation parameters (104 bytes only)
-*       - Export wave data as .wav, .raw data or .h code file (byte array)
+*       - Load/Save .rfx files with sound generation parameters (104 bytes only)
+*       - Export wave data as .wav, .qoa, .raw or .h code file (byte array)
 *       - Configurable sample-rate, bits-per-sample and channels on export
-*       - Multiple GUI styles with support for custom ones (.rgs)
-*
-*   POSSIBLE IMPROVEMENTS:
-*       - Improvement 01
-*       - Improvement 02
+*       - Multiple UI styles with support for custom ones (.rgs)
+*       - Sound generator as OSS single-file header-only lib: rfxgen.h
 *
 *   LIMITATIONS:
 *       - Limitation 01
 *       - Limitation 02
+*
+*   POSSIBLE IMPROVEMENTS:
+*       - Improvement 01
+*       - Improvement 02
 *
 *   CONFIGURATION:
 *       #define CUSTOM_MODAL_DIALOGS
@@ -26,7 +26,11 @@
 *           NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       3.3  (06-Mar-2023)  ADDED: Support export to QOA file format
+*       3.5  (xx-May-2023)  ADDED: Support loading .qoa wave data
+*                           ADDED: Support .qoa export and play on CLI
+*                           Updated to raylib 4.6-dev and raygui 4.0-dev
+* 
+*       3.3  (06-Mar-2023)  ADDED: Support export to .qoa file format
 *
 *       3.2  (14-Dec-2022)  ADDED: Welcome window with sponsors info
 *                           REDESIGNED: Main toolbar to add tooltips
@@ -74,8 +78,8 @@
 *       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 4.5              - Windowing/input management and drawing
-*       raygui 3.6              - Immediate-mode GUI controls with custom styling and icons
+*       raylib 4.6-dev          - Windowing/input management and drawing
+*       raygui 4.0-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.12.0  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
@@ -117,9 +121,9 @@
 
 #define TOOL_NAME               "rFXGen"
 #define TOOL_SHORT_NAME         "rFX"
-#define TOOL_VERSION            "3.1"
+#define TOOL_VERSION            "3.5"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
-#define TOOL_RELEASE_DATE       "Oct.2022"
+#define TOOL_RELEASE_DATE       "May.2023"
 #define TOOL_LOGO_COLOR         0x5197d4ff
 
 #include "raylib.h"
@@ -128,6 +132,14 @@
     #define CUSTOM_MODAL_DIALOGS            // Force custom modal dialogs usage
     #include <emscripten/emscripten.h>      // Emscripten library - LLVM to JavaScript compiler
 #endif
+
+#define RFXGEN_IMPLEMENTATION
+#define RFXGEN_RAND             GetRandomValue
+#define RFXGEN_SRAND            SetRandomSeed
+#define RFXGEN_CALLOC           RL_CALLOC
+#define RFXGET_FREE             RL_FREE
+#define RFXGET_ISFILEEXTENSION  IsFileExtension
+#include "rfxgen.h"                         // Sound generation library
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"                         // Required for: IMGUI controls
@@ -161,28 +173,21 @@
 #include "styles/style_ashes.h"             // raygui style: ashes
 #include "styles/style_bluish.h"            // raygui style: bluish
 
-#include <math.h>                       // Required for: sinf(), powf()
-#include <time.h>                       // Required for: clock()
-#include <stdlib.h>                     // Required for: calloc(), free()
-#include <string.h>                     // Required for: strcmp()
-#include <stdio.h>                      // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
-                                        // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
+// C standard library
+#include <math.h>                   // Required for: sinf(), powf()
+#include <time.h>                   // Required for: clock()
+#include <stdlib.h>                 // Required for: calloc(), free()
+#include <string.h>                 // Required for: strcmp()
+#include <stdio.h>                  // Required for: FILE, fopen(), fread(), fwrite(), ftell(), fseek() fclose()
+                                    // NOTE: Used on functions: LoadSound(), SaveSound(), WriteWAV()
 #if defined(_WIN32)
-    #include <conio.h>                  // Required for: kbhit() [Windows only, no stardard library]
+    #include <conio.h>              // Required for: kbhit() [Windows only, no stardard library]
 #else
     // Provide kbhit() function in non-Windows platforms
     #include <termios.h>
     #include <unistd.h>
     #include <fcntl.h>
 #endif
-
-#define RFXGEN_IMPLEMENTATION
-#define RFXGEN_RAND GetRandomValue
-#define RFXGEN_SRAND SetRandomSeed
-#define RFXGEN_CALLOC RL_CALLOC
-#define RFXGET_FREE RL_FREE
-#define RFXGET_ISFILEEXTENSION IsFileExtension
-#include "rfxgen.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -664,7 +669,7 @@ int main(int argc, char *argv[])
 
             GuiSetStyle(TOGGLE, TEXT_PADDING, 3);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
-            params[mainToolbarState.soundSlotActive].waveTypeValue = GuiToggleGroup((Rectangle){ 12, 248 + 32 + 16, 108, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", params[mainToolbarState.soundSlotActive].waveTypeValue);
+            GuiToggleGroup((Rectangle){ 12, 248 + 32 + 16, 108, 24 }, "#126#Square\n#127#Sawtooth\n#125#Sinewave\n#124#Noise", &params[mainToolbarState.soundSlotActive].waveTypeValue);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             GuiSetStyle(TOGGLE, TEXT_PADDING, 0);
 
@@ -685,35 +690,35 @@ int main(int argc, char *argv[])
             GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 280, 398, 16*3 + 8 }, NULL);
             GuiGroupBox((Rectangle){ paramsPos.x - 130, paramsPos.y + 335, 398, 16*5 + 8 + 1 }, NULL);
 
-            volumeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y - 2, 220, 12 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), volumeValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y - 2, 220, 12 }, "VOLUME", TextFormat("%i", (int)(volumeValue*100)), &volumeValue, 0, 1);
 
-            params[mainToolbarState.soundSlotActive].attackTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 30, 220, 12 }, "ATTACK TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].attackTimeValue), params[mainToolbarState.soundSlotActive].attackTimeValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].sustainTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainTimeValue), params[mainToolbarState.soundSlotActive].sustainTimeValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].sustainPunchValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainPunchValue), params[mainToolbarState.soundSlotActive].sustainPunchValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].decayTimeValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DECAY TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].decayTimeValue), params[mainToolbarState.soundSlotActive].decayTimeValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 30, 220, 12 }, "ATTACK TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].attackTimeValue), &params[mainToolbarState.soundSlotActive].attackTimeValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainTimeValue), &params[mainToolbarState.soundSlotActive].sustainTimeValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SUSTAIN PUNCH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].sustainPunchValue), &params[mainToolbarState.soundSlotActive].sustainPunchValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DECAY TIME", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].decayTimeValue), &params[mainToolbarState.soundSlotActive].decayTimeValue, 0, 1);
 
-            params[mainToolbarState.soundSlotActive].startFrequencyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "START FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].startFrequencyValue), params[mainToolbarState.soundSlotActive].startFrequencyValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].minFrequencyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "MIN FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].minFrequencyValue), params[mainToolbarState.soundSlotActive].minFrequencyValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "START FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].startFrequencyValue), &params[mainToolbarState.soundSlotActive].startFrequencyValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "MIN FREQUENCY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].minFrequencyValue), &params[mainToolbarState.soundSlotActive].minFrequencyValue, 0, 1);
 
-            params[mainToolbarState.soundSlotActive].slideValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].slideValue), params[mainToolbarState.soundSlotActive].slideValue, -1, 1);
-            params[mainToolbarState.soundSlotActive].deltaSlideValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DELTA SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].deltaSlideValue), params[mainToolbarState.soundSlotActive].deltaSlideValue, -1, 1);
-            params[mainToolbarState.soundSlotActive].vibratoDepthValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO DEPTH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoDepthValue), params[mainToolbarState.soundSlotActive].vibratoDepthValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].vibratoSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoSpeedValue), params[mainToolbarState.soundSlotActive].vibratoSpeedValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].slideValue), &params[mainToolbarState.soundSlotActive].slideValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DELTA SLIDE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].deltaSlideValue), &params[mainToolbarState.soundSlotActive].deltaSlideValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO DEPTH", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoDepthValue), &params[mainToolbarState.soundSlotActive].vibratoDepthValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "VIBRATO SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].vibratoSpeedValue), &params[mainToolbarState.soundSlotActive].vibratoSpeedValue, 0, 1);
 
-            params[mainToolbarState.soundSlotActive].changeAmountValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "CHANGE AMOUNT", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeAmountValue), params[mainToolbarState.soundSlotActive].changeAmountValue, -1, 1);
-            params[mainToolbarState.soundSlotActive].changeSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "CHANGE SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeSpeedValue), params[mainToolbarState.soundSlotActive].changeSpeedValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].squareDutyValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SQUARE DUTY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].squareDutyValue), params[mainToolbarState.soundSlotActive].squareDutyValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].dutySweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DUTY SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].dutySweepValue), params[mainToolbarState.soundSlotActive].dutySweepValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "CHANGE AMOUNT", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeAmountValue), &params[mainToolbarState.soundSlotActive].changeAmountValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "CHANGE SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].changeSpeedValue), &params[mainToolbarState.soundSlotActive].changeSpeedValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "SQUARE DUTY", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].squareDutyValue), &params[mainToolbarState.soundSlotActive].squareDutyValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "DUTY SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].dutySweepValue), &params[mainToolbarState.soundSlotActive].dutySweepValue, -1, 1);
 
-            params[mainToolbarState.soundSlotActive].repeatSpeedValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "REPEAT SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].repeatSpeedValue), params[mainToolbarState.soundSlotActive].repeatSpeedValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].phaserOffsetValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER OFFSET", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserOffsetValue), params[mainToolbarState.soundSlotActive].phaserOffsetValue, -1, 1);
-            params[mainToolbarState.soundSlotActive].phaserSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserSweepValue), params[mainToolbarState.soundSlotActive].phaserSweepValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "REPEAT SPEED", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].repeatSpeedValue), &params[mainToolbarState.soundSlotActive].repeatSpeedValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER OFFSET", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserOffsetValue), &params[mainToolbarState.soundSlotActive].phaserOffsetValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "PHASER SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].phaserSweepValue), &params[mainToolbarState.soundSlotActive].phaserSweepValue, -1, 1);
 
-            params[mainToolbarState.soundSlotActive].lpfCutoffValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "LPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffValue), params[mainToolbarState.soundSlotActive].lpfCutoffValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue), params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue, -1, 1);
-            params[mainToolbarState.soundSlotActive].lpfResonanceValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF RESONANCE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfResonanceValue), params[mainToolbarState.soundSlotActive].lpfResonanceValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].hpfCutoffValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "HPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].hpfCutoffValue), params[mainToolbarState.soundSlotActive].hpfCutoffValue, 0, 1);
-            params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue = GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue), params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 24, 220, 12 }, "LPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffValue), &params[mainToolbarState.soundSlotActive].lpfCutoffValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue), &params[mainToolbarState.soundSlotActive].lpfCutoffSweepValue, -1, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "LPF RESONANCE", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].lpfResonanceValue), &params[mainToolbarState.soundSlotActive].lpfResonanceValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "HPF CUTOFF", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].hpfCutoffValue), &params[mainToolbarState.soundSlotActive].hpfCutoffValue, 0, 1);
+            GuiSliderBar((Rectangle){ paramsPos.x, paramsPos.y += 16, 220, 12 }, "HPF CUTOFF SWEEP", TextFormat("%.2f", params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue), &params[mainToolbarState.soundSlotActive].hpfCutoffSweepValue, -1, 1);
             //--------------------------------------------------------------------------------
 
             // Draw Wave form
@@ -779,12 +784,12 @@ int main(int argc, char *argv[])
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 48 + 16, 106, 24 }, "Sample Size:");
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 72 + 24, 106, 24 }, "Channels:");
 
-                fileTypeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;QOA;RAW;CODE", fileTypeActive);
-                sampleRateActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", sampleRateActive);
+                GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12, 124, 24 }, "WAV;QOA;RAW;CODE", &fileTypeActive);
+                GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 24 + 8, 124, 24 }, "22050 Hz;44100 Hz", &sampleRateActive);
                 if (fileTypeActive == 1) { sampleSizeActive = 1; GuiDisable(); }
-                sampleSizeActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", sampleSizeActive);
+                GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 48 + 16, 124, 24 }, "8 bit;16 bit;32 bit", &sampleSizeActive);
                 GuiEnable();
-                channelsActive = GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 72 + 24, 124, 24 }, "Mono;Stereo", channelsActive);
+                GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 72 + 24, 124, 24 }, "Mono;Stereo", &channelsActive);
 
                 if (result == 1)    // Export button pressed
                 {
@@ -993,7 +998,7 @@ static void ShowCommandLineInfo(void)
     printf("\nOPTIONS:\n\n");
     printf("    -h, --help                      : Show tool version and command line usage help\n\n");
     printf("    -i, --input <filename.ext>      : Define input file.\n");
-    printf("                                      Supported extensions: .rfx, .wav, .ogg, .flac, .mp3\n\n");
+    printf("                                      Supported extensions: .rfx, .wav, .qoa, .ogg, .flac, .mp3\n\n");
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .qoa, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
@@ -1005,7 +1010,7 @@ static void ShowCommandLineInfo(void)
     printf("                                          Channels:         1 (mono), 2 (stereo)\n");
     printf("                                      NOTE: If not specified, defaults to: 44100, 16, 1\n\n");
     printf("    -p, --play <filename.ext>       : Play provided sound.\n");
-    printf("                                      Supported extensions: .wav, .ogg, .flac, .mp3\n");
+    printf("                                      Supported extensions: .wav, .qoa, .ogg, .flac, .mp3\n");
 
     printf("\nEXAMPLES:\n\n");
     printf("    > rfxgen --input sound.rfx --output jump.wav\n");
@@ -1049,6 +1054,7 @@ static void ProcessCommandLine(int argc, char *argv[])
             {
                 if (IsFileExtension(argv[i + 1], ".rfx") ||
                     IsFileExtension(argv[i + 1], ".wav") ||
+                    IsFileExtension(argv[i + 1], ".qoa") ||
                     IsFileExtension(argv[i + 1], ".ogg") ||
                     IsFileExtension(argv[i + 1], ".flac") ||
                     IsFileExtension(argv[i + 1], ".mp3"))
@@ -1120,6 +1126,7 @@ static void ProcessCommandLine(int argc, char *argv[])
             if (((i + 1) < argc) && (argv[i + 1][0] != '-'))
             {
                 if (IsFileExtension(argv[i + 1], ".wav") ||
+                    IsFileExtension(argv[i + 1], ".qoa") ||
                     IsFileExtension(argv[i + 1], ".ogg") ||
                     IsFileExtension(argv[i + 1], ".flac") ||
                     IsFileExtension(argv[i + 1], ".mp3"))
@@ -1157,6 +1164,7 @@ static void ProcessCommandLine(int argc, char *argv[])
             wave.data = GenerateWave(params, &wave.frameCount);
         }
         else if (IsFileExtension(inFileName, ".wav") ||
+                 IsFileExtension(inFileName, ".qoa") ||
                  IsFileExtension(inFileName, ".ogg") ||
                  IsFileExtension(inFileName, ".flac") ||
                  IsFileExtension(inFileName, ".mp3"))
@@ -1188,7 +1196,7 @@ static void ProcessCommandLine(int argc, char *argv[])
     // Play audio file if provided
     if (playFileName[0] != '\0')
     {
-        Wave wave = LoadWave(playFileName);     // Load audio (WAV, OGG, FLAC, MP3)
+        Wave wave = LoadWave(playFileName);     // Load audio (WAV, QOA, OGG, FLAC, MP3)
         PlayWaveCLI(wave);
         UnloadWave(wave);
     }
