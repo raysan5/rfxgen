@@ -39,6 +39,16 @@ jobs:
         echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_macos" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
+      
+    - name: Setup Environment
+      run: | 
+        mkdir build
+        cd build
+        mkdir ${{ env.PROJECT_RELEASE_PATH }}
+        cd ${{ env.PROJECT_RELEASE_PATH }}
+        mkdir include
+        mkdir lib
+        cd ../..
         
     # Generating static library, note that i386 architecture is deprecated
     # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
@@ -54,16 +64,16 @@ jobs:
         
         # Build raylib x86_64 static
         make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
-        mv libraylib.a /tmp/libraylib_x86_64.a
+        mv -v -f libraylib.a /tmp/libraylib_x86_64.a
         make clean
         
         # Build raylib arm64 static
         make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" -B
-        mv libraylib.a /tmp/libraylib_arm64.a
+        mv -v -f libraylib.a /tmp/libraylib_arm64.a
         make clean
         
         # Join x86_64 and arm64 static
-        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.a /tmp/libraylib_x86_64.a /tmp/libraylib_arm64.a
+        lipo -create -output ../build/${{ env.PROJECT_RELEASE_PATH }}/lib/libraylib.a /tmp/libraylib_x86_64.a /tmp/libraylib_arm64.a
         cd..
 
     - name: Build Product
