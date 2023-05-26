@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>rfxgen</string>
+	<key>CFBundleIconFile</key>
+	<string>rfxgen.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.raylibtech.rfxgen</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>rfxgen</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleVersion</key>
+	<string>3.5</string>
+    <key>CFBundleShortVersionString</key>
+	<string>3.5</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.12</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright (c) 2015-2023 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)</string>
+</dict>
+</plist>
