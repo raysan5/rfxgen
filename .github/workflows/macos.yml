@@ -43,6 +43,14 @@ jobs:
     - name: Setup Environment
       run: | 
         mkdir ${{ env.PROJECT_RELEASE_PATH }}
+        cd ${{ env.PROJECT_RELEASE_PATH }}
+        mkdir ${{ env.PROJECT_NAME }}.app
+        cd ${{ env.PROJECT_NAME }}.app
+        mkdir Contents
+        cd Contents
+        mkdir MacOS
+        mkdir Resources
+        cd ../../..
         ls
       shell: bash
              
@@ -80,7 +88,9 @@ jobs:
     - name: Generate Artifacts
       run: |
         ls ${{ env.PROJECT_BUILD_PATH }}
-        cp ${{ env.PROJECT_BUILD_PATH }}/${{ env.PROJECT_NAME }} ${{ env.PROJECT_RELEASE_PATH }}
+        cp ${{ env.PROJECT_BUILD_PATH }}/${{ env.PROJECT_NAME }} ${{ env.PROJECT_RELEASE_PATH }}/${{ env.PROJECT_NAME }}.app/Contents/MacOS
+        cp ${{ env.PROJECT_NAME }}/logo/${{ env.PROJECT_NAME }}.icns ${{ env.PROJECT_RELEASE_PATH }}/${{ env.PROJECT_NAME }}.app/Contents/Resources
+        cp ${{ env.PROJECT_NAME }}/src/Info.plist ${{ env.PROJECT_RELEASE_PATH }}/${{ env.PROJECT_NAME }}.app/Contents
         cp ${{ env.PROJECT_NAME }}/README.md ${{ env.PROJECT_RELEASE_PATH }}
         cp ${{ env.PROJECT_NAME }}/LICENSE ${{ env.PROJECT_RELEASE_PATH }}
         ls ${{ env.PROJECT_RELEASE_PATH }}
