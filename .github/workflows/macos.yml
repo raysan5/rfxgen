@@ -44,7 +44,7 @@ jobs:
     # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
     - name: Build raylib Library
       run: |
-        cd src
+        cd raylib/src
         clang --version
         
         # Extract version numbers from Makefile
