@@ -1,0 +1,100 @@
+name: macOS
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+    
+permissions:
+  contents: read
+
+jobs:
+  build:
+    permissions:
+      contents: write       # for actions/upload-release-asset to upload release asset
+    runs-on: macos-latest
+    
+    env:
+      PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_BUILD_PATH: ${{ github.event.repository.name }}/src
+      PROJECT_RELEASE_PATH: ${{ github.event.repository.name }}_dev_macos
+      PROJECT_SOURCES: "'${{ github.event.repository.name }}.c external/tinyfiledialogs.c'"
+      PROJECT_CUSTOM_FLAGS: ""
+      RAYLIB_CONFIG_FLAGS: "'-DSUPPORT_MODULE_RSHAPES -DSUPPORT_MODULE_RTEXTURES -DSUPPORT_MODULE_RTEXT -DSUPPORT_MODULE_RAUDIO -DSUPPORT_EVENTS_WAITING -DSUPPORT_COMPRESSION_API -DSUPPORT_QUADS_DRAW_MODE -DSUPPORT_IMAGE_MANIPULATION -DSUPPORT_DEFAULT_FONT -DSUPPORT_FILEFORMAT_TTF -DSUPPORT_TEXT_MANIPULATION -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_QOA -DSUPPORT_FILEFORMAT_MP3 -DSUPPORT_FILEFORMAT_OGG -DSUPPORT_FILEFORMAT_FLAC -DSUPPORT_STANDARD_FILEIO -DSUPPORT_TRACELOG'"
+    
+    steps:
+    - name: Checkout this repo
+      uses: actions/checkout@master
+      with:
+        path: ${{ env.PROJECT_NAME }}
+      
+    - name: Checkout raylib repo
+      uses: actions/checkout@v3
+      with:
+        repository: raysan5/raylib
+        path: raylib
+        
+    - name: Setup Release Paths
+      run: |
+        echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_macos" >> $GITHUB_ENV
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
+        
+    # Generating static library, note that i386 architecture is deprecated
+    # Defining GL_SILENCE_DEPRECATION because OpenGL is deprecated on macOS
+    - name: Build raylib Library
+      run: |
+        cd src
+        clang --version
+        
+        # Extract version numbers from Makefile
+        brew install grep
+        RAYLIB_API_VERSION=`ggrep -Po 'RAYLIB_API_VERSION\s*=\s\K(.*)' Makefile`
+        RAYLIB_VERSION=`ggrep -Po 'RAYLIB_VERSION\s*=\s\K(.*)' Makefile`
+        
+        # Build raylib x86_64 static
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC CUSTOM_CFLAGS="-target x86_64-apple-macos10.12 -DGL_SILENCE_DEPRECATION"
+        mv libraylib.a /tmp/libraylib_x86_64.a
+        make clean
+        
+        # Build raylib arm64 static
+        make PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=STATIC CUSTOM_CFLAGS="-target arm64-apple-macos11 -DGL_SILENCE_DEPRECATION" -B
+        mv libraylib.a /tmp/libraylib_arm64.a
+        make clean
+        
+        # Join x86_64 and arm64 static
+        lipo -create -output ../build/${{ env.RELEASE_NAME }}/lib/libraylib.a /tmp/libraylib_x86_64.a /tmp/libraylib_arm64.a
+        cd..
+
+    - name: Build Product
+      run: |
+        cd ${{ env.PROJECT_NAME }}/src
+        make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_CUSTOM_FLAGS=${{ env.PROJECT_CUSTOM_FLAGS }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib
+
+    - name: Generate Artifacts
+      run: |
+        ls ${{ env.PROJECT_BUILD_PATH }}
+        cp ${{ env.PROJECT_BUILD_PATH }}/${{ env.PROJECT_NAME }} ${{ env.PROJECT_RELEASE_PATH }}
+        cp ${{ env.PROJECT_NAME }}/README.md ${{ env.PROJECT_RELEASE_PATH }}
+        cp ${{ env.PROJECT_NAME }}/LICENSE ${{ env.PROJECT_RELEASE_PATH }}
+        ls ${{ env.PROJECT_RELEASE_PATH }}
+        7z a ./${{ env.PROJECT_RELEASE_PATH }}.zip ./${{ env.PROJECT_RELEASE_PATH }}
+
+    # Issue: Double zip: https://github.com/actions/upload-artifact/issues/39
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
+        
+    # Alternative: https://github.com/marketplace/actions/gh-release
+    - name: Upload Artifact to Release
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        asset_path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
+        asset_content_type: application/zip
+      if: github.event_name == 'release' && github.event.action == 'published'
