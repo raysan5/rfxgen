@@ -160,7 +160,11 @@ else
             CFLAGS += -Os
         endif
     else
-        CFLAGS += -s -O2
+        ifeq ($(PLATFORM_OS),OSX)
+            CFLAGS += -O2
+        else
+            CFLAGS += -s -O2
+        endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
