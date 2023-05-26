@@ -73,8 +73,8 @@ jobs:
         make clean
         
         # Join x86_64 and arm64 static
-        lipo -create -output ../build/${{ env.PROJECT_RELEASE_PATH }}/lib/libraylib.a /tmp/libraylib_x86_64.a /tmp/libraylib_arm64.a
-        cd..
+        lipo -create -output ../../build/${{ env.PROJECT_RELEASE_PATH }}/lib/libraylib.a /tmp/libraylib_x86_64.a /tmp/libraylib_arm64.a
+        cd ../..
 
     - name: Build Product
       run: |
