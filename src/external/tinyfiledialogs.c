@@ -3,7 +3,7 @@ The code is 100% compatible C C++
 (just comment out << extern "C" >> in the header file) */
 
 /*_________
- /         \ tinyfiledialogs.c v3.12 [Apr 14, 2023] zlib licence
+ /         \ tinyfiledialogs.c v3.13.1 [May 7, 2023] zlib licence
  |tiny file| Unique code file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2023 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
@@ -99,7 +99,7 @@ Thanks for contributions, bug corrections & thorough testing to:
 #endif
 #define LOW_MULTIPLE_FILES 32
 
-char tinyfd_version[8] = "3.12";
+char tinyfd_version[8] = "3.13.1";
 
 /******************************************************************************************************/
 /**************************************** UTF-8 on Windows ********************************************/
@@ -157,7 +157,7 @@ char tinyfd_needs[] = "\
       \\|\
 \ntiny file dialogs on Windows needs:\
 \n   a graphic display\
-\nor dialog.exe (curses console mode)\
+\nor dialog.exe (curses console mode  ** Disabled by default **)\
 \nor a console for basic input";
 #else
 char tinyfd_needs[] = "\
@@ -171,9 +171,11 @@ char tinyfd_needs[] = "\
 \n   applescript or kdialog or yad or Xdialog\
 \nor zenity (or matedialog or shellementary or qarma)\
 \nor python (2 or 3) + tkinter + python-dbus (optional)\
-\nor dialog (opens console if needed) ** Disabled by default **/\
+\nor dialog (opens console if needed) ** Disabled by default **\
 \nor xterm + bash (opens console for basic input)\
-\nor existing console for basic input";
+\nor existing console for basic input\
+\nand the command 'which' to be able to choose.";
+
 #endif
 
 #ifdef _MSC_VER
@@ -3842,7 +3844,7 @@ static int dunstPresent(void)
         lDunstPresent = detectPresence( "dunst" ) ;
         if ( lDunstPresent )
         {
-            lIn = popen( "ps -e | grep dunst | grep -v grep" , "r" ) ;
+            lIn = popen( "ps -e | grep dunst | grep -v grep" , "r" ) ; /* add "| wc -l" to receive the number of lines */
             lTmp = fgets( lBuff , sizeof( lBuff ) , lIn ) ;
             pclose( lIn ) ;
             /* if ( lTmp ) printf("lTmp:%s\n", lTmp); */
@@ -5143,7 +5145,7 @@ my \\$notificationsObject = \\$notificationsService->get_object('/org/freedeskto
                                         printf("\n%s\n",aMessage);
                                 }
                                 printf("y/n: "); fflush(stdout);
-                                lChar = tolower( getchar() ) ;
+                                lChar = (char) tolower( getchar() ) ;
                                 printf("\n\n");
                         }
                         while ( lChar != 'y' && lChar != 'n' );
@@ -5158,7 +5160,7 @@ my \\$notificationsObject = \\$notificationsService->get_object('/org/freedeskto
                                         printf("\n%s\n",aMessage);
                                 }
                                 printf("[O]kay/[C]ancel: "); fflush(stdout);
-                                lChar = tolower( getchar() ) ;
+                                lChar = (char) tolower( getchar() ) ;
                                 printf("\n\n");
                         }
                         while ( lChar != 'o' && lChar != 'c' );
@@ -5173,7 +5175,7 @@ my \\$notificationsObject = \\$notificationsService->get_object('/org/freedeskto
                                         printf("\n%s\n",aMessage);
                                 }
                                 printf("[Y]es/[N]o/[C]ancel: "); fflush(stdout);
-                                lChar = tolower( getchar() ) ;
+                                lChar = (char) tolower( getchar() ) ;
                                 printf("\n\n");
                         }
                         while ( lChar != 'y' && lChar != 'n' && lChar != 'c' );

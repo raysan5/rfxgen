@@ -2,7 +2,7 @@
 then comment out << extern "C" >> bellow in this header file) */
 
 /*_________
- /         \ tinyfiledialogs.h v3.12 [Apr 14, 2023] zlib licence
+ /         \ tinyfiledialogs.h v3.13.1 [May 7, 2023] zlib licence
  |tiny file| Unique header file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2023 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
