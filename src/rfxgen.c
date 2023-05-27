@@ -80,7 +80,7 @@
 *   DEPENDENCIES:
 *       raylib 4.6-dev          - Windowing/input management and drawing
 *       raygui 4.0-dev          - Immediate-mode GUI controls with custom styling and icons
-*       tinyfiledialogs 3.12.0  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
+*       tinyfiledialogs 3.13.1  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
 *     - Windows (MinGW-w64):
