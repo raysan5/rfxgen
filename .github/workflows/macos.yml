@@ -78,6 +78,7 @@ jobs:
         
         # Join x86_64 and arm64 static
         lipo -create -output libraylib.a libraylib_x86_64.a libraylib_arm64.a
+        lipo libraylib.a -detailed_info
         cd ../..
 
     - name: Build Product
@@ -98,6 +99,7 @@ jobs:
         
         # Join x86_64 and arm64 binaries
         lipo -create -output ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_x86_64 ${{ env.PROJECT_NAME }}_arm64
+        lipo ${{ env.PROJECT_NAME }} -detailed_info
         cd ..
 
     - name: Generate Artifacts
