@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   rFXGen v3.5 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
+*   rFXGen v4.0 - A simple and easy to use sounds generator (based on Tomas Petterson sfxr)
 *
 *   FEATURES:
 *       - Predefined sound presets (Coin, Shoot, Explosion, PowerUp...)
@@ -26,9 +26,11 @@
 *           NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       3.5  (xx-May-2023)  ADDED: Support loading .qoa wave data
+*       4.0  (xx-May-2023)  ADDED: Support macOS builds (x86_64 + arm64)
+*                           ADDED: Support loading .qoa wave data
 *                           ADDED: Support .qoa export and play on CLI
-*                           Updated to raylib 4.6-dev and raygui 4.0-dev
+*                           REDESIGNED: Using raygui 4.0-dev
+*                           REVIEWED: Regenerated tool imagery
 * 
 *       3.3  (06-Mar-2023)  ADDED: Support export to .qoa file format
 *
@@ -121,7 +123,7 @@
 
 #define TOOL_NAME               "rFXGen"
 #define TOOL_SHORT_NAME         "rFX"
-#define TOOL_VERSION            "3.5"
+#define TOOL_VERSION            "4.0"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
 #define TOOL_RELEASE_DATE       "May.2023"
 #define TOOL_LOGO_COLOR         0x5197d4ff
