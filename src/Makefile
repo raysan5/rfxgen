@@ -360,8 +360,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		find . -type f -perm +ugo+x -delete
-		rm -f *.o
+		rm -f *.o external/*.o $(PROJECT_NAME)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
