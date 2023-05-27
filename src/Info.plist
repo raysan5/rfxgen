@@ -17,13 +17,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
-	<string>3.5</string>
+	<string>4.0</string>
     <key>CFBundleShortVersionString</key>
-	<string>3.5.0</string>
+	<string>4.0.0</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.12</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright (c) 2015-2023 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)</string>
+	<string>Copyright (c) 2023 raylib technologies (@raylibtech)</string>
     <key>CFBundleSignature</key>
     <string>????</string>
 </dict>

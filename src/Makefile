@@ -29,7 +29,7 @@
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define project variables
-PROJECT_NAME          ?= project_name
+PROJECT_NAME          ?= rtoolname
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= .
 
@@ -41,9 +41,9 @@ RAYLIB_LIB_PATH       ?= $(RAYLIB_PATH)/src
 BUILD_MODE            ?= RELEASE
 
 # PLATFORM_WEB: Default properties
-BUILD_WEB_ASYNCIFY    ?= TRUE
+BUILD_WEB_ASYNCIFY    ?= FALSE
 BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/shell.html
-BUILD_WEB_HEAP_SIZE   ?= 134217728
+BUILD_WEB_HEAP_SIZE   ?= 128MB
 BUILD_WEB_RESOURCES   ?= FALSE
 BUILD_WEB_RESOURCES_PATH  ?= resources
 
@@ -323,12 +323,8 @@ endif
 # Define source code files required
 #------------------------------------------------------------------------------------------------
 PROJECT_SOURCE_FILES ?= \
-    project_game.c \
-    screen_logo.c \
-    screen_title.c \
-    screen_options.c \
-    screen_gameplay.c \
-    screen_ending.c
+    rtoolname.c \
+    external/tinyfiledialogs.c
 
 # Define all object files from source files
 OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
