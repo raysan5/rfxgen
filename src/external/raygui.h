@@ -1318,7 +1318,6 @@ static int GetCharPressed(void);         // -- GuiTextBox(), GuiValueBox()
 // Drawing required functions
 //-------------------------------------------------------------------------------
 static void DrawRectangle(int x, int y, int width, int height, Color color);        // -- GuiDrawRectangle(), GuiDrawIcon()
-
 static void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4); // -- GuiColorPicker()
 //-------------------------------------------------------------------------------
 
@@ -1667,6 +1666,9 @@ int GuiScrollPanel(Rectangle bounds, const char *text, Rectangle content, Vector
     int result = 0;
     GuiState state = guiState;
 
+    Rectangle temp = { 0 };
+    if (view == NULL) view = &temp;
+
     Vector2 scrollPos = { 0.0f, 0.0f };
     if (scroll != NULL) scrollPos = *scroll;
 
@@ -1887,6 +1889,9 @@ int GuiToggle(Rectangle bounds, const char *text, bool *active)
     int result = 0;
     GuiState state = guiState;
 
+    bool temp = false;
+    if (active == NULL) active = &temp;
+
     // Update control
     //--------------------------------------------------------------------
     if ((state != STATE_DISABLED) && !guiLocked && !guiSliderDragging)
@@ -1936,6 +1941,9 @@ int GuiToggleGroup(Rectangle bounds, const char *text, int *active)
     int result = 0;
     float initBoundsX = bounds.x;
 
+    int temp = 0;
+    if (active == NULL) active = &temp;
+
     bool toggle = false;    // Required for individual toggles
 
     // Get substrings items from text (items pointers)
@@ -1977,6 +1985,9 @@ int GuiCheckBox(Rectangle bounds, const char *text, bool *checked)
 {
     int result = 0;
     GuiState state = guiState;
+
+    bool temp = false;
+    if (checked == NULL) checked = &temp;
 
     Rectangle textBounds = { 0 };
 
@@ -2037,6 +2048,9 @@ int GuiComboBox(Rectangle bounds, const char *text, int *active)
 {
     int result = 0;
     GuiState state = guiState;
+
+    int temp = 0;
+    if (active == NULL) active = &temp;
 
     bounds.width -= (GuiGetStyle(COMBOBOX, COMBO_BUTTON_WIDTH) + GuiGetStyle(COMBOBOX, COMBO_BUTTON_SPACING));
 
@@ -2287,7 +2301,7 @@ int GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
                 textWidth = GetTextWidth(text + textIndexOffset) - GetTextWidth(text + textBoxCursorIndex);
             }
 
-            int textLength = (int)strlen(text);     // Get current text length
+            unsigned int textLength = (unsigned int)strlen(text);     // Get current text length
             int codepoint = GetCharPressed();       // Get Unicode codepoint
             if (multiline && IsKeyPressed(KEY_ENTER)) codepoint = (int)'\n';
 
@@ -2424,7 +2438,7 @@ int GuiTextBox(Rectangle bounds, char *text, int bufferSize, bool editMode)
 
                 if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
                 {
-                    textBoxCursorIndex = strlen(text);   // GLOBAL: Place cursor index to the end of current text
+                    textBoxCursorIndex = (int)strlen(text);   // GLOBAL: Place cursor index to the end of current text
                     result = 1;
                 }
             }
@@ -2673,6 +2687,9 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
     int result = 0;
     GuiState state = guiState;
 
+    float temp = (maxValue - minValue)/2.0f;
+    if (value == NULL) value = &temp;
+
     int sliderValue = (int)(((*value - minValue)/(maxValue - minValue))*(bounds.width - 2*GuiGetStyle(SLIDER, BORDER_WIDTH)));
 
     Rectangle slider = { bounds.x, bounds.y + GuiGetStyle(SLIDER, BORDER_WIDTH) + GuiGetStyle(SLIDER, SLIDER_PADDING),
@@ -2796,6 +2813,9 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
 {
     int result = 0;
     GuiState state = guiState;
+
+    float temp = (maxValue - minValue)/2.0f;
+    if (value == NULL) value = &temp;
 
     Rectangle progress = { bounds.x + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH),
                            bounds.y + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) + GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING), 0,
@@ -3310,6 +3330,9 @@ int GuiColorBarHue(Rectangle bounds, const char *text, float *hue)
 int GuiColorPicker(Rectangle bounds, const char *text, Color *color)
 {
     int result = 0;
+
+    Color temp = { 200, 0, 0, 255 };
+    if (color == NULL) color = &temp;
 
     GuiColorPanel(bounds, NULL, color);
 
@@ -4338,7 +4361,7 @@ static void GuiTooltip(Rectangle controlRec)
 {
     if (!guiLocked && guiTooltip && (guiTooltipPtr != NULL) && !guiSliderDragging)
     {
-        Vector2 textSize = MeasureTextEx(GuiGetFont(), guiTooltipPtr, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING));
+        Vector2 textSize = MeasureTextEx(GuiGetFont(), guiTooltipPtr, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
 
         if ((controlRec.x + textSize.x + 16) > GetScreenWidth()) controlRec.x -= (textSize.x + 16 - controlRec.width);
 
