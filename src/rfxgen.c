@@ -31,7 +31,7 @@
 *                           ADDED: Support .qoa export and play on CLI
 *                           REDESIGNED: Using raygui 4.0-dev
 *                           REVIEWED: Regenerated tool imagery
-* 
+*
 *       3.3  (06-Mar-2023)  ADDED: Support export to .qoa file format
 *
 *       3.2  (14-Dec-2022)  ADDED: Welcome window with sponsors info
