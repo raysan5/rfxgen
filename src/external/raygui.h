@@ -643,6 +643,8 @@ RAYGUIAPI int GuiColorPicker(Rectangle bounds, const char *text, Color *color); 
 RAYGUIAPI int GuiColorPanel(Rectangle bounds, const char *text, Color *color);                         // Color Panel control
 RAYGUIAPI int GuiColorBarAlpha(Rectangle bounds, const char *text, float *alpha);                      // Color Bar Alpha control
 RAYGUIAPI int GuiColorBarHue(Rectangle bounds, const char *text, float *value);                        // Color Bar Hue control
+RAYGUIAPI int GuiColorPickerHSV(Rectangle bounds, const char *text, Vector3 *colorHsv);                // Color Picker control that avoids conversion to RGB on each call (multiple color controls)
+RAYGUIAPI int GuiColorPanelHSV(Rectangle bounds, const char *text, Vector3 *colorHsv);                 // Color Panel control that returns HSV color value, used by GuiColorPickerHSV()
 //----------------------------------------------------------------------------------------------------------
 
 
@@ -2822,6 +2824,7 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
     float temp = (maxValue - minValue)/2.0f;
     if (value == NULL) value = &temp;
 
+    // Progress bar
     Rectangle progress = { bounds.x + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH),
                            bounds.y + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) + GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING), 0,
                            bounds.height - 2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) - 2*GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING) };
@@ -2830,16 +2833,32 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
     //--------------------------------------------------------------------
     if (*value > maxValue) *value = maxValue;
 
-    if (state != STATE_DISABLED) progress.width = ((float)(*value/(maxValue - minValue))*(float)(bounds.width - 2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH)));
+    if (state != STATE_DISABLED) progress.width = ((float)(*value/(maxValue - minValue))*bounds.width) - 2*GuiGetStyle(PROGRESSBAR, BORDER_WIDTH);
     //--------------------------------------------------------------------
 
     // Draw control
     //--------------------------------------------------------------------
-    GuiDrawRectangle(bounds, GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER + (state*3))), guiAlpha), BLANK);
+    if (state == STATE_DISABLED)
+    {
+        GuiDrawRectangle(bounds, GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER + (state*3))), guiAlpha), BLANK);
+    }
+    else
+    {
+        // Border color aligned with progress bar, more visual
+        GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y, progress.width + (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_FOCUSED)), guiAlpha));
+        GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + 1, GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), bounds.height - 2 }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_FOCUSED)), guiAlpha));
+        GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + bounds.height - 1, progress.width + (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_FOCUSED)), guiAlpha));
+        if (*value == maxValue) GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + progress.width + 1, bounds.y, (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), bounds.height }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_FOCUSED)), guiAlpha));
+        else
+        {
+            GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + progress.width + 1, bounds.y, bounds.width - progress.width, (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_NORMAL)), guiAlpha));
+            GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + progress.width + 1, bounds.y + bounds.height - 1, bounds.width - progress.width, (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_NORMAL)), guiAlpha));
+            GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + bounds.width - 1, bounds.y + 1, (float)GuiGetStyle(PROGRESSBAR, BORDER_WIDTH), bounds.height - 2 }, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BORDER_COLOR_NORMAL)), guiAlpha));
+        }
 
-    // Draw slider internal progress bar (depends on state)
-    if ((state == STATE_NORMAL) || (state == STATE_PRESSED)) GuiDrawRectangle(progress, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BASE_COLOR_PRESSED)), guiAlpha));
-    else if (state == STATE_FOCUSED) GuiDrawRectangle(progress, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, TEXT_COLOR_FOCUSED)), guiAlpha));
+        // Draw slider internal progress bar (depends on state)
+        GuiDrawRectangle(progress, 0, BLANK, Fade(GetColor(GuiGetStyle(PROGRESSBAR, BASE_COLOR_PRESSED)), guiAlpha));
+    }
 
     // Draw left/right text if provided
     if (textLeft != NULL)
@@ -3356,6 +3375,103 @@ int GuiColorPicker(Rectangle bounds, const char *text, Color *color)
     Vector3 rgb = ConvertHSVtoRGB(hsv);
 
     *color = RAYGUI_CLITERAL(Color){ (unsigned char)roundf(rgb.x*255.0f), (unsigned char)roundf(rgb.y*255.0f), (unsigned char)roundf(rgb.z*255.0f), (*color).a };
+
+    return result;
+}
+
+// Color Picker control that avoids conversion to RGB and back to HSV on each call, thus avoiding jittering.
+// The user can call ConvertHSVtoRGB() to convert *colorHsv value to RGB.
+// NOTE: It's divided in multiple controls:
+//      int GuiColorPanelHSV(Rectangle bounds, const char *text, Vector3 *colorHsv)
+//      int GuiColorBarAlpha(Rectangle bounds, const char *text, float *alpha)
+//      float GuiColorBarHue(Rectangle bounds, float value)
+// NOTE: bounds define GuiColorPanelHSV() size
+int GuiColorPickerHSV(Rectangle bounds, const char *text, Vector3 *colorHsv)
+{
+    int result = 0;
+
+    if (colorHsv == NULL)
+    {
+        const Vector3 tempColor = { 200.0f/255.0f, 0.0f, 0.0f };
+        Vector3 tempHsv = ConvertRGBtoHSV(tempColor);
+        colorHsv = &tempHsv;
+    }
+
+    GuiColorPanelHSV(bounds, NULL, colorHsv);
+
+    const Rectangle boundsHue = { (float)bounds.x + bounds.width + GuiGetStyle(COLORPICKER, HUEBAR_PADDING), (float)bounds.y, (float)GuiGetStyle(COLORPICKER, HUEBAR_WIDTH), (float)bounds.height };
+
+    GuiColorBarHue(boundsHue, NULL, &colorHsv->x);
+
+    return result;
+}
+
+// Color Panel control, returns HSV color value in *colorHsv.
+// Used by GuiColorPickerHSV()
+int GuiColorPanelHSV(Rectangle bounds, const char *text, Vector3 *colorHsv)
+{
+    int result = 0;
+    GuiState state = guiState;
+    Vector2 pickerSelector = { 0 };
+
+    const Color colWhite = { 255, 255, 255, 255 };
+    const Color colBlack = { 0, 0, 0, 255 };
+
+    pickerSelector.x = bounds.x + (float)colorHsv->y*bounds.width;            // HSV: Saturation
+    pickerSelector.y = bounds.y + (1.0f - (float)colorHsv->z)*bounds.height;  // HSV: Value
+
+    float hue = -1.0f;
+    Vector3 maxHue = { hue >= 0.0f ? hue : colorHsv->x, 1.0f, 1.0f };
+    Vector3 rgbHue = ConvertHSVtoRGB(maxHue);
+    Color maxHueCol = { (unsigned char)(255.0f*rgbHue.x),
+                      (unsigned char)(255.0f*rgbHue.y),
+                      (unsigned char)(255.0f*rgbHue.z), 255 };
+
+    // Update control
+    //--------------------------------------------------------------------
+    if ((state != STATE_DISABLED) && !guiLocked && !guiSliderDragging)
+    {
+        Vector2 mousePoint = GetMousePosition();
+
+        if (CheckCollisionPointRec(mousePoint, bounds))
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                state = STATE_PRESSED;
+                pickerSelector = mousePoint;
+
+                // Calculate color from picker
+                Vector2 colorPick = { pickerSelector.x - bounds.x, pickerSelector.y - bounds.y };
+
+                colorPick.x /= (float)bounds.width;     // Get normalized value on x
+                colorPick.y /= (float)bounds.height;    // Get normalized value on y
+
+                colorHsv->y = colorPick.x;
+                colorHsv->z = 1.0f - colorPick.y;
+            }
+            else state = STATE_FOCUSED;
+        }
+    }
+    //--------------------------------------------------------------------
+
+    // Draw control
+    //--------------------------------------------------------------------
+    if (state != STATE_DISABLED)
+    {
+        DrawRectangleGradientEx(bounds, Fade(colWhite, guiAlpha), Fade(colWhite, guiAlpha), Fade(maxHueCol, guiAlpha), Fade(maxHueCol, guiAlpha));
+        DrawRectangleGradientEx(bounds, Fade(colBlack, 0), Fade(colBlack, guiAlpha), Fade(colBlack, guiAlpha), Fade(colBlack, 0));
+
+        // Draw color picker: selector
+        Rectangle selector = { pickerSelector.x - GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE)/2, pickerSelector.y - GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE)/2, (float)GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE), (float)GuiGetStyle(COLORPICKER, COLOR_SELECTOR_SIZE) };
+        GuiDrawRectangle(selector, 0, BLANK, Fade(colWhite, guiAlpha));
+    }
+    else
+    {
+        DrawRectangleGradientEx(bounds, Fade(Fade(GetColor(GuiGetStyle(COLORPICKER, BASE_COLOR_DISABLED)), 0.1f), guiAlpha), Fade(Fade(colBlack, 0.6f), guiAlpha), Fade(Fade(colBlack, 0.6f), guiAlpha), Fade(Fade(GetColor(GuiGetStyle(COLORPICKER, BORDER_COLOR_DISABLED)), 0.6f), guiAlpha));
+    }
+
+    GuiDrawRectangle(bounds, GuiGetStyle(COLORPICKER, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(COLORPICKER, BORDER + state*3)), guiAlpha), BLANK);
+    //--------------------------------------------------------------------
 
     return result;
 }
@@ -3987,7 +4103,6 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
         {
             Font font = { 0 };
             int fontType = 0;   // 0-Normal, 1-SDF
-            Rectangle whiteRec = { 0 };
 
             memcpy(&font.baseSize, fileDataPtr, sizeof(int));
             memcpy(&font.glyphCount, fileDataPtr + 4, sizeof(int));
@@ -3995,7 +4110,8 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
             fileDataPtr += 12;
 
             // Load font white rectangle
-            memcpy(&whiteRec, fileDataPtr, sizeof(Rectangle));
+            Rectangle fontWhiteRec = { 0 };
+            memcpy(&fontWhiteRec, fileDataPtr, sizeof(Rectangle));
             fileDataPtr += 16;
 
             // Load font image parameters
@@ -4063,8 +4179,11 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
             GuiSetFont(font);
 
             // Set font texture source rectangle to be used as white texture to draw shapes
-            // NOTE: This way, all gui can be draw using a single draw call
-            if ((whiteRec.width != 0) && (whiteRec.height != 0)) SetShapesTexture(font.texture, whiteRec);
+            // NOTE: It makes possible to draw shapes and text (full UI) in a single draw call
+            if ((fontWhiteRec.x > 0) && 
+                (fontWhiteRec.y > 0) && 
+                (fontWhiteRec.width > 0) && 
+                (fontWhiteRec.height > 0)) SetShapesTexture(font.texture, fontWhiteRec);
         }
 #endif
     }
