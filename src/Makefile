@@ -25,7 +25,7 @@
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
-# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_WEB
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_WEB, PLATFORM_DRM
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define project variables
@@ -75,12 +75,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    UNAMEOS = $(shell uname)
-    ifeq ($(UNAMEOS),Linux)
-        PLATFORM_OS = LINUX
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     UNAMEOS = $(shell uname)
     ifeq ($(UNAMEOS),Linux)
@@ -112,19 +106,20 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CC = clang
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
-        # Define RPI cross-compiler
-        #CC = armv6j-hardfloat-linux-gnueabi-gcc
-        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
 endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        # Define RPI cross-compiler
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
+    endif
+endif
+
 
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
@@ -167,9 +162,6 @@ else
         endif
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS += -std=gnu99
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     CFLAGS += -std=gnu99 -DEGL_NO_X11
 endif
@@ -180,12 +172,6 @@ endif
 INCLUDE_PATHS += -I. -Iexternal -I$(RAYLIB_INCLUDE_PATH)
 
 # Define additional directories containing required header files
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI required libraries
-    INCLUDE_PATHS += -I/opt/vc/include
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
-endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # DRM required libraries
     INCLUDE_PATHS += -I/usr/include/libdrm
@@ -257,10 +243,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    LDFLAGS += -L/opt/vc/lib
-endif
-
 # Define libraries required on linking: LDLIBS
 # NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
 #------------------------------------------------------------------------------------------------
@@ -305,20 +287,16 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # Libraries for Raspberry Pi compiling
-    # NOTE: Required packages: libasound2-dev (ALSA)
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # Libraries for web (HTML5) compiling
+    LDLIBS = $(RAYLIB_LIB_PATH)/libraylib.a
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     # Libraries for DRM compiling
     # NOTE: Required packages: libasound2-dev (ALSA)
     LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lgbm -ldrm -ldl
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    # Libraries for web (HTML5) compiling
-    LDLIBS = $(RAYLIB_LIB_PATH)/libraylib.a
-endif
+
 
 # Define source code files required
 #------------------------------------------------------------------------------------------------
@@ -358,10 +336,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
 		rm -f *.o external/*.o $(PROJECT_NAME)
     endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-	find . -type f -executable -delete
-	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
