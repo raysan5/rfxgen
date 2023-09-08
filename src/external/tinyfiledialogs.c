@@ -1,9 +1,10 @@
-/* this file can be renamed with extension ".cpp" and compiled as C++.
-The code is 100% compatible C C++
-(just comment out << extern "C" >> in the header file) */
+/* SPDX-License-Identifier: ZLIB
 
-/*_________
- /         \ tinyfiledialogs.c v3.13.1 [May 7, 2023] zlib licence
+this file can be renamed with extension ".cpp" and compiled as C++.
+The code is 100% compatible C C++
+(just comment out << extern "C" >> in the header file)
+  _________
+ /         \ tinyfiledialogs.c v3.13.3 [Jul 2, 2023] zlib licence
  |tiny file| Unique code file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2023 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
@@ -40,11 +41,6 @@ appreciated but is not required.
 2. Altered source versions must be plainly marked as such, and must not be
 misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
------------
-
-Thanks for contributions, bug corrections & thorough testing to:
-- Don Heyse http://ldglite.sf.net for bug corrections & thorough testing!
-- Paul Rouget
 */
 
 
@@ -99,7 +95,7 @@ Thanks for contributions, bug corrections & thorough testing to:
 #endif
 #define LOW_MULTIPLE_FILES 32
 
-char tinyfd_version[8] = "3.13.1";
+char tinyfd_version[8] = "3.13.3";
 
 /******************************************************************************************************/
 /**************************************** UTF-8 on Windows ********************************************/
@@ -174,7 +170,7 @@ char tinyfd_needs[] = "\
 \nor dialog (opens console if needed) ** Disabled by default **\
 \nor xterm + bash (opens console for basic input)\
 \nor existing console for basic input\
-\nand the command 'which' to be able to choose.";
+\nand the command `which\x60 to detect any of the above."; /* ` or \x60 is the grave accent */
 
 #endif
 
@@ -1069,8 +1065,8 @@ int tinyfd_messageBoxW(
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return 1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_messageBoxW(L"INVALID TITLE WITH QUOTES", aMessage, aDialogType, aIconType, aDefaultButton);
-		if (quoteDetectedW(aMessage)) return tinyfd_messageBoxW(aTitle, L"INVALID MESSAGE WITH QUOTES", aDialogType, aIconType, aDefaultButton);
+		if (quoteDetectedW(aTitle)) return tinyfd_messageBoxW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 \\x60 instead.", aMessage, aDialogType, aIconType, aDefaultButton);
+		if (quoteDetectedW(aMessage)) return tinyfd_messageBoxW(aTitle, L"INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDialogType, aIconType, aDefaultButton);
 
         if (aIconType && !wcscmp(L"warning", aIconType))
         {
@@ -1158,8 +1154,8 @@ int tinyfd_notifyPopupW(
 
         if (aTitle && !wcscmp(aTitle, L"tinyfd_query")) { strcpy(tinyfd_response, "windows_wchar"); return 1; }
 
-        if (quoteDetectedW(aTitle)) return tinyfd_notifyPopupW(L"INVALID TITLE WITH QUOTES", aMessage, aIconType);
-		if (quoteDetectedW(aMessage)) return tinyfd_notifyPopupW(aTitle, L"INVALID MESSAGE WITH QUOTES", aIconType);
+        if (quoteDetectedW(aTitle)) return tinyfd_notifyPopupW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aIconType);
+		if (quoteDetectedW(aMessage)) return tinyfd_notifyPopupW(aTitle, L"INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aIconType);
 
         lTitleLen = aTitle ? wcslen(aTitle) : 0;
         lMessageLen = aMessage ? wcslen(aMessage) : 0;
@@ -1234,9 +1230,9 @@ wchar_t * tinyfd_inputBoxW(
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_inputBoxW(L"INVALID TITLE WITH QUOTES", aMessage, aDefaultInput);
-		if (quoteDetectedW(aMessage)) return tinyfd_inputBoxW(aTitle, L"INVALID MESSAGE WITH QUOTES", aDefaultInput);
-		if (quoteDetectedW(aDefaultInput)) return tinyfd_inputBoxW(aTitle, aMessage, L"INVALID DEFAULT_INPUT WITH QUOTES");
+		if (quoteDetectedW(aTitle)) return tinyfd_inputBoxW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aDefaultInput);
+		if (quoteDetectedW(aMessage)) return tinyfd_inputBoxW(aTitle, L"INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultInput);
+		if (quoteDetectedW(aDefaultInput)) return tinyfd_inputBoxW(aTitle, aMessage, L"INVALID DEFAULT_INPUT WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 
         lTitleLen =  aTitle ? wcslen(aTitle) : 0 ;
         lMessageLen =  aMessage ? wcslen(aMessage) : 0 ;
@@ -1515,12 +1511,12 @@ wchar_t * tinyfd_saveFileDialogW(
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_saveFileDialogW(L"INVALID TITLE WITH QUOTES", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
-		if (quoteDetectedW(aDefaultPathAndFile)) return tinyfd_saveFileDialogW(aTitle, L"INVALID DEFAULT_PATH WITH QUOTES", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
-		if (quoteDetectedW(aSingleFilterDescription)) return tinyfd_saveFileDialogW(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, L"INVALID FILTER_DESCRIPTION WITH QUOTES");
+		if (quoteDetectedW(aTitle)) return tinyfd_saveFileDialogW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
+		if (quoteDetectedW(aDefaultPathAndFile)) return tinyfd_saveFileDialogW(aTitle, L"INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
+		if (quoteDetectedW(aSingleFilterDescription)) return tinyfd_saveFileDialogW(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, L"INVALID FILTER_DESCRIPTION WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 		for (i = 0; i < aNumOfFilterPatterns; i++)
 		{
-			if (quoteDetectedW(aFilterPatterns[i])) return tinyfd_saveFileDialogW(L"INVALID FILTER_PATTERN WITH QUOTES", aDefaultPathAndFile, 0, NULL, NULL);
+			if (quoteDetectedW(aFilterPatterns[i])) return tinyfd_saveFileDialogW(L"INVALID FILTER_PATTERN WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, 0, NULL, NULL);
 		}
 
         lHResult = CoInitializeEx(NULL, 0);
@@ -1624,12 +1620,12 @@ wchar_t * tinyfd_openFileDialogW(
 
 		if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_openFileDialogW(L"INVALID TITLE WITH QUOTES", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
-		if (quoteDetectedW(aDefaultPathAndFile)) return tinyfd_openFileDialogW(aTitle, L"INVALID DEFAULT_PATH WITH QUOTES", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
-		if (quoteDetectedW(aSingleFilterDescription)) return tinyfd_openFileDialogW(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, L"INVALID FILTER_DESCRIPTION WITH QUOTES", aAllowMultipleSelects);
+		if (quoteDetectedW(aTitle)) return tinyfd_openFileDialogW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
+		if (quoteDetectedW(aDefaultPathAndFile)) return tinyfd_openFileDialogW(aTitle, L"INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
+		if (quoteDetectedW(aSingleFilterDescription)) return tinyfd_openFileDialogW(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, L"INVALID FILTER_DESCRIPTION WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aAllowMultipleSelects);
 		for (i = 0; i < aNumOfFilterPatterns; i++)
 		{
-			if (quoteDetectedW(aFilterPatterns[i])) return tinyfd_openFileDialogW(L"INVALID FILTER_PATTERN WITH QUOTES", aDefaultPathAndFile, 0, NULL, NULL, aAllowMultipleSelects);
+			if (quoteDetectedW(aFilterPatterns[i])) return tinyfd_openFileDialogW(L"INVALID FILTER_PATTERN WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, 0, NULL, NULL, aAllowMultipleSelects);
 		}
 
 		if (aAllowMultipleSelects)
@@ -1801,8 +1797,8 @@ wchar_t * tinyfd_selectFolderDialogW(
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_selectFolderDialogW(L"INVALID TITLE WITH QUOTES", aDefaultPath);
-		if (quoteDetectedW(aDefaultPath)) return tinyfd_selectFolderDialogW(aTitle, L"INVALID DEFAULT_PATH WITH QUOTES");
+		if (quoteDetectedW(aTitle)) return tinyfd_selectFolderDialogW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPath);
+		if (quoteDetectedW(aDefaultPath)) return tinyfd_selectFolderDialogW(aTitle, L"INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 
         lHResult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -1853,8 +1849,8 @@ wchar_t * tinyfd_colorChooserW(
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_colorChooserW(L"INVALID TITLE WITH QUOTES", aDefaultHexRGB, aDefaultRGB, aoResultRGB);
-		if (quoteDetectedW(aDefaultHexRGB)) return tinyfd_colorChooserW(aTitle, L"INVALID DEFAULT_HEX_RGB WITH QUOTES", aDefaultRGB, aoResultRGB);
+		if (quoteDetectedW(aTitle)) return tinyfd_colorChooserW(L"INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultHexRGB, aDefaultRGB, aoResultRGB);
+		if (quoteDetectedW(aDefaultHexRGB)) return tinyfd_colorChooserW(aTitle, L"INVALID DEFAULT_HEX_RGB WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultRGB, aoResultRGB);
 
         lHResult = CoInitializeEx(NULL, 0);
 
@@ -2715,8 +2711,8 @@ int tinyfd_messageBox(
 	UINT lOriginalCP = 0;
 	UINT lOriginalOutputCP = 0;
 
-	if (tfd_quoteDetected(aTitle)) return tinyfd_messageBox("INVALID TITLE WITH QUOTES", aMessage, aDialogType, aIconType, aDefaultButton);
-	if (tfd_quoteDetected(aMessage)) return tinyfd_messageBox(aTitle, "INVALID MESSAGE WITH QUOTES", aDialogType, aIconType, aDefaultButton);
+	if (tfd_quoteDetected(aTitle)) return tinyfd_messageBox("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aDialogType, aIconType, aDefaultButton);
+	if (tfd_quoteDetected(aMessage)) return tinyfd_messageBox(aTitle, "INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDialogType, aIconType, aDefaultButton);
 
 	if ((!tinyfd_forceConsole || !(GetConsoleWindow() || dialogPresent()))
 		&& (!getenv("SSH_CLIENT") || getenvDISPLAY()))
@@ -2830,8 +2826,8 @@ int tinyfd_notifyPopup(
         char const * aMessage , /* NULL or "" may contain \n \t */
         char const * aIconType ) /* "info" "warning" "error" */
 {
-	if (tfd_quoteDetected(aTitle)) return tinyfd_notifyPopup("INVALID TITLE WITH QUOTES", aMessage, aIconType);
-	if (tfd_quoteDetected(aMessage)) return tinyfd_notifyPopup(aTitle, "INVALID MESSAGE WITH QUOTES", aIconType);
+	if (tfd_quoteDetected(aTitle)) return tinyfd_notifyPopup("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aIconType);
+	if (tfd_quoteDetected(aMessage)) return tinyfd_notifyPopup(aTitle, "INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aIconType);
 
     if ( powershellPresent() && (!tinyfd_forceConsole || !(
             GetConsoleWindow() ||
@@ -2868,9 +2864,9 @@ char * tinyfd_inputBox(
 
 	if (!aTitle && !aMessage && !aDefaultInput) return lBuff; /* now I can fill lBuff from outside */
 
-	if (tfd_quoteDetected(aTitle)) return tinyfd_inputBox("INVALID TITLE WITH QUOTES", aMessage, aDefaultInput);
-	if (tfd_quoteDetected(aMessage)) return tinyfd_inputBox(aTitle, "INVALID MESSAGE WITH QUOTES", aDefaultInput);
-	if (tfd_quoteDetected(aDefaultInput)) return tinyfd_inputBox(aTitle, aMessage, "INVALID DEFAULT_INPUT WITH QUOTES");
+	if (tfd_quoteDetected(aTitle)) return tinyfd_inputBox("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aDefaultInput);
+	if (tfd_quoteDetected(aMessage)) return tinyfd_inputBox(aTitle, "INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultInput);
+	if (tfd_quoteDetected(aDefaultInput)) return tinyfd_inputBox(aTitle, aMessage, "INVALID DEFAULT_INPUT WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 
     mode = 0;
     hStdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -3001,12 +2997,12 @@ char * tinyfd_saveFileDialog(
         lBuff[0]='\0';
 
         if ( ! aFilterPatterns ) aNumOfFilterPatterns = 0 ;
-		if (tfd_quoteDetected(aTitle)) return tinyfd_saveFileDialog("INVALID TITLE WITH QUOTES", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
-		if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_saveFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
-		if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_saveFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES");
+		if (tfd_quoteDetected(aTitle)) return tinyfd_saveFileDialog("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
+		if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_saveFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
+		if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_saveFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 		for (i = 0; i < aNumOfFilterPatterns; i++)
 		{
-			if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_saveFileDialog("INVALID FILTER_PATTERN WITH QUOTES", aDefaultPathAndFile, 0, NULL, NULL);
+			if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_saveFileDialog("INVALID FILTER_PATTERN WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, 0, NULL, NULL);
 		}
 
 
@@ -3070,12 +3066,12 @@ char * tinyfd_openFileDialog(
 	int i;
 
     if ( ! aFilterPatterns ) aNumOfFilterPatterns = 0 ;
-	if (tfd_quoteDetected(aTitle)) return tinyfd_openFileDialog("INVALID TITLE WITH QUOTES", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
-	if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_openFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
-	if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_openFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES", aAllowMultipleSelects);
+	if (tfd_quoteDetected(aTitle)) return tinyfd_openFileDialog("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
+	if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_openFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
+	if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_openFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aAllowMultipleSelects);
 	for (i = 0; i < aNumOfFilterPatterns; i++)
 	{
-		if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_openFileDialog("INVALID FILTER_PATTERN WITH QUOTES", aDefaultPathAndFile, 0, NULL, NULL, aAllowMultipleSelects);
+		if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_openFileDialog("INVALID FILTER_PATTERN WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, 0, NULL, NULL, aAllowMultipleSelects);
 	}
 
     if ( ( !tinyfd_forceConsole || !( GetConsoleWindow() || dialogPresent() ) )
@@ -3129,8 +3125,8 @@ char * tinyfd_selectFolderDialog(
 	char * lPointerInputBox;
 	char lString[MAX_PATH_OR_CMD];
 
-	if (tfd_quoteDetected(aTitle)) return tinyfd_selectFolderDialog("INVALID TITLE WITH QUOTES", aDefaultPath);
-	if (tfd_quoteDetected(aDefaultPath)) return tinyfd_selectFolderDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES");
+	if (tfd_quoteDetected(aTitle)) return tinyfd_selectFolderDialog("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPath);
+	if (tfd_quoteDetected(aDefaultPath)) return tinyfd_selectFolderDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 
     if ( ( !tinyfd_forceConsole || !( GetConsoleWindow() || dialogPresent() ) )
 		&& (!getenv("SSH_CLIENT") || getenvDISPLAY()))
@@ -3184,8 +3180,8 @@ char * tinyfd_colorChooser(
 
 	lDefaultHexRGB[0] = '\0';
 
-	if (tfd_quoteDetected(aTitle)) return tinyfd_colorChooser("INVALID TITLE WITH QUOTES", aDefaultHexRGB, aDefaultRGB, aoResultRGB);
-	if (tfd_quoteDetected(aDefaultHexRGB)) return tinyfd_colorChooser(aTitle, "INVALID DEFAULT_HEX_RGB WITH QUOTES", aDefaultRGB, aoResultRGB);
+	if (tfd_quoteDetected(aTitle)) return tinyfd_colorChooser("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultHexRGB, aDefaultRGB, aoResultRGB);
+	if (tfd_quoteDetected(aDefaultHexRGB)) return tinyfd_colorChooser(aTitle, "INVALID DEFAULT_HEX_RGB WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultRGB, aoResultRGB);
 
     if ( (!tinyfd_forceConsole || !( GetConsoleWindow() || dialogPresent()) )
 		&& (!getenv("SSH_CLIENT") || getenvDISPLAY()))
@@ -3573,7 +3569,7 @@ static char * terminalName(void)
                 {
                         strcpy(lTerminalName , "" ) ;
                 }
-                /* bad: koi rxterm guake tilda vala-terminal qterminal
+                /* bad: koi rxterm guake tilda vala-terminal qterminal kgx
                 aterm Terminal terminology sakura lilyterm weston-terminal
                 roxterm termit xvt rxvt mrxvt urxvt */
         }
@@ -4267,8 +4263,8 @@ int tinyfd_messageBox(
 
         lBuff[0]='\0';
 
-		if (tfd_quoteDetected(aTitle)) return tinyfd_messageBox("INVALID TITLE WITH QUOTES", aMessage, aDialogType, aIconType, aDefaultButton);
-		if (tfd_quoteDetected(aMessage)) return tinyfd_messageBox(aTitle, "INVALID MESSAGE WITH QUOTES", aDialogType, aIconType, aDefaultButton);
+		if (tfd_quoteDetected(aTitle)) return tinyfd_messageBox("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aDialogType, aIconType, aDefaultButton);
+		if (tfd_quoteDetected(aMessage)) return tinyfd_messageBox(aTitle, "INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDialogType, aIconType, aDefaultButton);
 
         lTitleLen =  aTitle ? strlen(aTitle) : 0 ;
         lMessageLen =  aMessage ? strlen(aMessage) : 0 ;
@@ -5247,8 +5243,8 @@ int tinyfd_notifyPopup(
         size_t lTitleLen ;
         size_t lMessageLen ;
 
-		if (tfd_quoteDetected(aTitle)) return tinyfd_notifyPopup("INVALID TITLE WITH QUOTES", aMessage, aIconType);
-		if (tfd_quoteDetected(aMessage)) return tinyfd_notifyPopup(aTitle, "INVALID MESSAGE WITH QUOTES", aIconType);
+		if (tfd_quoteDetected(aTitle)) return tinyfd_notifyPopup("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aIconType);
+		if (tfd_quoteDetected(aMessage)) return tinyfd_notifyPopup(aTitle, "INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aIconType);
 
         if ( getenv("SSH_TTY") && !dunstifyPresent() && !dunstPresent() )
         {
@@ -5324,32 +5320,6 @@ int tinyfd_notifyPopup(
                         strcat( lDialogString , aMessage ) ;
                 }
                 strcat( lDialogString , " \" 5" ) ;
-        }
-        else if ( (tfd_zenity3Present()>=5) )
-        {
-                /* zenity 2.32 & 3.14 has the notification but with a bug: it doesnt return from it */
-                /* zenity 3.8 show the notification as an alert ok cancel box */
-                if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"zenity");return 1;}
-                strcpy( lDialogString , "zenity --notification");
-
-                if ( aIconType && strlen( aIconType ) )
-                {
-                        strcat( lDialogString , " --window-icon '");
-                        strcat( lDialogString , aIconType ) ;
-                        strcat( lDialogString , "'" ) ;
-                }
-
-                strcat( lDialogString , " --text \"" ) ;
-                if ( aTitle && strlen(aTitle) )
-                {
-                        strcat(lDialogString, aTitle) ;
-                        strcat(lDialogString, "\n") ;
-                }
-                if ( aMessage && strlen( aMessage ) )
-                {
-                        strcat( lDialogString , aMessage ) ;
-                }
-                strcat( lDialogString , " \"" ) ;
         }
         else if ( tfd_yadPresent() )
         {
@@ -5439,6 +5409,33 @@ aIconType?aIconType:"", aTitle?aTitle:"", aMessage?aMessage:"" ) ;
             }
             strcat( lDialogString , "\"" ) ;
         }
+        else if ( (tfd_zenity3Present()>=5) )
+        {
+                /* zenity 2.32 & 3.14 has the notification but with a bug: it doesnt return from it */
+                /* zenity 3.8 show the notification as an alert ok cancel box */
+                /* zenity 3.44 doesn't have the notification (3.42 has it) */
+                if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"zenity");return 1;}
+                strcpy( lDialogString , "zenity --notification");
+
+                if ( aIconType && strlen( aIconType ) )
+                {
+                        strcat( lDialogString , " --window-icon '");
+                        strcat( lDialogString , aIconType ) ;
+                        strcat( lDialogString , "'" ) ;
+                }
+
+                strcat( lDialogString , " --text \"" ) ;
+                if ( aTitle && strlen(aTitle) )
+                {
+                        strcat(lDialogString, aTitle) ;
+                        strcat(lDialogString, "\n") ;
+                }
+                if ( aMessage && strlen( aMessage ) )
+                {
+                        strcat( lDialogString , aMessage ) ;
+                }
+                strcat( lDialogString , " \"" ) ;
+        }
         else
         {
             if (lDialogString) free(lDialogString);
@@ -5484,9 +5481,9 @@ char * tinyfd_inputBox(
 
         lBuff[0]='\0';
 
-		if (tfd_quoteDetected(aTitle)) return tinyfd_inputBox("INVALID TITLE WITH QUOTES", aMessage, aDefaultInput);
-		if (tfd_quoteDetected(aMessage)) return tinyfd_inputBox(aTitle, "INVALID MESSAGE WITH QUOTES", aDefaultInput);
-		if (tfd_quoteDetected(aDefaultInput)) return tinyfd_inputBox(aTitle, aMessage, "INVALID DEFAULT_INPUT WITH QUOTES");
+		if (tfd_quoteDetected(aTitle)) return tinyfd_inputBox("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aMessage, aDefaultInput);
+		if (tfd_quoteDetected(aMessage)) return tinyfd_inputBox(aTitle, "INVALID MESSAGE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultInput);
+		if (tfd_quoteDetected(aDefaultInput)) return tinyfd_inputBox(aTitle, aMessage, "INVALID DEFAULT_INPUT WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 
         lTitleLen =  aTitle ? strlen(aTitle) : 0 ;
         lMessageLen =  aMessage ? strlen(aMessage) : 0 ;
@@ -6064,12 +6061,12 @@ char * tinyfd_saveFileDialog(
         lBuff[0]='\0';
 
         if ( ! aFilterPatterns ) aNumOfFilterPatterns = 0 ;
-		if (tfd_quoteDetected(aTitle)) return tinyfd_saveFileDialog("INVALID TITLE WITH QUOTES", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
-		if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_saveFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
-		if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_saveFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES");
+		if (tfd_quoteDetected(aTitle)) return tinyfd_saveFileDialog("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
+		if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_saveFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription);
+		if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_saveFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 		for (i = 0; i < aNumOfFilterPatterns; i++)
 		{
-			if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_saveFileDialog("INVALID FILTER_PATTERN WITH QUOTES", aDefaultPathAndFile, 0, NULL, NULL);
+			if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_saveFileDialog("INVALID FILTER_PATTERN WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, 0, NULL, NULL);
 		}
 
         if ( osascriptPresent( ) )
@@ -6514,12 +6511,12 @@ char * tinyfd_openFileDialog(
       static char * lBuff = NULL;
 
         if ( ! aFilterPatterns ) aNumOfFilterPatterns = 0 ;
-		if (tfd_quoteDetected(aTitle)) return tinyfd_openFileDialog("INVALID TITLE WITH QUOTES", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
-		if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_openFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
-		if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_openFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES", aAllowMultipleSelects);
+		if (tfd_quoteDetected(aTitle)) return tinyfd_openFileDialog("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
+		if (tfd_quoteDetected(aDefaultPathAndFile)) return tinyfd_openFileDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aNumOfFilterPatterns, aFilterPatterns, aSingleFilterDescription, aAllowMultipleSelects);
+		if (tfd_quoteDetected(aSingleFilterDescription)) return tinyfd_openFileDialog(aTitle, aDefaultPathAndFile, aNumOfFilterPatterns, aFilterPatterns, "INVALID FILTER_DESCRIPTION WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aAllowMultipleSelects);
 		for (i = 0; i < aNumOfFilterPatterns; i++)
 		{
-			if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_openFileDialog("INVALID FILTER_PATTERN WITH QUOTES", aDefaultPathAndFile, 0, NULL, NULL, aAllowMultipleSelects);
+			if (tfd_quoteDetected(aFilterPatterns[i])) return tinyfd_openFileDialog("INVALID FILTER_PATTERN WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPathAndFile, 0, NULL, NULL, aAllowMultipleSelects);
 		}
 
 		free(lBuff);
@@ -7063,8 +7060,8 @@ char * tinyfd_selectFolderDialog(
         int lWasXterm = 0 ;
         lBuff[0]='\0';
 
-		if (tfd_quoteDetected(aTitle)) return tinyfd_selectFolderDialog("INVALID TITLE WITH QUOTES", aDefaultPath);
-		if (tfd_quoteDetected(aDefaultPath)) return tinyfd_selectFolderDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES");
+		if (tfd_quoteDetected(aTitle)) return tinyfd_selectFolderDialog("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultPath);
+		if (tfd_quoteDetected(aDefaultPath)) return tinyfd_selectFolderDialog(aTitle, "INVALID DEFAULT_PATH WITH QUOTES: use the GRAVE ACCENT \\x60 instead.");
 
         if ( osascriptPresent( ))
         {
@@ -7378,8 +7375,8 @@ char * tinyfd_colorChooser(
         int lWasXdialog = 0 ;
         lBuff[0]='\0';
 
-		if (tfd_quoteDetected(aTitle)) return tinyfd_colorChooser("INVALID TITLE WITH QUOTES", aDefaultHexRGB, aDefaultRGB, aoResultRGB);
-		if (tfd_quoteDetected(aDefaultHexRGB)) return tinyfd_colorChooser(aTitle, "INVALID DEFAULT_HEX_RGB WITH QUOTES", aDefaultRGB, aoResultRGB);
+		if (tfd_quoteDetected(aTitle)) return tinyfd_colorChooser("INVALID TITLE WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultHexRGB, aDefaultRGB, aoResultRGB);
+		if (tfd_quoteDetected(aDefaultHexRGB)) return tinyfd_colorChooser(aTitle, "INVALID DEFAULT_HEX_RGB WITH QUOTES: use the GRAVE ACCENT \\x60 instead.", aDefaultRGB, aoResultRGB);
 
 		if (aDefaultHexRGB && (strlen(aDefaultHexRGB)==7) )
 		{
