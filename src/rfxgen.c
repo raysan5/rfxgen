@@ -26,10 +26,10 @@
 *           NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       4.0  (xx-May-2023)  ADDED: Support macOS builds (x86_64 + arm64)
+*       4.0  (10-Sep-2023)  ADDED: Support macOS builds (x86_64 + arm64)
 *                           ADDED: Support loading .qoa wave data
 *                           ADDED: Support .qoa export and play on CLI
-*                           REDESIGNED: Using raygui 4.0-dev
+*                           REDESIGNED: Using raygui 4.0    
 *                           REVIEWED: Regenerated tool imagery
 *
 *       3.3  (06-Mar-2023)  ADDED: Support export to .qoa file format
@@ -81,8 +81,8 @@
 *
 *   DEPENDENCIES:
 *       raylib 4.6-dev          - Windowing/input management and drawing
-*       raygui 4.0-dev          - Immediate-mode GUI controls with custom styling and icons
-*       tinyfiledialogs 3.13.1  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
+*       raygui 4.0              - Immediate-mode GUI controls with custom styling and icons
+*       tinyfiledialogs 3.13.3  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
 *     - Windows (MinGW-w64):
