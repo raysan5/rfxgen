@@ -141,11 +141,12 @@
 *           Draw text bounds rectangles for debug
 *
 *   VERSIONS HISTORY:
-*       4.0 (10-Sep-2023) ADDED: GuiToggleSlider()
+*       4.0 (12-Sep-2023) ADDED: GuiToggleSlider()
 *                         ADDED: GuiColorPickerHSV() and GuiColorPanelHSV()
 *                         ADDED: Multiple new icons, mostly compiler related
 *                         ADDED: New DEFAULT properties: TEXT_LINE_SPACING, TEXT_ALIGNMENT_VERTICAL, TEXT_WRAP_MODE
 *                         ADDED: New enum values: GuiTextAlignment, GuiTextAlignmentVertical, GuiTextWrapMode
+*                         ADDED: Support loading styles with custom font charset from external file
 *                         REDESIGNED: GuiTextBox(), support mouse cursor positioning
 *                         REDESIGNED: GuiDrawText(), support multiline and word-wrap modes (read only)
 *                         REDESIGNED: GuiProgressBar() to be more visual, progress affects border color
@@ -265,13 +266,16 @@
 *           - void DrawRectangle(int x, int y, int width, int height, Color color); // -- GuiDrawRectangle()
 *           - void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4); // -- GuiColorPicker()
 *
-*           - Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCount); // -- GuiLoadStyle()
-*           - Font GetFontDefault(void);                           // -- GuiLoadStyleDefault()
-*           - Texture2D LoadTextureFromImage(Image image);         // -- GuiLoadStyle()
-*           - void SetShapesTexture(Texture2D tex, Rectangle rec); // -- GuiLoadStyle()
-*           - char *LoadFileText(const char *fileName);            // -- GuiLoadStyle()
-*           - const char *GetDirectoryPath(const char *filePath);  // -- GuiLoadStyle()
-*
+*           - Font GetFontDefault(void);                            // -- GuiLoadStyleDefault()
+*           - Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // -- GuiLoadStyle()
+*           - Texture2D LoadTextureFromImage(Image image);          // -- GuiLoadStyle(), required to load texture from embedded font atlas image
+*           - void SetShapesTexture(Texture2D tex, Rectangle rec);  // -- GuiLoadStyle(), required to set shapes rec to font white rec (optimization)
+*           - char *LoadFileText(const char *fileName);             // -- GuiLoadStyle(), required to load charset data
+*           - void UnloadFileText(char *text);                      // -- GuiLoadStyle(), required to unload charset data
+*           - const char *GetDirectoryPath(const char *filePath);   // -- GuiLoadStyle(), required to find charset/font file from text .rgs
+*           - int *LoadCodepoints(const char *text, int *count);    // -- GuiLoadStyle(), required to load required font codepoints list
+*           - void UnloadCodepoints(int *codepoints);               // -- GuiLoadStyle(), required to unload codepoints list
+*           - unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize); // -- GuiLoadStyle()
 *
 *   CONTRIBUTORS:
 *       Ramon Santamaria:   Supervision, review, redesign, update and maintenance
@@ -499,7 +503,7 @@ typedef enum {
     LABEL,          // Used also for: LABELBUTTON
     BUTTON,
     TOGGLE,         // Used also for: TOGGLEGROUP
-    SLIDER,         // Used also for: SLIDERBAR
+    SLIDER,         // Used also for: SLIDERBAR, TOGGLESLIDER
     PROGRESSBAR,
     CHECKBOX,
     COMBOBOX,
@@ -1421,12 +1425,21 @@ static void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color
 
 // Text required functions
 //-------------------------------------------------------------------------------
-static Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCount); // -- GuiLoadStyle()
-static Font GetFontDefault(void);                           // -- GuiLoadStyleDefault()
-static Texture2D LoadTextureFromImage(Image image);         // -- GuiLoadStyle()
-static void SetShapesTexture(Texture2D tex, Rectangle rec); // -- GuiLoadStyle()
-static char *LoadFileText(const char *fileName);            // -- GuiLoadStyle()
-static const char *GetDirectoryPath(const char *filePath);  // -- GuiLoadStyle()
+static Font GetFontDefault(void);                            // -- GuiLoadStyleDefault()
+static Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount); // -- GuiLoadStyle(), load font
+
+static Texture2D LoadTextureFromImage(Image image);          // -- GuiLoadStyle(), required to load texture from embedded font atlas image
+static void SetShapesTexture(Texture2D tex, Rectangle rec);  // -- GuiLoadStyle(), required to set shapes rec to font white rec (optimization)
+
+static char *LoadFileText(const char *fileName);             // -- GuiLoadStyle(), required to load charset data
+static void UnloadFileText(char *text);                      // -- GuiLoadStyle(), required to unload charset data
+
+static const char *GetDirectoryPath(const char *filePath);   // -- GuiLoadStyle(), required to find charset/font file from text .rgs
+
+static int *LoadCodepoints(const char *text, int *count);    // -- GuiLoadStyle(), required to load required font codepoints list
+static void UnloadCodepoints(int *codepoints);               // -- GuiLoadStyle(), required to unload codepoints list
+
+static unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize); // -- GuiLoadStyle()
 //-------------------------------------------------------------------------------
 
 // raylib functions already implemented in raygui
@@ -1514,8 +1527,6 @@ void GuiSetFont(Font font)
         if (!guiStyleLoaded) GuiLoadStyleDefault();
 
         guiFont = font;
-        GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize);
-        GuiSetStyle(DEFAULT, TEXT_LINE_SPACING, (int)(1.5f*font.baseSize));
     }
 }
 
@@ -2144,7 +2155,8 @@ int GuiToggleSlider(Rectangle bounds, const char *text, int *active)
             }
             else state = STATE_FOCUSED;
         }
-        else if (*active) state = STATE_PRESSED;
+        
+        if ((*active) && (state != STATE_FOCUSED)) state = STATE_PRESSED;
     }
 
     if (*active >= itemCount) *active = 0;
@@ -3990,33 +4002,36 @@ void GuiLoadStyle(const char *fileName)
                         sscanf(buffer, "f %d %s %[^\r\n]s", &fontSize, charmapFileName, fontFileName);
 
                         Font font = { 0 };
+                        int *codepoints = NULL;
+                        int codepointCount = 0;
 
                         if (charmapFileName[0] != '0')
                         {
-                            // Load characters from charmap file,
-                            // expected '\n' separated list of integer values
-                            char *charValues = LoadFileText(charmapFileName);
-                            if (charValues != NULL)
-                            {
-                                int glyphCount = 0;
-                                const char **chars = TextSplit(charValues, '\n', &glyphCount);
-
-                                int *values = (int *)RAYGUI_MALLOC(glyphCount*sizeof(int));
-                                for (int i = 0; i < glyphCount; i++) values[i] = TextToInteger(chars[i]);
-
-                                if (font.texture.id != GetFontDefault().texture.id) UnloadTexture(font.texture);
-                                font = LoadFontEx(TextFormat("%s/%s", GetDirectoryPath(fileName), fontFileName), fontSize, values, glyphCount);
-                                if (font.texture.id == 0) font = GetFontDefault();
-
-                                RAYGUI_FREE(values);
-                            }
+                            // Load text data from file
+                            // NOTE: Expected an UTF-8 array of codepoints, no separation
+                            char *textData = LoadFileText(TextFormat("%s/%s", GetDirectoryPath(fileName), charmapFileName));
+                            codepoints = LoadCodepoints(textData, &codepointCount);
+                            UnloadFileText(textData);
                         }
-                        else
+
+                        if (fontFileName[0] != '\0')
                         {
+                            // In case a font is already loaded and it is not default internal font, unload it
                             if (font.texture.id != GetFontDefault().texture.id) UnloadTexture(font.texture);
-                            font = LoadFontEx(TextFormat("%s/%s", GetDirectoryPath(fileName), fontFileName), fontSize, NULL, 0);
-                            if (font.texture.id == 0) font = GetFontDefault();
+
+                            if (codepointCount > 0) font = LoadFontEx(TextFormat("%s/%s", GetDirectoryPath(fileName), fontFileName), fontSize, codepoints, codepointCount);
+                            else font = LoadFontEx(TextFormat("%s/%s", GetDirectoryPath(fileName), fontFileName), fontSize, NULL, 0);   // Default to 95 standard codepoints
                         }
+
+                        // If font texture not properly loaded, revert to default font and size/spacing
+                        if (font.texture.id == 0)
+                        {
+                            font = GetFontDefault();
+                            GuiSetStyle(DEFAULT, TEXT_SIZE, 10);
+                            GuiSetStyle(DEFAULT, TEXT_SPACING, 1);
+                        }
+
+                        UnloadCodepoints(codepoints);
 
                         if ((font.texture.id > 0) && (font.glyphCount > 0)) GuiSetFont(font);
 
@@ -4100,6 +4115,8 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(PROGRESSBAR, TEXT_PADDING, 4);
     GuiSetStyle(CHECKBOX, TEXT_PADDING, 4);
     GuiSetStyle(CHECKBOX, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
+    GuiSetStyle(DROPDOWNBOX, TEXT_PADDING, 0);
+    GuiSetStyle(DROPDOWNBOX, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
     GuiSetStyle(TEXTBOX, TEXT_PADDING, 4);
     GuiSetStyle(TEXTBOX, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
     GuiSetStyle(VALUEBOX, TEXT_PADDING, 0);
@@ -4418,6 +4435,8 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
                 // Load font recs data
                 int recsDataSize = font.glyphCount*sizeof(Rectangle);
                 int recsDataCompressedSize = 0;
+
+                // WARNING: Version 400 adds the compression size parameter
                 if (version >= 400)
                 {
                     // RGS files version 400 support compressed recs data
@@ -4455,6 +4474,8 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
                 // Load font glyphs info data
                 int glyphsDataSize = font.glyphCount*16;    // 16 bytes data per glyph
                 int glyphsDataCompressedSize = 0;
+
+                // WARNING: Version 400 adds the compression size parameter
                 if (version >= 400)
                 {
                     // RGS files version 400 support compressed glyphs data
@@ -4505,18 +4526,17 @@ static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
                         fileDataPtr += 16;
                     }
                 }
-
-
-                // Set font texture source rectangle to be used as white texture to draw shapes
-                // NOTE: It makes possible to draw shapes and text (full UI) in a single draw call
-                if ((fontWhiteRec.x > 0) &&
-                    (fontWhiteRec.y > 0) &&
-                    (fontWhiteRec.width > 0) &&
-                    (fontWhiteRec.height > 0)) SetShapesTexture(font.texture, fontWhiteRec);
             }
             else font = GetFontDefault();   // Fallback in case of errors loading font atlas texture
 
             GuiSetFont(font);
+
+            // Set font texture source rectangle to be used as white texture to draw shapes
+            // NOTE: It makes possible to draw shapes and text (full UI) in a single draw call
+            if ((fontWhiteRec.x > 0) &&
+                (fontWhiteRec.y > 0) &&
+                (fontWhiteRec.width > 0) &&
+                (fontWhiteRec.height > 0)) SetShapesTexture(font.texture, fontWhiteRec);
         }
 #endif
     }
