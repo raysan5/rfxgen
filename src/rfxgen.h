@@ -11,7 +11,7 @@
 *       Used to switch how logging occurs within the library. By default, will log with printf().
 *
 *   #define RFXGET_RAND(min, max)
-*       Used to generate a random value between the given min and max integers. By default, will use rand().
+*       Used to generate a random value between the given min and max integers. Defaults to rand().
 *
 *   #define RFXGEN_SRAND
 *       Used to seed the random number generator. Defaults to srand().
@@ -163,51 +163,54 @@ RLAPI void WaveMutate(WaveParams *params); // Mutate current sound
 #if defined(RFXGEN_IMPLEMENTATION)
 
 // C standard library dependencies
-#include <math.h>   // abs, pow, powf
-
-// Random integer between the given range
-#ifndef RFXGEN_RAND
-    #include <stdlib.h>
-    #define RFXGEN_RAND(min, max) ((rand()%(max - min) + 1) + min)
-#endif
-
-// Float random number generation
-#define frnd(range) ((float)RFXGEN_RAND(0, 10000)/10000.0f*range)
+#include <stdlib.h>     // Required for: srand(), rand(), calloc(), free()
+#include <stdio.h>      // Required for: printf()
+#include <string.h>     // Required for: strcmp(), strlen(), memcpy()
+#include <math.h>       // Required for: abs(), pow(), powf()
+#include <time.h>       // Required for: time()
 
 #ifndef RFXGEN_SRAND
-    #include <stdlib.h>
     #define RFXGEN_SRAND srand
 #endif
 
+// Random integer between the given range
+// WARNING: RFXGEN_RAND(0, 1) always return 0 
+// because we do the module 1 with random number generated! 
+#ifndef RFXGEN_RAND
+    #define RFXGEN_RAND(min, max) ((rand()%(max - min) + 1) + min)
+#endif
+
+// Random condition, true or false
+#define RFXGEN_RAND01 (RFXGEN_RAND(0, 100) > 50)
+
+// Float random number generation
+#define RFXGEN_RANDF(range) (((float)RFXGEN_RAND(0, 10000)/10000.0f)*range)
+
 // Simple log system to avoid printf() calls if required
 #ifndef RFXGEN_LOG
-    #include <stdio.h>
     #define RFXGEN_LOG(...) printf(__VA_ARGS__)
 #endif
 
 // Allocate requested memory and return a pointer to it
 #ifndef RFXGEN_CALLOC
-    #include <stdlib.h>
     #define RFXGEN_CALLOC calloc
 #endif
 
 // Deallocate previously allocated memory
 #ifndef RFXGEN_FREE
-    #include <stdlib.h>
     #define RFXGEN_FREE free
 #endif
 
 // Copy memory
 #ifndef RFXGEN_MEMCPY
-    #include <string.h>
     #define RFXGEN_MEMCPY memcpy
 #endif
 
 // Check if a file extension matches the given extension
 #ifndef RFXGEN_ISFILEEXTENSION
-    #include <string.h>
     #define RFXGEN_ISFILEEXTENSION(file, extension) (strcmp((file) + strlen(file) - strlen(extension), (extension)) == 0)
 #endif
+
 
 //--------------------------------------------------------------------------------------------
 // Load/Save/Export functions
@@ -352,7 +355,7 @@ RLAPI float *GenerateWave(WaveParams params, unsigned int *frameCount)
 
     iphase = abs((int)fphase);
 
-    for (int i = 0; i < 32; i++) noiseBuffer[i] = frnd(2.0f) - 1.0f;
+    for (int i = 0; i < 32; i++) noiseBuffer[i] = RFXGEN_RANDF(2.0f) - 1.0f;
 
     repeatLimit = (int)(powf(1.0f - params.repeatSpeedValue, 2.0f)*20000 + 32);
 
@@ -480,7 +483,7 @@ RLAPI float *GenerateWave(WaveParams params, unsigned int *frameCount)
 
                 if (params.waveTypeValue == 3)
                 {
-                    for (int i = 0;i < 32; i++) noiseBuffer[i] = frnd(2.0f) - 1.0f;
+                    for (int i = 0;i < 32; i++) noiseBuffer[i] = RFXGEN_RANDF(2.0f) - 1.0f;
                 }
             }
 
@@ -713,16 +716,16 @@ RLAPI WaveParams GenPickupCoin(void)
     WaveParams params = { 0 };
     ResetWaveParams(&params);
 
-    params.startFrequencyValue = 0.4f + frnd(0.5f);
+    params.startFrequencyValue = 0.4f + RFXGEN_RANDF(0.5f);
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = frnd(0.1f);
-    params.decayTimeValue = 0.1f + frnd(0.4f);
-    params.sustainPunchValue = 0.3f + frnd(0.3f);
+    params.sustainTimeValue = RFXGEN_RANDF(0.1f);
+    params.decayTimeValue = 0.1f + RFXGEN_RANDF(0.4f);
+    params.sustainPunchValue = 0.3f + RFXGEN_RANDF(0.3f);
 
-    if (RFXGEN_RAND(0, 1))
+    if (RFXGEN_RAND01)
     {
-        params.changeSpeedValue = 0.5f + frnd(0.2f);
-        params.changeAmountValue = 0.2f + frnd(0.4f);
+        params.changeSpeedValue = 0.5f + RFXGEN_RANDF(0.2f);
+        params.changeAmountValue = 0.2f + RFXGEN_RANDF(0.4f);
     }
 
     return params;
@@ -736,46 +739,46 @@ RLAPI WaveParams GenLaserShoot(void)
 
     params.waveTypeValue = RFXGEN_RAND(0, 2);
 
-    if ((params.waveTypeValue == 2) && RFXGEN_RAND(0, 1)) params.waveTypeValue = RFXGEN_RAND(0, 1);
+    if ((params.waveTypeValue == 2) && RFXGEN_RAND01) params.waveTypeValue = RFXGEN_RAND01;
 
-    params.startFrequencyValue = 0.5f + frnd(0.5f);
-    params.minFrequencyValue = params.startFrequencyValue - 0.2f - frnd(0.6f);
+    params.startFrequencyValue = 0.5f + RFXGEN_RANDF(0.5f);
+    params.minFrequencyValue = params.startFrequencyValue - 0.2f - RFXGEN_RANDF(0.6f);
 
     if (params.minFrequencyValue < 0.2f) params.minFrequencyValue = 0.2f;
 
-    params.slideValue = -0.15f - frnd(0.2f);
+    params.slideValue = -0.15f - RFXGEN_RANDF(0.2f);
 
     if (RFXGEN_RAND(0, 2) == 0)
     {
-        params.startFrequencyValue = 0.3f + frnd(0.6f);
-        params.minFrequencyValue = frnd(0.1f);
-        params.slideValue = -0.35f - frnd(0.3f);
+        params.startFrequencyValue = 0.3f + RFXGEN_RANDF(0.6f);
+        params.minFrequencyValue = RFXGEN_RANDF(0.1f);
+        params.slideValue = -0.35f - RFXGEN_RANDF(0.3f);
     }
 
-    if (RFXGEN_RAND(0, 1))
+    if (RFXGEN_RAND01)
     {
-        params.squareDutyValue = frnd(0.5f);
-        params.dutySweepValue = frnd(0.2f);
+        params.squareDutyValue = RFXGEN_RANDF(0.5f);
+        params.dutySweepValue = RFXGEN_RANDF(0.2f);
     }
     else
     {
-        params.squareDutyValue = 0.4f + frnd(0.5f);
-        params.dutySweepValue = -frnd(0.7f);
+        params.squareDutyValue = 0.4f + RFXGEN_RANDF(0.5f);
+        params.dutySweepValue = -RFXGEN_RANDF(0.7f);
     }
 
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = 0.1f + frnd(0.2f);
-    params.decayTimeValue = frnd(0.4f);
+    params.sustainTimeValue = 0.1f + RFXGEN_RANDF(0.2f);
+    params.decayTimeValue = RFXGEN_RANDF(0.4f);
 
-    if (RFXGEN_RAND(0, 1)) params.sustainPunchValue = frnd(0.3f);
+    if (RFXGEN_RAND01) params.sustainPunchValue = RFXGEN_RANDF(0.3f);
 
     if (RFXGEN_RAND(0, 2) == 0)
     {
-        params.phaserOffsetValue = frnd(0.2f);
-        params.phaserSweepValue = -frnd(0.2f);
+        params.phaserOffsetValue = RFXGEN_RANDF(0.2f);
+        params.phaserSweepValue = -RFXGEN_RANDF(0.2f);
     }
 
-    if (RFXGEN_RAND(0, 1)) params.hpfCutoffValue = frnd(0.3f);
+    if (RFXGEN_RAND01) params.hpfCutoffValue = RFXGEN_RANDF(0.3f);
 
     return params;
 }
@@ -788,44 +791,44 @@ RLAPI WaveParams GenExplosion(void)
 
     params.waveTypeValue = 3;
 
-    if (RFXGEN_RAND(0, 1))
+    if (RFXGEN_RAND01)
     {
-        params.startFrequencyValue = 0.1f + frnd(0.4f);
-        params.slideValue = -0.1f + frnd(0.4f);
+        params.startFrequencyValue = 0.1f + RFXGEN_RANDF(0.4f);
+        params.slideValue = -0.1f + RFXGEN_RANDF(0.4f);
     }
     else
     {
-        params.startFrequencyValue = 0.2f + frnd(0.7f);
-        params.slideValue = -0.2f - frnd(0.2f);
+        params.startFrequencyValue = 0.2f + RFXGEN_RANDF(0.7f);
+        params.slideValue = -0.2f - RFXGEN_RANDF(0.2f);
     }
 
     params.startFrequencyValue *= params.startFrequencyValue;
 
     if (RFXGEN_RAND(0, 4) == 0) params.slideValue = 0.0f;
-    if (RFXGEN_RAND(0, 2) == 0) params.repeatSpeedValue = 0.3f + frnd(0.5f);
+    if (RFXGEN_RAND(0, 2) == 0) params.repeatSpeedValue = 0.3f + RFXGEN_RANDF(0.5f);
 
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = 0.1f + frnd(0.3f);
-    params.decayTimeValue = frnd(0.5f);
+    params.sustainTimeValue = 0.1f + RFXGEN_RANDF(0.3f);
+    params.decayTimeValue = RFXGEN_RANDF(0.5f);
 
-    if (RFXGEN_RAND(0, 1) == 0)
+    if (RFXGEN_RAND01 == 0)
     {
-        params.phaserOffsetValue = -0.3f + frnd(0.9f);
-        params.phaserSweepValue = -frnd(0.3f);
+        params.phaserOffsetValue = -0.3f + RFXGEN_RANDF(0.9f);
+        params.phaserSweepValue = -RFXGEN_RANDF(0.3f);
     }
 
-    params.sustainPunchValue = 0.2f + frnd(0.6f);
+    params.sustainPunchValue = 0.2f + RFXGEN_RANDF(0.6f);
 
-    if (RFXGEN_RAND(0, 1))
+    if (RFXGEN_RAND01)
     {
-        params.vibratoDepthValue = frnd(0.7f);
-        params.vibratoSpeedValue = frnd(0.6f);
+        params.vibratoDepthValue = RFXGEN_RANDF(0.7f);
+        params.vibratoSpeedValue = RFXGEN_RANDF(0.6f);
     }
 
     if (RFXGEN_RAND(0, 2) == 0)
     {
-        params.changeSpeedValue = 0.6f + frnd(0.3f);
-        params.changeAmountValue = 0.8f - frnd(1.6f);
+        params.changeSpeedValue = 0.6f + RFXGEN_RANDF(0.3f);
+        params.changeAmountValue = 0.8f - RFXGEN_RANDF(1.6f);
     }
 
     return params;
@@ -837,30 +840,30 @@ RLAPI WaveParams GenPowerup(void)
     WaveParams params = { 0 };
     ResetWaveParams(&params);
 
-    if (RFXGEN_RAND(0, 1)) params.waveTypeValue = 1;
-    else params.squareDutyValue = frnd(0.6f);
+    if (RFXGEN_RAND01) params.waveTypeValue = 1;
+    else params.squareDutyValue = RFXGEN_RANDF(0.6f);
 
-    if (RFXGEN_RAND(0, 1))
+    if (RFXGEN_RAND01)
     {
-        params.startFrequencyValue = 0.2f + frnd(0.3f);
-        params.slideValue = 0.1f + frnd(0.4f);
-        params.repeatSpeedValue = 0.4f + frnd(0.4f);
+        params.startFrequencyValue = 0.2f + RFXGEN_RANDF(0.3f);
+        params.slideValue = 0.1f + RFXGEN_RANDF(0.4f);
+        params.repeatSpeedValue = 0.4f + RFXGEN_RANDF(0.4f);
     }
     else
     {
-        params.startFrequencyValue = 0.2f + frnd(0.3f);
-        params.slideValue = 0.05f + frnd(0.2f);
+        params.startFrequencyValue = 0.2f + RFXGEN_RANDF(0.3f);
+        params.slideValue = 0.05f + RFXGEN_RANDF(0.2f);
 
-        if (RFXGEN_RAND(0, 1))
+        if (RFXGEN_RAND01)
         {
-            params.vibratoDepthValue = frnd(0.7f);
-            params.vibratoSpeedValue = frnd(0.6f);
+            params.vibratoDepthValue = RFXGEN_RANDF(0.7f);
+            params.vibratoSpeedValue = RFXGEN_RANDF(0.6f);
         }
     }
 
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = frnd(0.4f);
-    params.decayTimeValue = 0.1f + frnd(0.4f);
+    params.sustainTimeValue = RFXGEN_RANDF(0.4f);
+    params.decayTimeValue = 0.1f + RFXGEN_RANDF(0.4f);
 
     return params;
 }
@@ -873,15 +876,15 @@ RLAPI WaveParams GenHitHurt(void)
 
     params.waveTypeValue = RFXGEN_RAND(0, 2);
     if (params.waveTypeValue == 2) params.waveTypeValue = 3;
-    if (params.waveTypeValue == 0) params.squareDutyValue = frnd(0.6f);
+    if (params.waveTypeValue == 0) params.squareDutyValue = RFXGEN_RANDF(0.6f);
 
-    params.startFrequencyValue = 0.2f + frnd(0.6f);
-    params.slideValue = -0.3f - frnd(0.4f);
+    params.startFrequencyValue = 0.2f + RFXGEN_RANDF(0.6f);
+    params.slideValue = -0.3f - RFXGEN_RANDF(0.4f);
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = frnd(0.1f);
-    params.decayTimeValue = 0.1f + frnd(0.2f);
+    params.sustainTimeValue = RFXGEN_RANDF(0.1f);
+    params.decayTimeValue = 0.1f + RFXGEN_RANDF(0.2f);
 
-    if (RFXGEN_RAND(0, 1)) params.hpfCutoffValue = frnd(0.3f);
+    if (RFXGEN_RAND01) params.hpfCutoffValue = RFXGEN_RANDF(0.3f);
 
     return params;
 }
@@ -893,15 +896,15 @@ RLAPI WaveParams GenJump(void)
     ResetWaveParams(&params);
 
     params.waveTypeValue = 0;
-    params.squareDutyValue = frnd(0.6f);
-    params.startFrequencyValue = 0.3f + frnd(0.3f);
-    params.slideValue = 0.1f + frnd(0.2f);
+    params.squareDutyValue = RFXGEN_RANDF(0.6f);
+    params.startFrequencyValue = 0.3f + RFXGEN_RANDF(0.3f);
+    params.slideValue = 0.1f + RFXGEN_RANDF(0.2f);
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = 0.1f + frnd(0.3f);
-    params.decayTimeValue = 0.1f + frnd(0.2f);
+    params.sustainTimeValue = 0.1f + RFXGEN_RANDF(0.3f);
+    params.decayTimeValue = 0.1f + RFXGEN_RANDF(0.2f);
 
-    if (RFXGEN_RAND(0, 1)) params.hpfCutoffValue = frnd(0.3f);
-    if (RFXGEN_RAND(0, 1)) params.lpfCutoffValue = 1.0f - frnd(0.6f);
+    if (RFXGEN_RAND01) params.hpfCutoffValue = RFXGEN_RANDF(0.3f);
+    if (RFXGEN_RAND01) params.lpfCutoffValue = 1.0f - RFXGEN_RANDF(0.6f);
 
     return params;
 }
@@ -912,12 +915,12 @@ RLAPI WaveParams GenBlipSelect(void)
     WaveParams params = { 0 };
     ResetWaveParams(&params);
 
-    params.waveTypeValue = RFXGEN_RAND(0, 1);
-    if (params.waveTypeValue == 0) params.squareDutyValue = frnd(0.6f);
-    params.startFrequencyValue = 0.2f + frnd(0.4f);
+    params.waveTypeValue = RFXGEN_RAND01;
+    if (params.waveTypeValue == 0) params.squareDutyValue = RFXGEN_RANDF(0.6f);
+    params.startFrequencyValue = 0.2f + RFXGEN_RANDF(0.4f);
     params.attackTimeValue = 0.0f;
-    params.sustainTimeValue = 0.1f + frnd(0.1f);
-    params.decayTimeValue = frnd(0.2f);
+    params.sustainTimeValue = 0.1f + RFXGEN_RANDF(0.1f);
+    params.decayTimeValue = RFXGEN_RANDF(0.2f);
     params.hpfCutoffValue = 0.1f;
 
     return params;
@@ -931,46 +934,46 @@ RLAPI WaveParams GenRandomize(void)
 
     params.randSeed = RFXGEN_RAND(0, 0xFFFE);
 
-    params.startFrequencyValue = powf(frnd(2.0f) - 1.0f, 2.0f);
+    params.startFrequencyValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 2.0f);
 
-    if (RFXGEN_RAND(0, 1)) params.startFrequencyValue = powf(frnd(2.0f) - 1.0f, 3.0f)+0.5f;
+    if (RFXGEN_RAND01) params.startFrequencyValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f)+0.5f;
 
     params.minFrequencyValue = 0.0f;
-    params.slideValue = powf(frnd(2.0f) - 1.0f, 5.0f);
+    params.slideValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 5.0f);
 
     if ((params.startFrequencyValue > 0.7f) && (params.slideValue > 0.2f)) params.slideValue = -params.slideValue;
     if ((params.startFrequencyValue < 0.2f) && (params.slideValue < -0.05f)) params.slideValue = -params.slideValue;
 
-    params.deltaSlideValue = powf(frnd(2.0f) - 1.0f, 3.0f);
-    params.squareDutyValue = frnd(2.0f) - 1.0f;
-    params.dutySweepValue = powf(frnd(2.0f) - 1.0f, 3.0f);
-    params.vibratoDepthValue = powf(frnd(2.0f) - 1.0f, 3.0f);
-    params.vibratoSpeedValue = frnd(2.0f) - 1.0f;
-    //params.vibratoPhaseDelay = frnd(2.0f) - 1.0f;
-    params.attackTimeValue = powf(frnd(2.0f) - 1.0f, 3.0f);
-    params.sustainTimeValue = powf(frnd(2.0f) - 1.0f, 2.0f);
-    params.decayTimeValue = frnd(2.0f)-1.0f;
-    params.sustainPunchValue = powf(frnd(0.8f), 2.0f);
+    params.deltaSlideValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
+    params.squareDutyValue = RFXGEN_RANDF(2.0f) - 1.0f;
+    params.dutySweepValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
+    params.vibratoDepthValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
+    params.vibratoSpeedValue = RFXGEN_RANDF(2.0f) - 1.0f;
+    //params.vibratoPhaseDelay = RFXGEN_RANDF(2.0f) - 1.0f;
+    params.attackTimeValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
+    params.sustainTimeValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 2.0f);
+    params.decayTimeValue = RFXGEN_RANDF(2.0f)-1.0f;
+    params.sustainPunchValue = powf(RFXGEN_RANDF(0.8f), 2.0f);
 
     if (params.attackTimeValue + params.sustainTimeValue + params.decayTimeValue < 0.2f)
     {
-        params.sustainTimeValue += 0.2f + frnd(0.3f);
-        params.decayTimeValue += 0.2f + frnd(0.3f);
+        params.sustainTimeValue += 0.2f + RFXGEN_RANDF(0.3f);
+        params.decayTimeValue += 0.2f + RFXGEN_RANDF(0.3f);
     }
 
-    params.lpfResonanceValue = frnd(2.0f) - 1.0f;
-    params.lpfCutoffValue = 1.0f - powf(frnd(1.0f), 3.0f);
-    params.lpfCutoffSweepValue = powf(frnd(2.0f) - 1.0f, 3.0f);
+    params.lpfResonanceValue = RFXGEN_RANDF(2.0f) - 1.0f;
+    params.lpfCutoffValue = 1.0f - powf(RFXGEN_RANDF(1.0f), 3.0f);
+    params.lpfCutoffSweepValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
 
     if (params.lpfCutoffValue < 0.1f && params.lpfCutoffSweepValue < -0.05f) params.lpfCutoffSweepValue = -params.lpfCutoffSweepValue;
 
-    params.hpfCutoffValue = powf(frnd(1.0f), 5.0f);
-    params.hpfCutoffSweepValue = powf(frnd(2.0f) - 1.0f, 5.0f);
-    params.phaserOffsetValue = powf(frnd(2.0f) - 1.0f, 3.0f);
-    params.phaserSweepValue = powf(frnd(2.0f) - 1.0f, 3.0f);
-    params.repeatSpeedValue = frnd(2.0f) - 1.0f;
-    params.changeSpeedValue = frnd(2.0f) - 1.0f;
-    params.changeAmountValue = frnd(2.0f) - 1.0f;
+    params.hpfCutoffValue = powf(RFXGEN_RANDF(1.0f), 5.0f);
+    params.hpfCutoffSweepValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 5.0f);
+    params.phaserOffsetValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
+    params.phaserSweepValue = powf(RFXGEN_RANDF(2.0f) - 1.0f, 3.0f);
+    params.repeatSpeedValue = RFXGEN_RANDF(2.0f) - 1.0f;
+    params.changeSpeedValue = RFXGEN_RANDF(2.0f) - 1.0f;
+    params.changeAmountValue = RFXGEN_RANDF(2.0f) - 1.0f;
 
     return params;
 }
@@ -978,31 +981,31 @@ RLAPI WaveParams GenRandomize(void)
 // Mutate current sound
 RLAPI void WaveMutate(WaveParams *params)
 {
-    RFXGEN_SRAND(0);       // Refresh seed to avoid converging behaviour
+    RFXGEN_SRAND(time(NULL));       // Refresh seed to avoid converging behaviour
     
-    if (RFXGEN_RAND(0, 1)) params->startFrequencyValue += frnd(0.1f) - 0.05f;        
-    //if (RFXGEN_RAND(0, 1)) params.minFrequencyValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->slideValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->deltaSlideValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->squareDutyValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->dutySweepValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->vibratoDepthValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->vibratoSpeedValue += frnd(0.1f) - 0.05f;
-    //if (RFXGEN_RAND(0, 1)) params.vibratoPhaseDelay += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->attackTimeValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->sustainTimeValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->decayTimeValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->sustainPunchValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->lpfResonanceValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->lpfCutoffValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->lpfCutoffSweepValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->hpfCutoffValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->hpfCutoffSweepValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->phaserOffsetValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->phaserSweepValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->repeatSpeedValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->changeSpeedValue += frnd(0.1f) - 0.05f;
-    if (RFXGEN_RAND(0, 1)) params->changeAmountValue += frnd(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->startFrequencyValue += RFXGEN_RANDF(0.1f) - 0.05f;        
+    //if (RFXGEN_RAND01) params.minFrequencyValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->slideValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->deltaSlideValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->squareDutyValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->dutySweepValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->vibratoDepthValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->vibratoSpeedValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    //if (RFXGEN_RAND01) params.vibratoPhaseDelay += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->attackTimeValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->sustainTimeValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->decayTimeValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->sustainPunchValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->lpfResonanceValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->lpfCutoffValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->lpfCutoffSweepValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->hpfCutoffValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->hpfCutoffSweepValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->phaserOffsetValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->phaserSweepValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->repeatSpeedValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->changeSpeedValue += RFXGEN_RANDF(0.1f) - 0.05f;
+    if (RFXGEN_RAND01) params->changeAmountValue += RFXGEN_RANDF(0.1f) - 0.05f;
 }
 
-#endif
+#endif      // RFXGEN_IMPLEMENTATION
