@@ -145,8 +145,8 @@ GuiMainToolbarState InitGuiMainToolbar(void)
     //...
 
     // Visuals options
-    state.visualStyleActive = 0;
-    state.prevVisualStyleActive = 0;
+    state.visualStyleActive = 5;
+    state.prevVisualStyleActive = 5;
     state.languageActive = 0;
 
     // Info options
