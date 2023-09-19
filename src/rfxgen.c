@@ -26,11 +26,14 @@
 *           NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
-*       4.0  (12-Sep-2023)  UPDATED: Using **raygui 4.0** and latest raylib 4.6-dev
+*       4.0  (20-Sep-2023)  REVIEWED: Sound generation issues, improved
+*                           ADDED: Using pseudo-random number generator
 *                           ADDED: Support macOS builds (x86_64 + arm64)
 *                           ADDED: Support loading .qoa wave data
 *                           ADDED: Support .qoa export and play on CLI
+*                           REVIEWED: Initial UI style
 *                           REVIEWED: Regenerated tool imagery
+*                           UPDATED: Using **raygui 4.0** and latest raylib 4.6-dev
 *
 *       3.3  (06-Mar-2023)  ADDED: Support export to .qoa file format
 *
@@ -135,9 +138,12 @@
     #include <emscripten/emscripten.h>      // Emscripten library - LLVM to JavaScript compiler
 #endif
 
+#define RPRAND_IMPLEMENTATION
+#include "rprand.h"                         // Pseudo-random number generator
+
 #define RFXGEN_IMPLEMENTATION
-#define RFXGEN_RAND             GetRandomValue
-#define RFXGEN_SRAND            SetRandomSeed
+#define RFXGEN_RAND             rprand_get_value        // raylib alternative: GetRandomValue
+#define RFXGEN_SRAND            rprand_set_seed         // raylib alternative: SetRandomSeed
 #define RFXGEN_CALLOC           RL_CALLOC
 #define RFXGET_FREE             RL_FREE
 #define RFXGET_ISFILEEXTENSION  IsFileExtension
@@ -404,6 +410,8 @@ int main(int argc, char *argv[])
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
     RenderTexture2D screenTarget = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
     SetTextureFilter(screenTarget.texture, TEXTURE_FILTER_POINT);
+
+    GuiLoadStyleCyber();    // Load default style
 
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
