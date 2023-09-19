@@ -128,7 +128,7 @@
 #define TOOL_SHORT_NAME         "rFX"
 #define TOOL_VERSION            "4.0"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
-#define TOOL_RELEASE_DATE       "May.2023"
+#define TOOL_RELEASE_DATE       "Sep.2023"
 #define TOOL_LOGO_COLOR         0x5197d4ff
 
 #include "raylib.h"
