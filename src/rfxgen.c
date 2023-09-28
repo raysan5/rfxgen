@@ -222,7 +222,11 @@ static const char *toolName = TOOL_NAME;
 static const char *toolVersion = TOOL_VERSION;
 static const char *toolDescription = TOOL_DESCRIPTION;
 
-static float volumeValue = 0.6f;        // Master volume
+// NOTE: Max length depends on OS, in Windows MAX_PATH = 256
+static char inFileName[512] = { 0 };        // Input file name (required in case of drag & drop over executable)
+static char outFileName[512] = { 0 };       // Output file name (required for file save/export)
+
+static float volumeValue = 0.6f;            // Master volume
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -250,9 +254,6 @@ static char getch(void) { return getchar(); }   // Get pressed character
 //------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    char inFileName[512] = { 0 };       // Input file name (required in case of drag & drop over executable)
-    char outFileName[512] = { 0 };      // Output file name (required for file save/export)
-
 #if !defined(_DEBUG)
     SetTraceLogLevel(LOG_NONE);         // Disable raylib trace log messsages
 #endif
@@ -1039,9 +1040,6 @@ static void ProcessCommandLine(int argc, char *argv[])
 {
     // CLI required variables
     bool showUsageInfo = false;         // Toggle command line usage info
-
-    char inFileName[512] = { 0 };       // Input file name
-    char outFileName[512] = { 0 };      // Output file name
     char playFileName[512] = { 0 };     // Play file name
 
     int sampleRate = 44100;             // Default conversion sample rate
