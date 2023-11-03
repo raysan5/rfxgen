@@ -10,19 +10,19 @@
 *   #define RFXGEN_LOG
 *       Used to switch how logging occurs within the library. By default, will log with printf().
 *
-*   #define RFXGET_RAND(min, max)
+*   #define RFXGEN_RAND(min, max)
 *       Used to generate a random value between the given min and max integers. Defaults to rand().
 *
 *   #define RFXGEN_SRAND
 *       Used to seed the random number generator. Defaults to srand().
 *
-*   #define RFXGET_CALLOC
+*   #define RFXGEN_CALLOC
 *       By default, will use calloc() for allocating memory.
 *
-*   #define RFXGET_FREE
+*   #define RFXGEN_FREE
 *       By default, will use free() to deallocate memory.
 *
-*   #define RFXGET_MEMCPY
+*   #define RFXGEN_MEMCPY
 *       By default, will use memcpy() for copying memory.
 *
 *   #define RFXGEN_ISFILEEXTENSION

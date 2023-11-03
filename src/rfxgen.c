@@ -145,8 +145,8 @@
 #define RFXGEN_RAND             rprand_get_value        // raylib alternative: GetRandomValue
 #define RFXGEN_SRAND            rprand_set_seed         // raylib alternative: SetRandomSeed
 #define RFXGEN_CALLOC           RL_CALLOC
-#define RFXGET_FREE             RL_FREE
-#define RFXGET_ISFILEEXTENSION  IsFileExtension
+#define RFXGEN_FREE             RL_FREE
+#define RFXGEN_ISFILEEXTENSION  IsFileExtension
 #include "rfxgen.h"                         // Sound generation library
 
 #define RAYGUI_IMPLEMENTATION
