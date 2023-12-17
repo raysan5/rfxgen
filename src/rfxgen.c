@@ -939,7 +939,6 @@ int main(int argc, char *argv[])
                         ExportWaveAsCode(cwave, outFileName); // Export wave data as code file
                     }
 
-
                     UnloadWave(cwave);
 
                 #if defined(PLATFORM_WEB)
