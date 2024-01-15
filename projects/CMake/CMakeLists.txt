@@ -35,7 +35,7 @@ if(${BUILD_RFXGEN})
                 MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
                 MACOSX_BUNDLE_BUNDLE_VERSION "3.3"
                 MACOSX_BUNDLE_ICON_FILE rfxgen.icns
-                MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2015-2023 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)"
+                MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2015-2024 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)"
                 MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/macos/rfxgen.plist.in
                 )
 
