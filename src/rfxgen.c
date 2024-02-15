@@ -469,10 +469,10 @@ int main(int argc, char *argv[])
         else if (IsKeyPressed(KEY_FIVE)) mainToolbarState.soundSlotActive = 4;
 
         // Select visual style
-        if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
-        else if (IsKeyPressed(KEY_RIGHT)) mainToolbarState.visualStyleActive++;
-        if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = MAX_GUI_STYLES_AVAILABLE - 1;
-        else if (mainToolbarState.visualStyleActive > (MAX_GUI_STYLES_AVAILABLE - 1)) mainToolbarState.visualStyleActive = 0;
+        //if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
+        //else if (IsKeyPressed(KEY_RIGHT)) mainToolbarState.visualStyleActive++;
+        //if (mainToolbarState.visualStyleActive < 0) mainToolbarState.visualStyleActive = MAX_GUI_STYLES_AVAILABLE - 1;
+        //else if (mainToolbarState.visualStyleActive > (MAX_GUI_STYLES_AVAILABLE - 1)) mainToolbarState.visualStyleActive = 0;
 
 #if !defined(PLATFORM_WEB)
         // Toggle screen size (x2) mode
