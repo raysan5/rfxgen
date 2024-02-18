@@ -24,15 +24,15 @@ jobs:
         path: ${{ env.PROJECT_NAME }}
       
     - name: Checkout raylib repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: raysan5/raylib
         path: raylib
   
     - name: Setup emsdk
-      uses: mymindstorm/setup-emsdk@v12
+      uses: mymindstorm/setup-emsdk@v14
       with:
-        version: 3.1.30
+        version: 3.1.54
         actions-cache-folder: 'emsdk-cache'
         
     - name: Setup Release Paths
@@ -76,14 +76,11 @@ jobs:
         name: ${{ env.PROJECT_RELEASE_PATH }}.zip
         path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
         
-    # Alternative: https://github.com/marketplace/actions/gh-release
+
     - name: Upload Artifact to Release
-      uses: actions/upload-release-asset@v1.0.1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ env.PROJECT_RELEASE_PATH }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_name: ${{ env.PROJECT_RELEASE_PATH }}.zip
-        asset_path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
-        asset_content_type: application/zip
       if: github.event_name == 'release' && github.event.action == 'published'
