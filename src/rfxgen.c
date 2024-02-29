@@ -138,7 +138,7 @@
     #include <emscripten/emscripten.h>      // Emscripten library - LLVM to JavaScript compiler
 #endif
 
-#define RPRAND_IMPLEMENTATION
+//#define RPRAND_IMPLEMENTATION             // WARNING: Already provided by raylib
 #include "rprand.h"                         // Pseudo-random number generator
 
 #define RFXGEN_IMPLEMENTATION
