@@ -446,8 +446,6 @@ int main(int argc, char *argv[])
 
         // Keyboard shortcuts
         //------------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[mainToolbarState.soundSlotActive]);  // Play current sound
-
         // Show dialog: save sound (.rfx)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S))
         {
@@ -461,12 +459,20 @@ int main(int argc, char *argv[])
         // Show dialog: export wave (.wav, .qoa, .raw, .h)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) windowExportActive = true;
 
-        // Select current sound slot
-        if (IsKeyPressed(KEY_ONE)) mainToolbarState.soundSlotActive = 0;
-        else if (IsKeyPressed(KEY_TWO)) mainToolbarState.soundSlotActive = 1;
-        else if (IsKeyPressed(KEY_THREE)) mainToolbarState.soundSlotActive = 2;
-        else if (IsKeyPressed(KEY_FOUR)) mainToolbarState.soundSlotActive = 3;
-        else if (IsKeyPressed(KEY_FIVE)) mainToolbarState.soundSlotActive = 4;
+        if (!showSaveFileDialog) {
+            // Select current sound slot
+            if (IsKeyPressed(KEY_ONE)) mainToolbarState.soundSlotActive = 0;
+            else if (IsKeyPressed(KEY_TWO)) mainToolbarState.soundSlotActive = 1;
+            else if (IsKeyPressed(KEY_THREE)) mainToolbarState.soundSlotActive = 2;
+            else if (IsKeyPressed(KEY_FOUR)) mainToolbarState.soundSlotActive = 3;
+            else if (IsKeyPressed(KEY_FIVE)) mainToolbarState.soundSlotActive = 4;
+
+            // Play current sound
+            if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[mainToolbarState.soundSlotActive]);
+
+            // Toggle play on change option
+            if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
+        }
 
         // Select visual style
         //if (IsKeyPressed(KEY_LEFT)) mainToolbarState.visualStyleActive--;
@@ -478,9 +484,6 @@ int main(int argc, char *argv[])
         // Toggle screen size (x2) mode
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_F)) screenSizeActive = !screenSizeActive;
 #endif
-        // Toggle play on change option
-        if (IsKeyPressed(KEY_P)) playOnChange = !playOnChange;
-
         // Toggle window: help
         if (IsKeyPressed(KEY_F1)) windowHelpState.windowActive = !windowHelpState.windowActive;
 
