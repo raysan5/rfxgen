@@ -66,11 +66,11 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #if !defined(RFXGEN_GEN_SAMPLE_RATE)
-    #define RFXGEN_GEN_SAMPLE_RATE 44100    // Default sample rate
+    #define RFXGEN_GEN_SAMPLE_RATE  44100       // Generation sample rate
 #endif
 
-#define RFXGEN_GEN_SAMPLE_SIZE 32           // The sample size of generated waves (32 bit -> float)
-#define RFXGEN_GEN_CHANNELS 1               // The number of channels that are generated for waves (only 1)
+#define RFXGEN_GEN_SAMPLE_SIZE         32       // Bit size of generated waves (32 bit -> float)
+#define RFXGEN_GEN_CHANNELS             1       // Channels for generated waves (only 1 - MONO)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -163,14 +163,14 @@ RLAPI void WaveMutate(WaveParams *params); // Mutate current sound
 #if defined(RFXGEN_IMPLEMENTATION)
 
 // C standard library dependencies
-#include <stdlib.h>     // Required for: srand(), rand(), calloc(), free()
+#include <stdlib.h>     // Required for: calloc(), free(), [srand(), rand()]
 #include <stdio.h>      // Required for: printf()
 #include <string.h>     // Required for: strcmp(), strlen(), memcpy()
 #include <math.h>       // Required for: abs(), pow(), powf()
 #include <time.h>       // Required for: time()
 
 #ifndef RFXGEN_SRAND
-    #define RFXGEN_SRAND srand
+    #define RFXGEN_SRAND  srand
 #endif
 
 // Random integer between the given range
