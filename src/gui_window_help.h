@@ -111,7 +111,7 @@ void GuiWindowHelp(GuiWindowHelpState *state);
 static const char *helpLines[] = {
     "F1 - Show Help window",
     "F2 - Show About window",
-    "F3 - Show Sponsor window",
+    "F3 - Show Issue Report window",
     //"F4 - Show User window",
     "-File Controls",
     "LCTRL + N - Reset sound slot",

@@ -26,6 +26,11 @@
 *           NOTE: Avoids including tinyfiledialogs depencency library
 *
 *   VERSIONS HISTORY:
+*       4.1  (06-Apr-2024)  ADDED: Issue report window
+*                           REMOVED: Sponsors window
+*                           REVIEWED: Main toolbar and help window
+*                           UPDATED: Using raylib 5.1-dev and raygui 4.1-dev
+* 
 *       4.0  (20-Sep-2023)  REVIEWED: Sound generation issues, improved
 *                           ADDED: Using pseudo-random number generator
 *                           ADDED: Support macOS builds (x86_64 + arm64)
@@ -83,8 +88,8 @@
 *       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 4.6-dev          - Windowing/input management and drawing
-*       raygui 4.0              - Immediate-mode GUI controls with custom styling and icons
+*       raylib 5.1-dev          - Windowing/input management and drawing
+*       raygui 4.1-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.13.3  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
@@ -126,9 +131,9 @@
 
 #define TOOL_NAME               "rFXGen"
 #define TOOL_SHORT_NAME         "rFX"
-#define TOOL_VERSION            "4.0"
+#define TOOL_VERSION            "4.1"
 #define TOOL_DESCRIPTION        "A simple and easy-to-use fx sounds generator"
-#define TOOL_RELEASE_DATE       "Sep.2023"
+#define TOOL_RELEASE_DATE       "Apr.2024"
 #define TOOL_LOGO_COLOR         0x5197d4ff
 
 #include "raylib.h"
@@ -138,14 +143,11 @@
     #include <emscripten/emscripten.h>      // Emscripten library - LLVM to JavaScript compiler
 #endif
 
-//#define RPRAND_IMPLEMENTATION             // WARNING: Already provided by raylib
-#include "rprand.h"                         // Pseudo-random number generator
-
 #define RFXGEN_IMPLEMENTATION
-#define RFXGEN_RAND             rprand_get_value        // raylib alternative: GetRandomValue
-#define RFXGEN_SRAND            rprand_set_seed         // raylib alternative: SetRandomSeed
 #define RFXGEN_CALLOC           RL_CALLOC
 #define RFXGEN_FREE             RL_FREE
+#define RFXGEN_RAND             GetRandomValue      // Using raylib provided generator: rprand
+#define RFXGEN_SRAND            SetRandomSeed       // Using raylib provided generator: rprand
 #define RFXGEN_ISFILEEXTENSION  IsFileExtension
 #include "rfxgen.h"                         // Sound generation library
 
@@ -162,9 +164,6 @@
 
 #define GUI_WINDOW_ABOUT_IMPLEMENTATION
 #include "gui_window_about.h"               // GUI: About Window
-
-#define GUI_WINDOW_SPONSOR_IMPLEMENTATION
-#include "gui_window_sponsor.h"             // GUI: Sponsor Window
 
 #define GUI_FILE_DIALOGS_IMPLEMENTATION
 #include "gui_file_dialogs.h"               // GUI: File Dialogs
@@ -317,14 +316,14 @@ int main(int argc, char *argv[])
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //-----------------------------------------------------------------------------------
 
-    // GUI: Sponsor Window
+    // GUI: Issue Report Window
     //-----------------------------------------------------------------------------------
-    GuiWindowSponsorState windowSponsorState = InitGuiWindowSponsor();
+    bool showIssueReportWindow = false;
     //-----------------------------------------------------------------------------------
 
     // GUI: Export Window
     //-----------------------------------------------------------------------------------
-    bool windowExportActive = false;
+    bool showExportWindow = false;
 
     int fileTypeActive = 0;         // ComboBox file type selection
     int sampleRateActive = 1;       // ComboBox sample rate selection
@@ -339,7 +338,7 @@ int main(int argc, char *argv[])
     // GUI: Exit Window
     //-----------------------------------------------------------------------------------
     bool closeWindow = false;
-    bool windowExitActive = false;
+    bool showExitWindow = false;
     //-----------------------------------------------------------------------------------
 
     // GUI: Custom file dialogs
@@ -457,7 +456,7 @@ int main(int argc, char *argv[])
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) showLoadFileDialog = true;
 
         // Show dialog: export wave (.wav, .qoa, .raw, .h)
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) windowExportActive = true;
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) showExportWindow = true;
 
         if (!showSaveFileDialog) {
             // Select current sound slot
@@ -490,18 +489,18 @@ int main(int argc, char *argv[])
         // Toggle window: about
         if (IsKeyPressed(KEY_F2)) windowAboutState.windowActive = !windowAboutState.windowActive;
 
-        // Toggle window: sponsor
-        if (IsKeyPressed(KEY_F3)) windowSponsorState.windowActive = !windowSponsorState.windowActive;
+        // Toggle window: issue report
+        if (IsKeyPressed(KEY_F3)) showIssueReportWindow = !showIssueReportWindow;
 
         // Show closing window on ESC
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
-            else if (windowSponsorState.windowActive) windowSponsorState.windowActive = false;
             else if (windowHelpState.windowActive) windowHelpState.windowActive = false;
-            else if (windowExportActive) windowExportActive = false;
+            else if (showIssueReportWindow) showIssueReportWindow = false;
+            else if (showExportWindow) showExportWindow = false;
         #if defined(PLATFORM_DESKTOP)
-            else windowExitActive = !windowExitActive;
+            else showExitWindow = !showExitWindow;
         #else
             else if (showLoadFileDialog) showLoadFileDialog = false;
             else if (showSaveFileDialog) showSaveFileDialog = false;
@@ -528,7 +527,7 @@ int main(int argc, char *argv[])
             strcpy(outFileName, "sound.rfx");
             showSaveFileDialog = true;
         }
-        else if (mainToolbarState.btnExportFilePressed) windowExportActive = true;
+        else if (mainToolbarState.btnExportFilePressed) showExportWindow = true;
 
         if (mainToolbarState.visualStyleActive != mainToolbarState.prevVisualStyleActive)
         {
@@ -553,9 +552,9 @@ int main(int argc, char *argv[])
         }
 
         // Help options logic
-        if (mainToolbarState.btnHelpPressed) windowHelpState.windowActive = true;                   // Help button logic
-        if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true;     // About window button logic
-        if (mainToolbarState.btnSponsorPressed) windowSponsorState.windowActive = true; // User sponsor logic
+        if (mainToolbarState.btnHelpPressed) windowHelpState.windowActive = true;
+        if (mainToolbarState.btnAboutPressed) windowAboutState.windowActive = true;
+        if (mainToolbarState.btnIssuePressed) showIssueReportWindow = true;
         //----------------------------------------------------------------------------------
 
         // Basic program flow logic
@@ -574,12 +573,12 @@ int main(int argc, char *argv[])
         // Avoid wave regeneration when some window is active
         if (!windowHelpState.windowActive &&
             !windowAboutState.windowActive &&
-            !windowSponsorState.windowActive &&
+            !showIssueReportWindow &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
             !showExportFileDialog &&
-            !windowExportActive &&
-            !windowExitActive)
+            !showExportWindow &&
+            !showExitWindow)
         {
             // Consider two possible cases to regenerate wave and update sound:
             // CASE1: regenerate flag is true (set by sound buttons functions)
@@ -600,8 +599,8 @@ int main(int argc, char *argv[])
 
                 if ((regenerate || playOnChange) &&
                     !windowAboutState.windowActive &&
-                    !windowSponsorState.windowActive &&
-                    !windowHelpState.windowActive)
+                    !windowHelpState.windowActive &&
+                    !showIssueReportWindow)
                 {
                     PlaySound(sound[mainToolbarState.soundSlotActive]);
                 }
@@ -641,9 +640,9 @@ int main(int argc, char *argv[])
         // WARNING: Some windows should lock the main screen controls when shown
         if (windowHelpState.windowActive ||
             windowAboutState.windowActive ||
-            windowSponsorState.windowActive ||
-            windowExitActive ||
-            windowExportActive ||
+            showIssueReportWindow ||
+            showExportWindow ||
+            showExitWindow ||
             showLoadFileDialog ||
             showSaveFileDialog ||
             showExportFileDialog) GuiLock();
@@ -779,16 +778,26 @@ int main(int argc, char *argv[])
             GuiWindowAbout(&windowAboutState);
             //----------------------------------------------------------------------------------------
 
-            // GUI: Sponsor Window
+            // GUI: Issue Report Window
             //----------------------------------------------------------------------------------------
-            windowSponsorState.windowBounds.x = (float)screenWidth/2 - windowSponsorState.windowBounds.width/2;
-            windowSponsorState.windowBounds.y = (float)screenHeight/2 - windowSponsorState.windowBounds.height/2 - 20;
-            GuiWindowSponsor(&windowSponsorState);
+            if (showIssueReportWindow)
+            {
+                Rectangle messageBox = { (float)GetScreenWidth()/2 - 300/2, (float)GetScreenHeight()/2 - 190/2 - 20, 300, 190 };
+                int result = GuiMessageBox(messageBox, "#220#Report Issue", 
+                    "Do you want to report any issue or\nfeature request for this program?\n\ngithub.com/raysan5/rfxgen", "#186#Report on GitHub");
+
+                if (result == 1)    // Report issue pressed
+                {
+                    OpenURL("https://github.com/raysan5/rfxgen/issues");
+                    showIssueReportWindow = false;
+                }
+                else if (result == 0) showIssueReportWindow = false;
+            }
             //----------------------------------------------------------------------------------------
 
             // GUI: Export Window
             //----------------------------------------------------------------------------------------
-            if (windowExportActive)
+            if (showExportWindow)
             {
                 Rectangle messageBox = { (float)screenWidth/2 - 248/2, (float)screenHeight/2 - 150, 248, 208 };
                 int result = GuiMessageBox(messageBox, "#7#Export Wave File", " ", "#7# Export Wave");
@@ -817,23 +826,23 @@ int main(int argc, char *argv[])
 
                     exportChannels = channelsActive + 1;
 
-                    windowExportActive = false;
+                    showExportWindow = false;
                     showExportFileDialog = true;
 
                     memset(outFileName, 0, 512);
                     strcpy(outFileName, "sound");
                 }
-                else if (result == 0) windowExportActive = false;
+                else if (result == 0) showExportWindow = false;
             }
             //----------------------------------------------------------------------------------
 
             // GUI: Exit Window
             //----------------------------------------------------------------------------------------
-            if (windowExitActive)
+            if (showExitWindow)
             {
                 int result = GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
 
-                if ((result == 0) || (result == 2)) windowExitActive = false;
+                if ((result == 0) || (result == 2)) showExitWindow = false;
                 else if (result == 1) closeWindow = true;
             }
             //----------------------------------------------------------------------------------------

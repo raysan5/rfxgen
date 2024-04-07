@@ -353,7 +353,6 @@
     <ClInclude Include="..\..\..\src\gui_main_toolbar.h" />
     <ClInclude Include="..\..\..\src\gui_window_about.h" />
     <ClInclude Include="..\..\..\src\gui_window_help.h" />
-    <ClInclude Include="..\..\..\src\gui_window_sponsor.h" />
     <ClInclude Include="..\..\..\src\rfxgen.h" />
   </ItemGroup>
   <ItemGroup>
