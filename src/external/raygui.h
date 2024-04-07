@@ -26,7 +26,7 @@
 *   NOTES:
 *       - WARNING: GuiLoadStyle() and GuiLoadStyle{Custom}() functions, allocate memory for
 *         font atlas recs and glyphs, freeing that memory is (usually) up to the user,
-*         no unload function is explicitly provided... but note that GuiLoadStyleDefaulf() unloads
+*         no unload function is explicitly provided... but note that GuiLoadStyleDefault() unloads
 *         by default any previously loaded font (texture, recs, glyphs).
 *       - Global UI alpha (guiAlpha) is applied inside GuiDrawRectangle() and GuiDrawText() functions
 *
@@ -317,9 +317,9 @@
 #define RAYGUI_H
 
 #define RAYGUI_VERSION_MAJOR 4
-#define RAYGUI_VERSION_MINOR 0
+#define RAYGUI_VERSION_MINOR 1
 #define RAYGUI_VERSION_PATCH 0
-#define RAYGUI_VERSION  "4.0"
+#define RAYGUI_VERSION  "4.1-dev"
 
 #if !defined(RAYGUI_STANDALONE)
     #include "raylib.h"
