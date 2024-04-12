@@ -1,6 +1,6 @@
 # rFXGen
 
-<img align="left" src="logo/rfxgen_256x256.png" width=256><br><br><br>
+<img align="left" src="logo/rfxgen_256x256.png" width=256><br>
 
 A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
