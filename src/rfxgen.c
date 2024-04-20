@@ -738,7 +738,7 @@ int main(int argc, char *argv[])
             //--------------------------------------------------------------------------------
             DrawTextureEx(waveTarget.texture, (Vector2) { waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
             DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
-            DrawRectangleLines((int)waveRec.x, (int)waveRec.y, (int)waveRec.width, (int)waveRec.height, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+            DrawRectangleLinesEx(waveRec, 1.0f, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
 
             // GUI: Main toolbar panel
