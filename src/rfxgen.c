@@ -27,10 +27,11 @@
 *
 *   VERSIONS HISTORY:
 *       4.1  (06-Apr-2024)  ADDED: Issue report window
+*                           ADDED: Support splash screen
 *                           REMOVED: Sponsors window
 *                           REVIEWED: Main toolbar and help window
 *                           UPDATED: Using raylib 5.1-dev and raygui 4.1-dev
-* 
+*
 *       4.0  (20-Sep-2023)  REVIEWED: Sound generation issues, improved
 *                           ADDED: Using pseudo-random number generator
 *                           ADDED: Support macOS builds (x86_64 + arm64)
@@ -316,6 +317,12 @@ int main(int argc, char *argv[])
     GuiWindowAboutState windowAboutState = InitGuiWindowAbout();
     //-----------------------------------------------------------------------------------
 
+    // GUI: Support Message Box
+    //-----------------------------------------------------------------------------------
+    bool showSupportMessageBox = true;
+    int supportMessageRandBtn = GetRandomValue(0, 1);
+    //-----------------------------------------------------------------------------------
+
     // GUI: Issue Report Window
     //-----------------------------------------------------------------------------------
     bool showIssueReportWindow = false;
@@ -411,7 +418,7 @@ int main(int argc, char *argv[])
     RenderTexture2D screenTarget = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
     SetTextureFilter(screenTarget.texture, TEXTURE_FILTER_POINT);
 
-    GuiLoadStyleCyber();    // Load default style
+    GuiLoadStyleCyber();    // Load initial style
 
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -498,6 +505,7 @@ int main(int argc, char *argv[])
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
             else if (windowHelpState.windowActive) windowHelpState.windowActive = false;
             else if (showIssueReportWindow) showIssueReportWindow = false;
+            else if (showSupportMessageBox) showSupportMessageBox = false;
             else if (showExportWindow) showExportWindow = false;
         #if defined(PLATFORM_DESKTOP)
             else showExitWindow = !showExitWindow;
@@ -574,6 +582,7 @@ int main(int argc, char *argv[])
         if (!windowHelpState.windowActive &&
             !windowAboutState.windowActive &&
             !showIssueReportWindow &&
+            !showSupportMessageBox &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
             !showExportFileDialog &&
@@ -641,6 +650,7 @@ int main(int argc, char *argv[])
         if (windowHelpState.windowActive ||
             windowAboutState.windowActive ||
             showIssueReportWindow ||
+            showSupportMessageBox ||
             showExportWindow ||
             showExitWindow ||
             showLoadFileDialog ||
@@ -783,7 +793,7 @@ int main(int argc, char *argv[])
             if (showIssueReportWindow)
             {
                 Rectangle messageBox = { (float)GetScreenWidth()/2 - 300/2, (float)GetScreenHeight()/2 - 190/2 - 20, 300, 190 };
-                int result = GuiMessageBox(messageBox, "#220#Report Issue", 
+                int result = GuiMessageBox(messageBox, "#220#Report Issue",
                     "Do you want to report any issue or\nfeature request for this program?\n\ngithub.com/raysan5/rfxgen", "#186#Report on GitHub");
 
                 if (result == 1)    // Report issue pressed
@@ -962,6 +972,36 @@ int main(int argc, char *argv[])
                 }
 
                 if (result >= 0) showExportFileDialog = false;
+            }
+            //----------------------------------------------------------------------------------------
+
+            // GUI: Show support message box (splash)
+            //----------------------------------------------------------------------------------------
+            if (showSupportMessageBox)
+            {
+                GuiPanel((Rectangle){ -10, screenHeight/2 - 180, screenWidth + 20, 290 }, NULL);
+
+                GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize*3);
+                GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+                GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED));
+                GuiLabel((Rectangle){ -10, screenHeight/2 - 140, screenWidth + 20, 30 }, TextFormat("Enjoying %s???", TOOL_NAME));
+                GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, GuiGetStyle(DEFAULT, TEXT_COLOR_NORMAL));
+                GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize*2);
+                GuiLabel((Rectangle){ -10, screenHeight/2 - 30, screenWidth + 20, 30 }, "Please, consider a small donation\n\nto support free tools development.");
+
+                if (supportMessageRandBtn)
+                {
+                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessageBox = false;
+                    if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessageBox = false; }
+                }
+                else
+                {
+                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessageBox = false; } 
+                    if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessageBox = false;
+                }
+
+                GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+                GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize);
             }
             //----------------------------------------------------------------------------------------
 
