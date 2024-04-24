@@ -29,9 +29,12 @@
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define project variables
-PROJECT_NAME          ?= rtoolname
+PROJECT_NAME          ?= rfxgen
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= .
+PROJECT_SOURCE_FILES  ?= \
+    rfxgen.c \
+    external/tinyfiledialogs.c
 
 RAYLIB_PATH           ?= C:/GitHub/raylib
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_PATH)/src
@@ -298,19 +301,13 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 endif
 
 
-# Define source code files required
-#------------------------------------------------------------------------------------------------
-PROJECT_SOURCE_FILES ?= \
-    rtoolname.c \
-    external/tinyfiledialogs.c
-
 # Define all object files from source files
+#------------------------------------------------------------------------------------------------
 OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
-# NOTE: We call this Makefile target or Makefile.Android target
 all:
 	$(MAKE) $(PROJECT_NAME)
 
