@@ -792,7 +792,7 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (showIssueReportWindow)
             {
-                Rectangle messageBox = { (float)GetScreenWidth()/2 - 300/2, (float)GetScreenHeight()/2 - 190/2 - 20, 300, 190 };
+                Rectangle messageBox = { (float)screenWidth/2 - 300/2, (float)screenHeight/2 - 190/2 - 20, 300, 190 };
                 int result = GuiMessageBox(messageBox, "#220#Report Issue",
                     "Do you want to report any issue or\nfeature request for this program?\n\ngithub.com/raysan5/rfxgen", "#186#Report on GitHub");
 
