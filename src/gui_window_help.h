@@ -123,7 +123,7 @@ static const char *helpLines[] = {
     "SPACE - Play current sound slot",
     "P - Toggle autoplay on params change",
     "-Tool Visuals",
-    "LEFT | RIGHT - Select visual style",
+    //"LEFT | RIGHT - Select visual style",
     "LCTRL + F - Toggle double screen size",
     "-",
     "ESCAPE - Close Window/Exit",
