@@ -12,7 +12,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2022 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2024 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -141,7 +141,7 @@ GuiWindowHelpState InitGuiWindowHelp(void)
     state.windowActive = false;
     state.supportDrag = false;
 
-    state.windowBounds = (Rectangle){ GetScreenWidth()/2 - 360/2, 0, 360, 0 };
+    state.windowBounds = (Rectangle){ (float)GetScreenWidth()/2 - 360/2, 0, 360, 0 };
     state.panOffset = (Vector2){ 0, 0 };
     state.dragMode = false;
 
@@ -162,7 +162,7 @@ GuiWindowHelpState InitGuiWindowHelp(void)
     // Review size if it does not fit on the screen
     if (state.windowBounds.height > (GetScreenHeight() - 80))
     {
-        state.windowBounds.height = GetScreenHeight() - 80;
+        state.windowBounds.height = (float)GetScreenHeight() - 80;
         state.windowBounds.y = GetScreenHeight()/2 - state.windowBounds.height/2;
     }
    
@@ -221,11 +221,11 @@ void GuiWindowHelp(GuiWindowHelpState *state)
         // Draw scroll panel considering window bounds and content size
         Rectangle scissor = { 0 };
         GuiScrollPanel((Rectangle){ state->windowBounds.x, state->windowBounds.y + GUIHELPWINDOW_LINE_HEIGHT - 1, state->windowBounds.width, state->windowBounds.height - 24 + 1 }, NULL,
-                       (Rectangle){ state->windowBounds.x, state->windowBounds.y + GUIHELPWINDOW_LINE_HEIGHT, state->windowBounds.width - 16, state->contentHeight }, &state->scrollPanelOffset, &scissor);
+                       (Rectangle){ state->windowBounds.x, state->windowBounds.y + GUIHELPWINDOW_LINE_HEIGHT, state->windowBounds.width - 16, (float)state->contentHeight }, &state->scrollPanelOffset, &scissor);
 
         // Draw help info and separation lines
         // WARNING: We only scissor if scrolling is required, scissor mode forces a new draw call
-        if (state->contentHeight > (state->windowBounds.height - 24)) BeginScissorMode(scissor.x, scissor.y, scissor.width + 2, scissor.height);
+        if (state->contentHeight > (state->windowBounds.height - 24)) BeginScissorMode((int)scissor.x, (int)scissor.y, (int)scissor.width + 2, (int)scissor.height);
 
             for (int i = 0; i < GUIHELPWINDOW_MAX_LINES; i++)
             {
