@@ -1743,6 +1743,9 @@ int GuiTabBar(Rectangle bounds, const char **text, int count, int *active)
                 if (toggle) *active = i;
             }
 
+            // Close tab with middle mouse button pressed
+            if (CheckCollisionPointRec(GetMousePosition(), tabBounds) && IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) result = i;
+
             GuiSetStyle(TOGGLE, TEXT_PADDING, textPadding);
             GuiSetStyle(TOGGLE, TEXT_ALIGNMENT, textAlignment);
 
@@ -2988,9 +2991,9 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
         if (*value > maxValue) *value = maxValue;
         else if (*value < minValue) *value = minValue;
     }
-    
+
     // Control value change check
-    if(oldValue == *value) result = 0;
+    if (oldValue == *value) result = 0;
     else result = 1;
 
     // Slider bar limits check
@@ -4794,8 +4797,8 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
         {
             // NOTE: We consider icon height, probably different than text size
             GuiDrawIcon(iconId, (int)textBoundsPosition.x, (int)(textBounds.y + textBounds.height/2 - RAYGUI_ICON_SIZE*guiIconScale/2 + TEXT_VALIGN_PIXEL_OFFSET(textBounds.height)), guiIconScale, tint);
-            textBoundsPosition.x += (RAYGUI_ICON_SIZE*guiIconScale + ICON_TEXT_PADDING);
-            textBoundsWidthOffset = (RAYGUI_ICON_SIZE*guiIconScale + ICON_TEXT_PADDING);
+            textBoundsPosition.x += (float)(RAYGUI_ICON_SIZE*guiIconScale + ICON_TEXT_PADDING);
+            textBoundsWidthOffset = (float)(RAYGUI_ICON_SIZE*guiIconScale + ICON_TEXT_PADDING);
         }
 #endif
         // Get size in bytes of text,
@@ -4811,7 +4814,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
         float textOffsetX = 0.0f;
         float glyphWidth = 0;
 
-        float ellipsisWidth = GetTextWidth("...");
+        int ellipsisWidth = GetTextWidth("...");
         bool overflowReached = false;
         for (int c = 0, codepointSize = 0; c < lineSize; c += codepointSize)
         {
@@ -4826,7 +4829,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
             if (guiFont.glyphs[index].advanceX == 0) glyphWidth = ((float)guiFont.recs[index].width*scaleFactor);
             else glyphWidth = (float)guiFont.glyphs[index].advanceX*scaleFactor;
 
-            // Wrap mode text measuring, to validate if 
+            // Wrap mode text measuring, to validate if
             // it can be drawn or a new line is required
             if (wrapMode == TEXT_WRAP_CHAR)
             {
@@ -4886,7 +4889,9 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
                             else if (!overflowReached)
                             {
                                 overflowReached = true;
-                                for (int j = 0; j < ellipsisWidth; j += ellipsisWidth/3) {
+
+                                for (int j = 0; j < ellipsisWidth; j += ellipsisWidth/3)
+                                {
                                     DrawTextCodepoint(guiFont, '.', RAYGUI_CLITERAL(Vector2){ textBoundsPosition.x + textOffsetX + j, textBoundsPosition.y + textOffsetY }, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), GuiFade(tint, guiAlpha));
                                 }
                             }
@@ -4951,7 +4956,6 @@ static void GuiTooltip(Rectangle controlRec)
     {
         Vector2 textSize = MeasureTextEx(GuiGetFont(), guiTooltipPtr, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING));
 
-        // WARNING: In case of scaled window but using scaled-framebuffer, tooltip will go out of screen
         if ((controlRec.x + textSize.x + 16) > GetScreenWidth()) controlRec.x -= (textSize.x + 16 - controlRec.width);
 
         GuiPanel(RAYGUI_CLITERAL(Rectangle){ controlRec.x, controlRec.y + controlRec.height + 4, textSize.x + 16, GuiGetStyle(DEFAULT, TEXT_SIZE) + 8.f }, NULL);
@@ -5174,7 +5178,9 @@ static int GuiScrollBar(Rectangle bounds, int value, int minValue, int maxValue)
     if (value > maxValue) value = maxValue;
     if (value < minValue) value = minValue;
 
-    const int valueRange = maxValue - minValue;
+    int valueRange = maxValue - minValue;
+    if (valueRange <= 0) valueRange = 1;
+
     int sliderSize = GuiGetStyle(SCROLLBAR, SCROLL_SLIDER_SIZE);
     if (sliderSize < 1) sliderSize = 1;  // TODO: Consider a minimum slider size
 
@@ -5502,21 +5508,21 @@ static int GetCodepointNext(const char *text, int *codepointSize)
     if (0xf0 == (0xf8 & ptr[0]))
     {
         // 4 byte UTF-8 codepoint
-        if(((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80) || ((ptr[3] & 0xC0) ^ 0x80)) { return codepoint; } //10xxxxxx checks
+        if (((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80) || ((ptr[3] & 0xC0) ^ 0x80)) { return codepoint; } //10xxxxxx checks
         codepoint = ((0x07 & ptr[0]) << 18) | ((0x3f & ptr[1]) << 12) | ((0x3f & ptr[2]) << 6) | (0x3f & ptr[3]);
         *codepointSize = 4;
     }
     else if (0xe0 == (0xf0 & ptr[0]))
     {
         // 3 byte UTF-8 codepoint */
-        if(((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80)) { return codepoint; } //10xxxxxx checks
+        if (((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80)) { return codepoint; } //10xxxxxx checks
         codepoint = ((0x0f & ptr[0]) << 12) | ((0x3f & ptr[1]) << 6) | (0x3f & ptr[2]);
         *codepointSize = 3;
     }
     else if (0xc0 == (0xe0 & ptr[0]))
     {
         // 2 byte UTF-8 codepoint
-        if((ptr[1] & 0xC0) ^ 0x80) { return codepoint; } //10xxxxxx checks
+        if ((ptr[1] & 0xC0) ^ 0x80) { return codepoint; } //10xxxxxx checks
         codepoint = ((0x1f & ptr[0]) << 6) | (0x3f & ptr[1]);
         *codepointSize = 2;
     }
