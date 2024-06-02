@@ -8,7 +8,7 @@ BEGIN
     BLOCK "040904E4"    // English US
     BEGIN
       VALUE "CompanyName", "raylib technologies"
-      VALUE "FileDescription", "rFXGen - A simple and easy-to-use fx sounds generator"
+      VALUE "FileDescription", "rFXGen | A simple and easy-to-use fx sounds generator"
       VALUE "FileVersion", "4.2"
       VALUE "InternalName", "rfxgen"
       VALUE "LegalCopyright", "(c) 2024 raylib technologies (@raylibtech)"
