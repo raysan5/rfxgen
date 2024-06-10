@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
                 params[mainToolbarState.soundSlotActive] = LoadWaveParams(droppedFiles.paths[0]);
                 regenerate = true;
 
-                SetWindowTitle(TextFormat("%s v%s - %s", toolName, toolVersion, GetFileName(droppedFiles.paths[0])));
+                SetWindowTitle(TextFormat("%s v%s | File: %s", toolName, toolVersion, GetFileName(droppedFiles.paths[0])));
             }
             else if (IsFileExtension(droppedFiles.paths[0], ".rgs")) GuiLoadStyle(droppedFiles.paths[0]);
 
