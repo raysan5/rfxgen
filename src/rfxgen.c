@@ -89,8 +89,8 @@
 *       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 5.1-dev          - Windowing/input management and drawing
-*       raygui 4.1-dev          - Immediate-mode GUI controls with custom styling and icons
+*       raylib 5.5-dev          - Windowing/input management and drawing
+*       raygui 4.5-dev          - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.13.3  - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
@@ -464,7 +464,8 @@ int main(int argc, char *argv[])
         // Show dialog: export wave (.wav, .qoa, .raw, .h)
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)) showExportWindow = true;
 
-        if (!showSaveFileDialog) {
+        if (!showSaveFileDialog)
+        {
             // Select current sound slot
             if (IsKeyPressed(KEY_ONE)) mainToolbarState.soundSlotActive = 0;
             else if (IsKeyPressed(KEY_TWO)) mainToolbarState.soundSlotActive = 1;
@@ -995,7 +996,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessageBox = false; } 
+                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessageBox = false; }
                     if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessageBox = false;
                 }
 
