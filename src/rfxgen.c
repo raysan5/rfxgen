@@ -171,7 +171,7 @@
 
 // raygui embedded styles
 // NOTE: Included in the same order as selector
-#define MAX_GUI_STYLES_AVAILABLE   9        // NOTE: Included light style
+#define MAX_GUI_STYLES_AVAILABLE   10        // NOTE: Included light style
 #include "styles/style_dark.h"              // raygui style: dark
 #include "styles/style_jungle.h"            // raygui style: jungle
 #include "styles/style_candy.h"             // raygui style: candy
@@ -180,6 +180,7 @@
 #include "styles/style_terminal.h"          // raygui style: terminal
 #include "styles/style_ashes.h"             // raygui style: ashes
 #include "styles/style_bluish.h"            // raygui style: bluish
+#include "styles/style_amber.h"             // raygui style: amber
 
 // C standard library
 #include <math.h>                   // Required for: sinf(), powf()
@@ -318,7 +319,11 @@ int main(int argc, char *argv[])
 
     // GUI: Support Message Box
     //-----------------------------------------------------------------------------------
+#if defined(PLATFORM_WEB)
     bool showSupportMessageBox = true;
+#else
+    bool showSupportMessageBox = false;
+#endif
     int supportMessageRandBtn = GetRandomValue(0, 1);
     //-----------------------------------------------------------------------------------
 
@@ -553,6 +558,7 @@ int main(int argc, char *argv[])
                 case 6: GuiLoadStyleTerminal(); break;
                 case 7: GuiLoadStyleAshes(); break;
                 case 8: GuiLoadStyleBluish(); break;
+                case 9: GuiLoadStyleAmber(); break;
                 default: break;
             }
 
