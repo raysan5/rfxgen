@@ -1,14 +1,8 @@
-# rFXGen
-
-<img align="left" src="logo/rfxgen_256x256.png" width=256><br>
+# `rFXGen`
 
 A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's sfxr](http://www.drpetter.se/project_sfxr.html).
 
-<br>
-
 `rFXGen` can be used for free as a [WebAssembly online tool](https://raylibtech.itch.io/rfxgen) and it can also be downloaded as a **standalone tool** for _Windows_ and _Linux_ with some extra features. Binaries for other OSs are not released but they can be compiled from sources.
-
-<br>
 
 ## Features
 
@@ -29,7 +23,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
 
 ![rFXGen Cyber UI style](screenshots/rfxgen_v300_cyber_shot01.png)
  
-## Basic Usage
+## Usage
 
 Open the tools and use the buttons to generate random sounds. Use the sliders to customize sound parameters.
 Sounds could be saved as `.rfx` (sound generation parameters) and also exported to `.wav`, `.raw` (samples data) and `.h` (byte array code file). 
