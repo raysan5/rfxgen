@@ -12,9 +12,11 @@
     <meta name="viewport" content="width=device-width">
     
     <!-- Open Graph metatags for sharing -->
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="rFXGen by raylib technologies">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image" content="https://www.raylibtech.com/images/tools/rfxgen_promo_card.png">
+    <meta property="og:image" content="https://www.raylibtech.com/rfxgen/rfxgen_promo_card.png">
+    <meta property="og:image:alt" content="A simple and easy-to-use fx sounds generator" />
     <meta property="og:site_name" content="raylibtech.com | rFXGen">
     <meta property="og:url" content="https://raylibtech.itch.io/rFXGen">
     <meta property="og:description" content="A simple and easy-to-use fx sounds generator">
@@ -23,15 +25,20 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@raylibtech">
     <meta name="twitter:title" content="rFXGen by raylib technologies">
-    <meta name="twitter:image" content="https://www.raylibtech.com/images/tools/rfxgen_promo_card.png">
+    <meta name="twitter:image" content="https://www.raylibtech.com/rfxgen/rfxgen_promo_card.png">
+    <meta name="twitter:image:alt" content="A simple and easy-to-use fx sounds generator">
     <meta name="twitter:url" content="https://raylibtech.itch.io/rFXGen">
     <meta name="twitter:description" content="A simple and easy-to-use fx sounds generator">
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="https://www.raylibtech.com/images/tools/rfxgen.ico">
+    <link rel="shortcut icon" href="https://www.raylibtech.com/rfxgen/rfxgen.ico">
     <style>
-        body { margin: 0px; }
-        canvas.emscripten { border: 0px none; background-color: black; }
+        body { font-family: arial; margin: 0px; background-color: black; padding: none; overflow: hidden; }
+        .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+        div.emscripten { text-align: center; }
+
+        /* NOTE: Canvas *must not* have any border or padding, or mouse coords will be wrong */
+        canvas.emscripten { border: 0px none; background: black; height: 100vh; width: 100vw; }
     </style>
     <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
     <script type='text/javascript'>
