@@ -309,7 +309,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -1045,6 +1045,7 @@ typedef enum {
 
 #if defined(RAYGUI_IMPLEMENTATION)
 
+#include <ctype.h>              // required for: isspace() [GuiTextBox()]
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf(), vsprintf() [GuiLoadStyle(), GuiLoadIcons()]
 #include <stdlib.h>             // Required for: malloc(), calloc(), free() [GuiLoadStyle(), GuiLoadIcons()]
 #include <string.h>             // Required for: strlen() [GuiTextBox(), GuiValueBox()], memset(), memcpy()
@@ -1639,9 +1640,9 @@ int GuiGroupBox(Rectangle bounds, const char *text)
 
     // Draw control
     //--------------------------------------------------------------------
-    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y, RAYGUI_GROUPBOX_LINE_THICK, bounds.height }, 0, BLANK, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED : LINE_COLOR)));
-    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + bounds.height - 1, bounds.width, RAYGUI_GROUPBOX_LINE_THICK }, 0, BLANK, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED : LINE_COLOR)));
-    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + bounds.width - 1, bounds.y, RAYGUI_GROUPBOX_LINE_THICK, bounds.height }, 0, BLANK, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED : LINE_COLOR)));
+    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y, RAYGUI_GROUPBOX_LINE_THICK, bounds.height }, 0, BLANK, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? (int)BORDER_COLOR_DISABLED : (int)LINE_COLOR)));
+    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y + bounds.height - 1, bounds.width, RAYGUI_GROUPBOX_LINE_THICK }, 0, BLANK, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? (int)BORDER_COLOR_DISABLED : (int)LINE_COLOR)));
+    GuiDrawRectangle(RAYGUI_CLITERAL(Rectangle){ bounds.x + bounds.width - 1, bounds.y, RAYGUI_GROUPBOX_LINE_THICK, bounds.height }, 0, BLANK, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? (int)BORDER_COLOR_DISABLED : (int)LINE_COLOR)));
 
     GuiLine(RAYGUI_CLITERAL(Rectangle){ bounds.x, bounds.y - GuiGetStyle(DEFAULT, TEXT_SIZE)/2, bounds.width, (float)GuiGetStyle(DEFAULT, TEXT_SIZE) }, text);
     //--------------------------------------------------------------------
@@ -1662,7 +1663,7 @@ int GuiLine(Rectangle bounds, const char *text)
     int result = 0;
     GuiState state = guiState;
 
-    Color color = GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED : LINE_COLOR));
+    Color color = GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? (int)BORDER_COLOR_DISABLED : (int)LINE_COLOR));
 
     // Draw control
     //--------------------------------------------------------------------
@@ -1710,7 +1711,7 @@ int GuiPanel(Rectangle bounds, const char *text)
     //--------------------------------------------------------------------
     if (text != NULL) GuiStatusBar(statusBar, text);  // Draw panel header as status bar
 
-    GuiDrawRectangle(bounds, RAYGUI_PANEL_BORDER_WIDTH, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BORDER_COLOR_DISABLED: LINE_COLOR)),
+    GuiDrawRectangle(bounds, RAYGUI_PANEL_BORDER_WIDTH, GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? (int)BORDER_COLOR_DISABLED: (int)LINE_COLOR)),
                      GetColor(GuiGetStyle(DEFAULT, (state == STATE_DISABLED)? BASE_COLOR_DISABLED : BACKGROUND_COLOR)));
     //--------------------------------------------------------------------
 
@@ -2148,7 +2149,9 @@ int GuiToggleSlider(Rectangle bounds, const char *text, int *active)
 
     // Get substrings items from text (items pointers)
     int itemCount = 0;
-    const char **items = GuiTextSplit(text, ';', &itemCount, NULL);
+    const char **items = NULL;
+
+    if (text != NULL) items = GuiTextSplit(text, ';', &itemCount, NULL);
 
     Rectangle slider = {
         0,      // Calculated later depending on the active toggle
@@ -2603,24 +2606,59 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                 }
             }
 
-            // Delete codepoint from text, before current cursor position
-            if ((textLength > 0) && (IsKeyPressed(KEY_BACKSPACE) || (IsKeyDown(KEY_BACKSPACE) && (autoCursorCooldownCounter >= RAYGUI_TEXTBOX_AUTO_CURSOR_COOLDOWN))))
+            // Delete related codepoints from text, before current cursor position
+            if ((textLength > 0) && IsKeyPressed(KEY_BACKSPACE) && (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)))
+            {
+                int i = textBoxCursorIndex - 1;
+                int accCodepointSize = 0;
+
+                // Move cursor to the end of word if on space already
+                while ((i > 0) && isspace(text[i]))
+                {
+                    int prevCodepointSize = 0;
+                    GetCodepointPrevious(text + i, &prevCodepointSize);
+                    i -= prevCodepointSize;
+                    accCodepointSize += prevCodepointSize;
+                }
+
+                // Move cursor to the start of the word
+                while ((i > 0) && !isspace(text[i]))
+                {
+                    int prevCodepointSize = 0;
+                    GetCodepointPrevious(text + i, &prevCodepointSize);
+                    i -= prevCodepointSize;
+                    accCodepointSize += prevCodepointSize;
+                }
+
+                // Move forward text from cursor position
+                for (int j = (textBoxCursorIndex - accCodepointSize); j < textLength; j++) text[j] = text[j + accCodepointSize];
+
+                // Prevent cursor index from decrementing past 0
+                if (textBoxCursorIndex > 0)
+                {
+                    textBoxCursorIndex -= accCodepointSize;
+                    textLength -= accCodepointSize;
+                }
+
+                // Make sure text last character is EOL
+                text[textLength] = '\0';
+            }
+            else if ((textLength > 0) && (IsKeyPressed(KEY_BACKSPACE) || (IsKeyDown(KEY_BACKSPACE) && (autoCursorCooldownCounter >= RAYGUI_TEXTBOX_AUTO_CURSOR_COOLDOWN))))
             {
                 autoCursorDelayCounter++;
 
                 if (IsKeyPressed(KEY_BACKSPACE) || (autoCursorDelayCounter%RAYGUI_TEXTBOX_AUTO_CURSOR_DELAY) == 0)      // Delay every movement some frames
                 {
                     int prevCodepointSize = 0;
-                    GetCodepointPrevious(text + textBoxCursorIndex, &prevCodepointSize);
-
-                    // Move backward text from cursor position
-                    for (int i = (textBoxCursorIndex - prevCodepointSize); i < textLength; i++) text[i] = text[i + prevCodepointSize];
-
-                    // TODO Check: >= cursor+codepointsize and <= length-codepointsize
 
                     // Prevent cursor index from decrementing past 0
                     if (textBoxCursorIndex > 0)
                     {
+                        GetCodepointPrevious(text + textBoxCursorIndex, &prevCodepointSize);
+
+                        // Move backward text from cursor position
+                        for (int i = (textBoxCursorIndex - prevCodepointSize); i < textLength; i++) text[i] = text[i + prevCodepointSize];
+
                         textBoxCursorIndex -= codepointSize;
                         textLength -= codepointSize;
                     }
@@ -2638,7 +2676,7 @@ int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
                 if (IsKeyPressed(KEY_LEFT) || (autoCursorDelayCounter%RAYGUI_TEXTBOX_AUTO_CURSOR_DELAY) == 0)      // Delay every movement some frames
                 {
                     int prevCodepointSize = 0;
-                    GetCodepointPrevious(text + textBoxCursorIndex, &prevCodepointSize);
+                    if (textBoxCursorIndex > 0) GetCodepointPrevious(text + textBoxCursorIndex, &prevCodepointSize);
 
                     if (textBoxCursorIndex >= prevCodepointSize) textBoxCursorIndex -= prevCodepointSize;
                 }

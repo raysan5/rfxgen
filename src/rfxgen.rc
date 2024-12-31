@@ -11,7 +11,7 @@ BEGIN
       VALUE "FileDescription", "rFXGen | A simple and easy-to-use fx sounds generator"
       VALUE "FileVersion", "4.2"
       VALUE "InternalName", "rfxgen"
-      VALUE "LegalCopyright", "(c) 2024 raylib technologies (@raylibtech)"
+      VALUE "LegalCopyright", "(c) 2025 raylib technologies (@raylibtech)"
       VALUE "OriginalFilename", "rfxgen"
       VALUE "ProductName", "rFXGen"
       VALUE "ProductVersion", "4.2"
