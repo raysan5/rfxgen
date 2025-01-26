@@ -10,7 +10,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2019-2022 raylib technologies (@raylibtech).
+*   Copyright (c) 2019-2025 raylib technologies (@raylibtech).
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -123,16 +123,16 @@ int GuiFileDialog(int dialogType, const char *title, char *fileName, const char 
         case DIALOG_OPEN_FILE: /* TODO: Load file modal dialog */ break;
         case DIALOG_OPEN_FILE_MULTI: /* TODO: Load multiple files modal dialog */ break;
         case DIALOG_OPEN_DIRECTORY: /* TODO: Load directory modal dialog */ break;
-        case DIALOG_SAVE_FILE: /* TODO: Load file modal dialog */ break;
+        case DIALOG_SAVE_FILE: /* TODO: Save file modal dialog */ break;
         case DIALOG_MESSAGE: result = GuiMessageBox((Rectangle){ GetScreenWidth()/2 - 160, GetScreenHeight()/2 - 120, 320, 120 }, title, message, filters); break;
         case DIALOG_TEXTINPUT: result = GuiTextInputBox((Rectangle){ GetScreenWidth()/2 - 160, GetScreenHeight()/2 - 120, 320, 120 }, title, message, filters, fileName, 512, NULL); break;
         default: break;
     }
 #else   // Use native OS dialogs (tinyfiledialogs)
 
-    const char *tempFileName = NULL;
+    char *tempFileName = NULL;
     int filterCount = 0;
-    const char **filterSplit = TextSplit(filters, ';', &filterCount);
+    const char **filterSplit = (const char **)TextSplit(filters, ';', &filterCount);
     
     switch (dialogType)
     {
