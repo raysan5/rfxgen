@@ -226,6 +226,7 @@ static const char *toolDescription = TOOL_DESCRIPTION;
 // NOTE: Max length depends on OS, in Windows MAX_PATH = 256
 static char inFileName[512] = { 0 };        // Input file name (required in case of drag & drop over executable)
 static char outFileName[512] = { 0 };       // Output file name (required for file save/export)
+static char presetType[512] = { 0 };        // Type of the preset to be generated
 
 static float volumeValue = 0.6f;            // Master volume
 
@@ -1070,6 +1071,8 @@ static void ShowCommandLineInfo(void)
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .qoa, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
+    printf("    -g, --generate <preset>			: Generate file based on the preset.\n");
+    printf("                                      Supported presets: coin, laser, explosion, powerup, hit, jump, blip\n");
     printf("    -f, --format <sample_rate>,<sample_size>,<channels>\n");
     printf("                                    : Define output wave format. Comma separated values.\n");
     printf("                                      Supported values:\n");
@@ -1205,7 +1208,14 @@ static void ProcessCommandLine(int argc, char *argv[])
             }
             else LOG("WARNING: No file to play provided\n");
         }
+        else if ((strcmp(argv[i], "-g") == 0) || (strcmp(argv[i], "--generate") == 0))
+        {
+            strcpy(presetType, argv[i + 1]); // saves the preset to generate
+        }
     }
+
+    // Wave that will be generated in case an input file or preset type is provided
+    Wave wave = { 0 };
 
     // Process input file if provided
     if (inFileName[0] != '\0')
@@ -1215,8 +1225,6 @@ static void ProcessCommandLine(int argc, char *argv[])
         LOG("\nInput file:       %s", inFileName);
         LOG("\nOutput file:      %s", outFileName);
         LOG("\nOutput format:    %i Hz, %i bits, %s\n\n", sampleRate, sampleSize, (channels == 1)? "Mono" : "Stereo");
-
-        Wave wave = { 0 };
 
         if (IsFileExtension(inFileName, ".rfx")) // || IsFileExtension(inFileName, ".sfs"))
         {
@@ -1237,6 +1245,29 @@ static void ProcessCommandLine(int argc, char *argv[])
             wave = LoadWave(inFileName);
         }
 
+    }
+
+    // Process generate sound if type provided
+    if (presetType[0] != '\0')
+    {
+        if (outFileName[0] == '\0') strcpy(outFileName, "output.wav");
+
+        wave.sampleRate = RFXGEN_GEN_SAMPLE_RATE;
+        wave.sampleSize = RFXGEN_GEN_SAMPLE_SIZE;
+        wave.channels = RFXGEN_GEN_CHANNELS;
+
+        if (strcmp(presetType, "coin") == 0)            wave.data = GenerateWave(GenPickupCoin(), &wave.frameCount);
+        else if (strcmp(presetType, "laser") == 0)      wave.data = GenerateWave(GenLaserShoot(), &wave.frameCount);
+        else if (strcmp(presetType, "explosion") == 0)  wave.data = GenerateWave(GenExplosion(), &wave.frameCount);
+        else if (strcmp(presetType, "powerup") == 0)    wave.data = GenerateWave(GenPowerup(), &wave.frameCount);
+        else if (strcmp(presetType, "hit") == 0)        wave.data = GenerateWave(GenHitHurt(), &wave.frameCount);
+        else if (strcmp(presetType, "jump") == 0)       wave.data = GenerateWave(GenJump(), &wave.frameCount);
+        else if (strcmp(presetType, "blip") == 0)       wave.data = GenerateWave(GenBlipSelect(), &wave.frameCount);
+        else LOG("Unrecognized type of preset.\n");
+    }
+
+    // Save the generated wave data if valid
+    if (wave.data != NULL) {
         // Format wave data to desired sampleRate, sampleSize and channels
         WaveFormat(&wave, sampleRate, sampleSize, channels);
 
