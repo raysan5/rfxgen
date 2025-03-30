@@ -15,6 +15,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
  - Configurable sample-rate, bits-per-sample and channels on export
  - Multiple GUI styles with support for custom ones (`.rgs`)
  - Command-line support for `.rfx` to `.wav` batch conversion
+ - Command-line support to generate audio files based on presets
  - Command-line audio player for `.wav`, `.ogg`, `.mp3` and `.flac`
  - **Completely portable (single-file, no-dependencies)**
  - **Free and open-source**
