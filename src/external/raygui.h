@@ -149,6 +149,7 @@
 *                         ADDED: GuiLoadIconsFromMemory()
 *                         ADDED: Multiple new icons
 *                         REMOVED: GuiSpinner() from controls list, using BUTTON + VALUEBOX properties
+*                         REMOVED: GuiSliderPro(), functionality was redundant
 *                         REVIEWED: Controls using text labels to use LABEL properties
 *                         REVIEWED: Replaced sprintf() by snprintf() for more safety
 *                         REVIEWED: GuiTabBar(), close tab with mouse middle button
@@ -754,7 +755,6 @@ RAYGUIAPI int GuiValueBoxFloat(Rectangle bounds, const char *text, char *textVal
 RAYGUIAPI int GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode);                   // Text Box control, updates input text
 
 RAYGUIAPI int GuiSlider(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue); // Slider control
-RAYGUIAPI int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue, int sliderWidth); // Slider control with extended parameters
 RAYGUIAPI int GuiSliderBar(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue); // Slider Bar control
 RAYGUIAPI int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue); // Progress Bar control
 RAYGUIAPI int GuiStatusBar(Rectangle bounds, const char *text);                                        // Status Bar control, shows info text
@@ -1010,11 +1010,11 @@ typedef enum {
     ICON_MLAYERS                  = 226,
     ICON_MAPS                     = 227,
     ICON_HOT                      = 228,
-    ICON_229                      = 229,
-    ICON_230                      = 230,
-    ICON_231                      = 231,
-    ICON_232                      = 232,
-    ICON_233                      = 233,
+    ICON_LABEL                    = 229,
+    ICON_NAME_ID                  = 230,
+    ICON_SLICING                  = 231,
+    ICON_MANUAL_CONTROL           = 232,
+    ICON_COLLISION                = 233,
     ICON_234                      = 234,
     ICON_235                      = 235,
     ICON_236                      = 236,
@@ -1329,11 +1329,11 @@ static unsigned int guiIcons[RAYGUI_ICON_MAX_ICONS*RAYGUI_ICON_DATA_ELEMENTS] = 
     0x0ffe0000, 0x3ffa0802, 0x7fea200a, 0x402a402a, 0x422a422a, 0x422e422a, 0x40384e28, 0x00007fe0,      // ICON_MLAYERS
     0x0ffe0000, 0x3ffa0802, 0x7fea200a, 0x402a402a, 0x5b2a512a, 0x512e552a, 0x40385128, 0x00007fe0,      // ICON_MAPS
     0x04200000, 0x1cf00c60, 0x11f019f0, 0x0f3807b8, 0x1e3c0f3c, 0x1c1c1e1c, 0x1e3c1c1c, 0x00000f70,      // ICON_HOT
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_229
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_230
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_231
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_232
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_233
+    0x00000000, 0x20803f00, 0x2a202e40, 0x20082e10, 0x08021004, 0x02040402, 0x00900108, 0x00000060,      // ICON_LABEL
+    0x00000000, 0x042007e0, 0x47e27c3e, 0x4ffa4002, 0x47fa4002, 0x4ffa4002, 0x7ffe4002, 0x00000000,      // ICON_NAME_ID
+    0x7fe00000, 0x402e4020, 0x43ce5e0a, 0x40504078, 0x438e4078, 0x402e5e0a, 0x7fe04020, 0x00000000,      // ICON_SLICING
+    0x00000000, 0x40027ffe, 0x47c24002, 0x55425d42, 0x55725542, 0x50125552, 0x10105016, 0x00001ff0,      // ICON_MANUAL_CONTROL
+    0x7ffe0000, 0x43c24002, 0x48124422, 0x500a500a, 0x500a500a, 0x44224812, 0x400243c2, 0x00007ffe,      // ICON_COLLISION
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_234
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_235
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,      // ICON_236
@@ -3239,7 +3239,7 @@ int GuiValueBoxFloat(Rectangle bounds, const char *text, char *textValue, float 
 
 // Slider control with pro parameters
 // NOTE: Other GuiSlider*() controls use this one
-int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue, int sliderWidth)
+int GuiSlider(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue)
 {
     int result = 0;
     GuiState state = guiState;
@@ -3247,6 +3247,8 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
     float temp = (maxValue - minValue)/2.0f;
     if (value == NULL) value = &temp;
     float oldValue = *value;
+    
+    int sliderWidth = GuiGetStyle(SLIDER, SLIDER_WIDTH);
 
     Rectangle slider = { bounds.x, bounds.y + GuiGetStyle(SLIDER, BORDER_WIDTH) + GuiGetStyle(SLIDER, SLIDER_PADDING),
                          0, bounds.height - 2*GuiGetStyle(SLIDER, BORDER_WIDTH) - 2*GuiGetStyle(SLIDER, SLIDER_PADDING) };
@@ -3265,7 +3267,7 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
                 {
                     state = STATE_PRESSED;
                     // Get equivalent value and slider position from mousePosition.x
-                    *value = (maxValue - minValue)*((mousePoint.x - bounds.x - sliderWidth/2)/(bounds.width-sliderWidth)) + minValue;
+                    *value = (maxValue - minValue)*((mousePoint.x - bounds.x - sliderWidth/2)/(bounds.width - sliderWidth)) + minValue;
                 }
             }
             else
@@ -3285,7 +3287,7 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
                 if (!CheckCollisionPointRec(mousePoint, slider))
                 {
                     // Get equivalent value and slider position from mousePosition.x
-                    *value = (maxValue - minValue)*((mousePoint.x - bounds.x - sliderWidth/2)/(bounds.width-sliderWidth)) + minValue;
+                    *value = (maxValue - minValue)*((mousePoint.x - bounds.x - sliderWidth/2)/(bounds.width - sliderWidth)) + minValue;
                 }
             }
             else state = STATE_FOCUSED;
@@ -3353,16 +3355,16 @@ int GuiSliderPro(Rectangle bounds, const char *textLeft, const char *textRight, 
     return result;
 }
 
-// Slider control extended, returns selected value and has text
-int GuiSlider(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue)
-{
-    return GuiSliderPro(bounds, textLeft, textRight, value, minValue, maxValue, GuiGetStyle(SLIDER, SLIDER_WIDTH));
-}
-
 // Slider Bar control extended, returns selected value
 int GuiSliderBar(Rectangle bounds, const char *textLeft, const char *textRight, float *value, float minValue, float maxValue)
 {
-    return GuiSliderPro(bounds, textLeft, textRight, value, minValue, maxValue, 0);
+    int result = 0;
+    int preSliderWidth = GuiGetStyle(SLIDER, SLIDER_WIDTH);
+    GuiSetStyle(SLIDER, SLIDER_WIDTH, 0);
+    result = GuiSlider(bounds, textLeft, textRight, value, minValue, maxValue);
+    GuiSetStyle(SLIDER, SLIDER_WIDTH, preSliderWidth);
+    
+    return result;
 }
 
 // Progress Bar control extended, shows current progress value
@@ -3375,7 +3377,7 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
     if (value == NULL) value = &temp;
 
     // Progress bar
-    Rectangle progress = { bounds.x + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) + GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING),
+    Rectangle progress = { bounds.x + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH),
                            bounds.y + GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) + GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING), 0,
                            bounds.height - GuiGetStyle(PROGRESSBAR, BORDER_WIDTH) - 2*GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING) -1 };
 
@@ -3414,7 +3416,6 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
         }
 
         // Draw slider internal progress bar (depends on state)
-        progress.width -= 2*GuiGetStyle(PROGRESSBAR, PROGRESS_PADDING);
         GuiDrawRectangle(progress, 0, BLANK, GetColor(GuiGetStyle(PROGRESSBAR, BASE_COLOR_PRESSED)));
     }
 
@@ -4444,8 +4445,8 @@ void GuiLoadStyleDefault(void)
     {
         // Unload previous font texture
         UnloadTexture(guiFont.texture);
-        RL_FREE(guiFont.recs);
-        RL_FREE(guiFont.glyphs);
+        RAYGUI_FREE(guiFont.recs);
+        RAYGUI_FREE(guiFont.glyphs);
         guiFont.recs = NULL;
         guiFont.glyphs = NULL;
 
@@ -4562,7 +4563,7 @@ char **GuiLoadIcons(const char *fileName, bool loadIconsName)
             else fseek(rgiFile, iconCount*RAYGUI_ICON_MAX_NAME_LENGTH, SEEK_CUR);
 
             // Read icons data directly over internal icons array
-            fread(guiIconsPtr, sizeof(unsigned int), iconCount*(iconSize*iconSize/32), rgiFile);
+            fread(guiIconsPtr, sizeof(unsigned int), (int)iconCount*((int)iconSize*(int)iconSize/32), rgiFile);
         }
 
         fclose(rgiFile);
@@ -4612,7 +4613,7 @@ char **GuiLoadIconsFromMemory(const unsigned char *fileData, int dataSize, bool 
             fileDataPtr += iconCount*RAYGUI_ICON_MAX_NAME_LENGTH;
         }
 
-        int iconDataSize = iconCount*(iconSize*iconSize/32)*sizeof(unsigned int);
+        int iconDataSize = iconCount*((int)iconSize*(int)iconSize/32)*(int)sizeof(unsigned int);
         guiIconsPtr = (unsigned int *)RAYGUI_MALLOC(iconDataSize);
 
         memcpy(guiIconsPtr, fileDataPtr, iconDataSize);
