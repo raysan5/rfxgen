@@ -320,9 +320,9 @@ int main(int argc, char *argv[])
     // GUI: Support Message Box
     //-----------------------------------------------------------------------------------
 #if defined(PLATFORM_WEB)
-    bool showSupportMessageBox = true;
+    bool showSupportMessage = true;
 #else
-    bool showSupportMessageBox = false;
+    bool showSupportMessage = false;
 #endif
     int supportMessageRandBtn = GetRandomValue(0, 1);
     //-----------------------------------------------------------------------------------
@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
             if (windowAboutState.windowActive) windowAboutState.windowActive = false;
             else if (windowHelpState.windowActive) windowHelpState.windowActive = false;
             else if (showIssueReportWindow) showIssueReportWindow = false;
-            else if (showSupportMessageBox) showSupportMessageBox = false;
+            else if (showSupportMessage) showSupportMessage = false;
             else if (showExportWindow) showExportWindow = false;
         #if defined(PLATFORM_DESKTOP)
             else showExitWindow = !showExitWindow;
@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
         if (!windowHelpState.windowActive &&
             !windowAboutState.windowActive &&
             !showIssueReportWindow &&
-            !showSupportMessageBox &&
+            !showSupportMessage &&
             !showLoadFileDialog &&
             !showSaveFileDialog &&
             !showExportFileDialog &&
@@ -656,7 +656,7 @@ int main(int argc, char *argv[])
         if (windowHelpState.windowActive ||
             windowAboutState.windowActive ||
             showIssueReportWindow ||
-            showSupportMessageBox ||
+            showSupportMessage ||
             showExportWindow ||
             showExitWindow ||
             showLoadFileDialog ||
@@ -983,7 +983,7 @@ int main(int argc, char *argv[])
 
             // GUI: Show support message box (splash)
             //----------------------------------------------------------------------------------------
-            if (showSupportMessageBox)
+            if (showSupportMessage)
             {
                 GuiPanel((Rectangle){ -10, screenHeight/2 - 180, screenWidth + 20, 290 }, NULL);
 
@@ -997,13 +997,13 @@ int main(int argc, char *argv[])
 
                 if (supportMessageRandBtn)
                 {
-                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessageBox = false;
-                    if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessageBox = false; }
+                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessage = false;
+                    if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessage = false; }
                 }
                 else
                 {
-                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessageBox = false; }
-                    if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessageBox = false;
+                    if (GuiButton((Rectangle){ 10, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Sure!")) { OpenURL("https://github.com/sponsors/raysan5"); showSupportMessage = false; }
+                    if (GuiButton((Rectangle){ 10 + screenWidth/2 - 5, screenHeight/2 + 40, screenWidth/2 - 15, 40 }, "Next time...")) showSupportMessage = false;
                 }
 
                 GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
