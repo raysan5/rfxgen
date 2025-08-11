@@ -106,7 +106,7 @@
 *       On PLATFORM_ANDROID and PLATFORM_WEB file dialogs are not available
 *
 *   DEVELOPERS:
-*       Ramon Santamaria (@raysan5):   Developer, supervisor, updater and maintainer.
+*       Ramon Santamaria (@raysan5):   Developer, supervisor, updater and maintainer
 *
 *
 *   LICENSE: zlib/libpng
