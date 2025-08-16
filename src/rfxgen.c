@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
             mainToolbarState.prevSoundSlotActive = mainToolbarState.soundSlotActive;
         }
 
-        // Screen scale logic (x2)
+        // Screen and mouse scale logic (x2)
         //----------------------------------------------------------------------------------
         if (screenSizeActive)
         {
