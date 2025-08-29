@@ -1071,7 +1071,7 @@ static void ShowCommandLineInfo(void)
     printf("    -o, --output <filename.ext>     : Define output file.\n");
     printf("                                      Supported extensions: .wav, .qoa, .raw, .h\n");
     printf("                                      NOTE: If not specified, defaults to: output.wav\n\n");
-    printf("    -g, --generate <preset>			: Generate file based on the preset.\n");
+    printf("    -g, --generate <preset>            : Generate file based on the preset.\n");
     printf("                                      Supported presets: coin, laser, explosion, powerup, hit, jump, blip\n");
     printf("    -f, --format <sample_rate>,<sample_size>,<channels>\n");
     printf("                                    : Define output wave format. Comma separated values.\n");
