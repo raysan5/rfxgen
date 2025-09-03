@@ -417,13 +417,16 @@
 
     // TODO: Texture2D type is very coupled to raylib, required by Font type
     // It should be redesigned to be provided by user
-    typedef struct Texture2D {
+    typedef struct Texture {
         unsigned int id;        // OpenGL texture id
         int width;              // Texture base width
         int height;             // Texture base height
         int mipmaps;            // Mipmap levels, 1 by default
         int format;             // Data format (PixelFormat type)
-    } Texture2D;
+    } Texture;
+
+    // Texture2D, same as Texture
+    typedef Texture Texture2D;
 
     // Image, pixel data stored in CPU memory (RAM)
     typedef struct Image {
@@ -1378,7 +1381,7 @@ static unsigned int *guiIconsPtr = guiIcons;
 #define RAYGUI_MAX_PROPS_EXTENDED        8      // Maximum number of extended properties
 
 //----------------------------------------------------------------------------------
-// Types and Structures Definition
+// Module Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Gui control property style color element
 typedef enum { BORDER = 0, BASE, TEXT, OTHER } GuiPropertyElement;
@@ -1494,7 +1497,7 @@ static void DrawRectangleGradientV(int posX, int posY, int width, int height, Co
 #endif      // RAYGUI_STANDALONE
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize);    // Load style from memory (binary only)
 
@@ -4774,9 +4777,8 @@ int GuiGetTextWidth(const char *text)
 #endif      // !RAYGUI_NO_ICONS
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definition
+// Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-
 // Load style from memory
 // WARNING: Binary files only
 static void GuiLoadStyleFromMemory(const unsigned char *fileData, int dataSize)
