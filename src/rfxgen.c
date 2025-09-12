@@ -753,7 +753,7 @@ int main(int argc, char *argv[])
 
             // Draw Wave form
             //--------------------------------------------------------------------------------
-            DrawTextureEx(waveTarget.texture, (Vector2) { waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
+            DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
             DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
             DrawRectangleLinesEx(waveRec, 1.0f, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
