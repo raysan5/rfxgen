@@ -37,6 +37,7 @@ ifneq ($(PLATFORM),PLATFORM_WEB)
 PROJECT_SOURCE_FILES  += external/tinyfiledialogs.c
 endif
 
+# raylib library variables
 RAYLIB_PATH           ?= C:/GitHub/raylib
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_PATH)/src
 RAYLIB_LIB_PATH       ?= $(RAYLIB_PATH)/src
@@ -180,7 +181,6 @@ endif
 
 # Define include paths for required headers: INCLUDE_PATHS
 #------------------------------------------------------------------------------------------------
-# NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS += -I. -Iexternal -I$(RAYLIB_INCLUDE_PATH)
 
 # Define additional directories containing required header files
