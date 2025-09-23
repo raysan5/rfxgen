@@ -43,4 +43,4 @@ Sounds could be saved as `.rfx` (sound generation parameters) and also exported 
 
 In any case, consider some donation to help the author keep working on software for games development.
 
-*Copyright (c) 2015-2025 raylib technologies ([@raylibtech](https://twitter.com/raylibtech)) / Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))*
+*Copyright (c) 2015-2025 raylib technologies ([@raylibtech](https://github.com/raylibtech)) / Ramon Santamaria ([@raysan5](https://github.com/raysan5))*

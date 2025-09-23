@@ -274,7 +274,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         float linkMailTextWidth = MeasureTextEx(GuiGetFont(), linkMailText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x;
         if (GuiLabelButton((Rectangle){ state->windowBounds.x + 90, state->windowBounds.y + 250 + 25, 165, 16 }, TextFormat("www.raylibtech.com/%s", TextToLower(TOOL_NAME)))) { OpenURL("https://www.raylibtech.com/"); }
         if (GuiLabelButton((Rectangle){ state->windowBounds.x + 90, state->windowBounds.y + 270 +25, linkMailTextWidth, 16 }, linkMailText)) { OpenURL("mailto:ray@raylibtech.com"); }
-        if (GuiLabelButton((Rectangle){ state->windowBounds.x + 90 + linkMailTextWidth + 4, state->windowBounds.y + 270 +25, MeasureTextEx(GuiGetFont(), linkraylibtechText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x, 16 }, linkraylibtechText)) { OpenURL("https://twitter.com/raylibtech"); }
+        if (GuiLabelButton((Rectangle){ state->windowBounds.x + 90 + linkMailTextWidth + 4, state->windowBounds.y + 270 +25, MeasureTextEx(GuiGetFont(), linkraylibtechText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x, 16 }, linkraylibtechText)) { OpenURL("https://github.com/raylibtech"); }
 
         GuiLabel((Rectangle){ state->windowBounds.x + 10, state->windowBounds.y + 270 + 25, 65, 16 }, lblSupportText);
         GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 285 + 25, (float)state->windowBounds.width, 20 }, NULL);
