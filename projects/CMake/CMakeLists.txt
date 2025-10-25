@@ -50,7 +50,9 @@ if(${BUILD_RFXGEN})
     target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
 
     # Web Configurations
-    if (${PLATFORM} STREQUAL "Web")
+    if ("${PLATFORM}" STREQUAL "Web")
         set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
+    else()
+        add_compile_definitions(PLATFORM_DESKTOP=)
     endif()
 endif()
