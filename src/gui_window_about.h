@@ -23,7 +23,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2024 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 raylib technologies (@raylibtech) / Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -143,7 +143,7 @@ static const char *lblUsedLibsText = "Powered by:";
 static const char *linkraylibText = "www.raylib.com";
 static const char *linkGitraylibText = "github.com/raysan5/raylib";
 static const char *linkGitrayguiText = "github.com/raysan5/raygui";
-static const char *lblCopyrightText = "Copyright (c) 2023 raylib technologies.";
+static const char *lblCopyrightText = "Copyright (c) 2015-2025 raylib technologies.";
 static const char *linkraylibtechText = "[@raylibtech]";
 static const char *lblMoreInfoText = "More info:";
 static const char *linkMailText = "ray@raylibtech.com";
@@ -269,7 +269,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         GuiLine((Rectangle){ state->windowBounds.x, state->windowBounds.y + 200 + 30, (float)state->windowBounds.width, 20 }, NULL);
 
         GuiLabel((Rectangle){ state->windowBounds.x + 10, state->windowBounds.y + 220 + 28, 289, 20 }, lblCopyrightText);
-        GuiLabel((Rectangle){ state->windowBounds.x + 10, state->windowBounds.y + 250 + 25, 65, 16 }, lblMoreInfoText);
+        GuiLabel((Rectangle){ state->windowBounds.x + 10, state->windowBounds.y + 250 + 25, 100, 16 }, lblMoreInfoText);
 
         float linkMailTextWidth = MeasureTextEx(GuiGetFont(), linkMailText, (float)GuiGetStyle(DEFAULT, TEXT_SIZE), (float)GuiGetStyle(DEFAULT, TEXT_SPACING)).x;
         if (GuiLabelButton((Rectangle){ state->windowBounds.x + 90, state->windowBounds.y + 250 + 25, 165, 16 }, TextFormat("www.raylibtech.com/%s", TextToLower(TOOL_NAME)))) { OpenURL("https://www.raylibtech.com/"); }
@@ -285,7 +285,7 @@ void GuiWindowAbout(GuiWindowAboutState *state)
         int buttonTextAlign = GuiGetStyle(BUTTON, TEXT_ALIGNMENT);
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 
-        if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80 - 90, state->windowBounds.y + 305 + 25, 80, 24 }, btnSponsorText)) { OpenURL("https://github.com/sponsors/raysan5"); }
+        //if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80 - 90, state->windowBounds.y + 305 + 25, 80, 24 }, btnSponsorText)) { OpenURL("https://github.com/sponsors/raysan5"); }
         if (GuiButton((Rectangle){ state->windowBounds.x + state->windowBounds.width - 80, state->windowBounds.y + 305 + 25, 70, 24 }, btnCloseText)) state->windowActive = false;
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, buttonTextAlign);
         //----------------------------------------------------------------------------------------
