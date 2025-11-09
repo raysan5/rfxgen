@@ -8,7 +8,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
 
  - Predefined **sound presets** (Coin, Shoot, Explosion, PowerUp...)
  - Multiple wave types supported (Square, Sawtooth, Sine, Noise)
- - Up to **5 sound slots** to store generated sound (temporary save)
+ - Up to **10 sound slots** to store generated sound (temporary save)
  - Load `.rfx` files with sound generation parameters
  - Save `.rfx` files with sound generation parameters (**104 bytes only**)
  - Export wave data as `.wav`, `.raw` data or `.h` code file (byte array)
@@ -22,7 +22,7 @@ A simple and easy-to-use fx sounds generator, based on the amazing [Dr.Petter's 
 
 ## Screenshot
 
-![rFXGen Cyber UI style](screenshots/rfxgen_v300_cyber_shot01.png)
+![rFXGen UI style](screenshots/rfxgen_v500_shot01.png)
  
 ## Usage
 
