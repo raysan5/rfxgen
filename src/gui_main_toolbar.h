@@ -145,8 +145,8 @@ GuiMainToolbarState InitGuiMainToolbar(void)
     //...
 
     // Visuals options
-    state.visualStyleActive = 5;
-    state.prevVisualStyleActive = 5;
+    state.visualStyleActive = 0;
+    state.prevVisualStyleActive = 0;
     state.languageActive = 0;
 
     // Info options
@@ -166,14 +166,14 @@ GuiMainToolbarState InitGuiMainToolbar(void)
 
 void GuiMainToolbar(GuiMainToolbarState *state)
 {
-    int screenWidth = 540;  // WARNING: Screen width is hardcoded to avoid issues on screen scaling!
+    int screenWidth = 640;  // WARNING: Screen width is hardcoded to avoid issues on screen scaling!
 
     // Toolbar panels
     state->anchorRight.x = screenWidth - 104;       // Update right-anchor panel
     state->anchorVisuals.x = state->anchorRight.x - 165 + 1;    // Update right-anchor panel
 
     GuiPanel((Rectangle){ state->anchorFile.x, state->anchorFile.y, 132, 40 }, NULL);
-    GuiPanel((Rectangle){ state->anchorEdit.x, state->anchorEdit.y, 142, 40 }, NULL);
+    GuiPanel((Rectangle){ state->anchorEdit.x, state->anchorEdit.y, state->anchorVisuals.x - state->anchorEdit.x + 1, 40 }, NULL);
     //GuiPanel((Rectangle){ state->anchorTools.x, state->anchorTools.y, state->anchorVisuals.x - state->anchorTools.x + 1, 40 }, NULL);
     GuiPanel((Rectangle){ state->anchorVisuals.x, state->anchorVisuals.y, 165, 40 }, NULL);
     GuiPanel((Rectangle){ state->anchorRight.x, state->anchorRight.y, 104, 40 }, NULL);
@@ -189,12 +189,12 @@ void GuiMainToolbar(GuiMainToolbarState *state)
     state->btnExportFilePressed = GuiButton((Rectangle){ state->anchorFile.x + 12 + 72 + 12, state->anchorFile.y + 8, 24, 24 }, "#7#");
 
     // Edit options
-    GuiLabel((Rectangle){ state->anchorEdit.x + 8, state->anchorEdit.y + 8, 80, 24 }, "Slot:");
+    GuiLabel((Rectangle){ state->anchorEdit.x + 12, state->anchorEdit.y + 8, 80, 24 }, "Slot:");
 
     int tooglePadding = GuiGetStyle(TOGGLE, GROUP_PADDING);
     GuiSetStyle(TOGGLE, GROUP_PADDING, 2);
-    GuiSetTooltip("Select current sound slot (1,2,3,4,5)");
-    GuiToggleGroup((Rectangle){ state->anchorEdit.x + 12 + 32, state->anchorEdit.y + 8, 16, 24 }, "1;2;3;4;5", &state->soundSlotActive);
+    GuiSetTooltip("Select current sound slot");
+    GuiToggleGroup((Rectangle){ state->anchorEdit.x + 12 + 36, state->anchorEdit.y + 8, 16, 24 }, "1;2;3;4;5;6;7;8;9;10", &state->soundSlotActive);
     GuiSetStyle(TOGGLE, GROUP_PADDING, tooglePadding);
 
     // Tool options
@@ -203,7 +203,7 @@ void GuiMainToolbar(GuiMainToolbarState *state)
     // Visuals options
     GuiLabel((Rectangle){ state->anchorVisuals.x + 8, state->anchorVisuals.y + 8, 60, 24 }, "Style:");
     GuiSetTooltip("Select visual UI style");
-    GuiComboBox((Rectangle){ state->anchorVisuals.x + 8 + 40, state->anchorVisuals.y + 8, 104, 24 }, "Light;Dark;Jungle;Candy;Lavanda;Cyber;Terminal;Ashes;Bluish;Amber", &state->visualStyleActive);
+    GuiComboBox((Rectangle){ state->anchorVisuals.x + 8 + 40, state->anchorVisuals.y + 8, 104, 24 }, "Genesis;Cyber;Terminal;Lavanda;Amber", &state->visualStyleActive);
 
     // Info options
     GuiSetTooltip("Show help window (F1)");
