@@ -1266,7 +1266,8 @@ static void ProcessCommandLine(int argc, char *argv[])
     }
 
     // Save the generated wave data if valid
-    if (wave.data != NULL) {
+    if (wave.data != NULL)
+    {
         // Format wave data to desired sampleRate, sampleSize and channels
         WaveFormat(&wave, sampleRate, sampleSize, channels);
 
