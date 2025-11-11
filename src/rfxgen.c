@@ -28,11 +28,11 @@
 *   VERSIONS HISTORY:
 *       5.0  (10-Nov-2025)  ADDED: Up to 10 sound slots available
 *                           ADDED: New UI default style: Genesis
-*                           REVIEWED: UI design, longer sliders 
+*                           REVIEWED: UI design, longer sliders
 *                           REVIEWED: Available UI styles
 *                           REVIEWED: Welcome window
 *                           UPDATED: Using raylib 5.6-dev and raygui 4.5-dev
-* 
+*
 *       4.2  (23-Apr-2024)  ADDED: Issue report window
 *                           ADDED: Support splash screen
 *                           REMOVED: Sponsors window
