@@ -119,7 +119,7 @@ static const char *helpLines[] = {
     "LCTRL + S - Save sound file (.rfx)",
     "LCTRL + E - Export wave file",
     "-Tool Controls",
-    "1-2-3-4-5 - Select current sound slot",
+    "1..0 - Select current sound slot",
     "SPACE - Play current sound slot",
     "P - Toggle autoplay on params change",
     "-Tool Visuals",
