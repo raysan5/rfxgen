@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
     // GUI: Main Layout
     //-----------------------------------------------------------------------------------
     bool playOnChange = true;           // Automatically play sound on parameter change
-    bool screenSizeActive = false;      // Scale screen x2 (useful for HighDPI screens)
+    bool screenSizeDouble = false;      // Scale screen x2 (useful for HighDPI screens)
     //-----------------------------------------------------------------------------------
 
     // GUI: Main toolbar panel (file and visualization)
@@ -428,6 +428,20 @@ int main(int argc, char *argv[])
 
     GuiLoadStyleGenesis();  // Load initial style
 
+#if !defined(PLATFORM_WEB)
+    // Enable highDPI mode if required (Scale screen x2)
+    int monitorWidth = GetMonitorWidth(GetCurrentMonitor());
+    int monitorHeight = GetMonitorHeight(GetCurrentMonitor());
+    if ((GetWindowScaleDPI().x > 1.5f) || (monitorHeight > (screenHeight*2)))
+    {
+        screenSizeDouble = true;
+        SetWindowSize(screenWidth*2, screenHeight*2);
+        SetMouseScale(0.5f, 0.5f);
+
+        SetWindowPosition(monitorWidth/2 - screenWidth, monitorHeight/2 - screenHeight);
+    }
+#endif
+
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -481,6 +495,11 @@ int main(int argc, char *argv[])
             else if (IsKeyPressed(KEY_THREE)) mainToolbarState.soundSlotActive = 2;
             else if (IsKeyPressed(KEY_FOUR)) mainToolbarState.soundSlotActive = 3;
             else if (IsKeyPressed(KEY_FIVE)) mainToolbarState.soundSlotActive = 4;
+            else if (IsKeyPressed(KEY_SIX)) mainToolbarState.soundSlotActive = 5;
+            else if (IsKeyPressed(KEY_SEVEN)) mainToolbarState.soundSlotActive = 6;
+            else if (IsKeyPressed(KEY_EIGHT)) mainToolbarState.soundSlotActive = 7;
+            else if (IsKeyPressed(KEY_NINE)) mainToolbarState.soundSlotActive = 8;
+            else if (IsKeyPressed(KEY_ZERO)) mainToolbarState.soundSlotActive = 9;
 
             // Play current sound
             if (IsKeyPressed(KEY_SPACE)) PlaySound(sound[mainToolbarState.soundSlotActive]);
@@ -497,7 +516,7 @@ int main(int argc, char *argv[])
 
 #if !defined(PLATFORM_WEB)
         // Toggle screen size (x2) mode
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_F)) screenSizeActive = !screenSizeActive;
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_F)) screenSizeDouble = !screenSizeDouble;
 #endif
         // Toggle window: help
         if (IsKeyPressed(KEY_F1)) windowHelpState.windowActive = !windowHelpState.windowActive;
@@ -633,7 +652,7 @@ int main(int argc, char *argv[])
 
         // Screen and mouse scale logic (x2)
         //----------------------------------------------------------------------------------
-        if (screenSizeActive)
+        if (screenSizeDouble)
         {
             // Screen size x2
             if (GetScreenWidth() < screenWidth*2)
@@ -1017,7 +1036,7 @@ int main(int argc, char *argv[])
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
             // Draw render texture to screen
-            if (screenSizeActive) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Rectangle){ 0, 0, (float)screenTarget.texture.width*2, (float)screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            if (screenSizeDouble) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Rectangle){ 0, 0, (float)screenTarget.texture.width*2, (float)screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
             else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
 
         EndDrawing();
