@@ -98,4 +98,4 @@ For additional support, priority issues review or tool customization requirement
 
 In any case, consider some donation to help the author keep working on useful software development.
 
-*Copyright (c) 2015-2025 raylib technologies ([@raylibtech](https://github.com/raylibtech)) / Ramon Santamaria ([@raysan5](https://github.com/raysan5))*
+*Copyright (c) 2015-2026 raylib technologies ([@raylibtech](https://github.com/raylibtech)) / Ramon Santamaria ([@raysan5](https://github.com/raysan5))*
