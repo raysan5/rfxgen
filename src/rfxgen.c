@@ -793,10 +793,10 @@ int main(int argc, char *argv[])
             GuiSetStyle(STATUSBAR, TEXT_PADDING, textPadding);
             //----------------------------------------------------------------------------------
 
-            // NOTE: If some overlap window is open and main window is locked, we draw a background rectangle
+            // NOTE: If some overlap window is open and main window is locked, draw a background rectangle
             if (GuiIsLocked()) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)), 0.85f));
 
-            // WARNING: Before drawing the windows, we unlock them
+            // WARNING: Before drawing the windows, unlock them
             GuiUnlock();
 
             // GUI: Help Window
@@ -953,7 +953,7 @@ int main(int argc, char *argv[])
                 {
                     // Export file: outFileName
                     Wave cwave = WaveCopy(wave[mainToolbarState.soundSlotActive]);
-                    WaveFormat(&cwave, exportSampleRate, exportSampleSize, exportChannels);   // Before exporting wave data, we format it as desired
+                    WaveFormat(&cwave, exportSampleRate, exportSampleSize, exportChannels);   // Before exporting wave data, format it as desired
 
                     if (fileTypeActive == 0)
                     {
