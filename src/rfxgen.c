@@ -921,7 +921,7 @@ int main(int argc, char *argv[])
 
                 #if defined(PLATFORM_WEB)
                     // Download file from MEMFS (emscripten memory filesystem)
-                    // NOTE: Second argument must be a simple filename (we can't use directories)
+                    // NOTE: Second argument must be a simple filename (can't use directories)
                     // NOTE: Included security check to (partially) avoid malicious code on PLATFORM_WEB
                     if (strchr(outFileName, '\'') == NULL) emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
                 #endif
@@ -990,7 +990,7 @@ int main(int argc, char *argv[])
 
                 #if defined(PLATFORM_WEB)
                     // Download file from MEMFS (emscripten memory filesystem)
-                    // NOTE: Second argument must be a simple filename (we can't use directories)
+                    // NOTE: Second argument must be a simple filename (can't use directories)
                     // NOTE: Included security check to (partially) avoid malicious code on PLATFORM_WEB
                     if (strchr(outFileName, '\'') == NULL) emscripten_run_script(TextFormat("saveFileFromMEMFSToDisk('%s','%s')", outFileName, GetFileName(outFileName)));
                 #endif
