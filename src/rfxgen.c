@@ -96,8 +96,8 @@
 *       0.5  (27-Aug-2016)  Completed port and adaptation from sfxr (only sound generation and playing)
 *
 *   DEPENDENCIES:
-*       raylib 5.6-dev          - Windowing/input management and drawing
-*       raygui 4.5-dev          - Immediate-mode GUI controls with custom styling and icons
+*       raylib 6.0              - Windowing/input management and drawing
+*       raygui 5.0              - Immediate-mode GUI controls with custom styling and icons
 *       tinyfiledialogs 3.20    - Open/save file dialogs, it requires linkage with comdlg32 and ole32 libs
 *
 *   BUILDING:
@@ -251,7 +251,7 @@ static void PlayWaveCLI(Wave wave);             // Play provided wave through CL
 static int kbhit(void);                         // Check if a key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
-#endif  // PLATFORM_DESKTOP
+#endif // PLATFORM_DESKTOP
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
-#endif  // PLATFORM_DESKTOP
+#endif // PLATFORM_DESKTOP
 #if (!defined(_DEBUG) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)))
     // WARNING (Windows): If program is compiled as Window application (instead of console),
     // no console is available to show output info... solution is compiling a console application
@@ -1318,7 +1318,7 @@ static void ProcessCommandLine(int argc, char *argv[])
 
     if (showUsageInfo) ShowCommandLineInfo();
 }
-#endif      // PLATFORM_DESKTOP
+#endif // PLATFORM_DESKTOP
 
 //--------------------------------------------------------------------------------------------
 // Auxiliar functions
@@ -1453,4 +1453,4 @@ static int kbhit(void)
     return 0;
 }
 #endif
-#endif      // PLATFORM_DESKTOP
+#endif // PLATFORM_DESKTOP
