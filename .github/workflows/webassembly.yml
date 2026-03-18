@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     env:
       PROJECT_NAME: ${{ github.event.repository.name }}
       PROJECT_BUILD_PATH: ${{ github.event.repository.name }}\\src
@@ -16,36 +16,36 @@ jobs:
       PROJECT_SOURCES: ${{ github.event.repository.name }}.c
       RAYLIB_CONFIG_FLAGS: "'-DSUPPORT_MODULE_RSHAPES -DSUPPORT_MODULE_RTEXTURES -DSUPPORT_MODULE_RTEXT -DSUPPORT_MODULE_RAUDIO -DSUPPORT_EVENTS_WAITING -DSUPPORT_COMPRESSION_API -DSUPPORT_SCREEN_CAPTURE -DSUPPORT_IMAGE_EXPORT -DSUPPORT_FILEFORMAT_PNG -DSUPPORT_QUADS_DRAW_MODE -DSUPPORT_IMAGE_MANIPULATION -DSUPPORT_DEFAULT_FONT -DSUPPORT_TEXT_MANIPULATION -DSUPPORT_FILEFORMAT_WAV -DSUPPORT_FILEFORMAT_QOA -DSUPPORT_STANDARD_FILEIO -DSUPPORT_TRACELOG'"
       BUILD_WEB_SHELL: minshell.html
-      
+
     steps:
     - name: Checkout this repo
       uses: actions/checkout@master
       with:
         path: ${{ env.PROJECT_NAME }}
-      
+
     - name: Checkout raylib repo
       uses: actions/checkout@v4
       with:
         repository: raysan5/raylib
         path: raylib
-  
+
     - name: Setup emsdk
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: 5.0.3
         actions-cache-folder: 'emsdk-cache'
-        
+
     - name: Setup Release Paths
       run: |
         echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_wasm" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
-    
+
     - name: Setup Environment
-      run: | 
+      run: |
         mkdir ${{ env.PROJECT_RELEASE_PATH }}
         dir
-   
+
     - name: Build raylib Library
       run: |
         cd raylib/src
@@ -56,7 +56,7 @@ jobs:
       run: |
         cd ${{ env.PROJECT_NAME }}/src
         make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib -B
-  
+
     - name: Generate Artifacts
       run: |
         dir ${{ env.PROJECT_BUILD_PATH }}
