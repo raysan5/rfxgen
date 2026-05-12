@@ -1,14 +1,24 @@
-name: WebAssembly
+name: Build Project - WebAssembly
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - '.github/workflows/build_webassembly.yml'
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write       # for actions/upload-release-asset to upload release asset
     runs-on: windows-latest
 
+    # WARNING: Project (internal) name could not be the same as repository name
     env:
       PROJECT_NAME: ${{ github.event.repository.name }}
       PROJECT_BUILD_PATH: ${{ github.event.repository.name }}\\src
@@ -21,7 +31,7 @@ jobs:
     - name: Checkout this repo
       uses: actions/checkout@master
       with:
-        path: ${{ env.PROJECT_NAME }}
+        path: ${{ env.PROJECT_REPO_NAME }}
 
     - name: Checkout raylib repo
       uses: actions/checkout@v4
@@ -37,6 +47,7 @@ jobs:
 
     - name: Setup Release Paths
       run: |
+        echo "PROJECT_VERSION=${{ github.event.release.tag_name }}_wasm" >> $GITHUB_ENV
         echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_wasm" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
@@ -50,12 +61,12 @@ jobs:
       run: |
         cd raylib/src
         emcc -v
-        make PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" RAYLIB_CONFIG_FLAGS=${{ env.RAYLIB_CONFIG_FLAGS }} RAYLIB_PROJECT_RELEASE_PATH=. -B
+        make PLATFORM=PLATFORM_WEB RAYLIB_BUILD_MODE=RELEASE RAYLIB_LIBTYPE=STATIC EMSDK_PATH="D:/a/${{ env.PROJECT_REPO_NAME }}/${{ env.PROJECT_REPO_NAME }}/emsdk-cache/emsdk-main" RAYLIB_CONFIG_FLAGS=${{ env.RAYLIB_CONFIG_FLAGS }} RAYLIB_RELEASE_PATH=. -B
 
     - name: Build Product
       run: |
-        cd ${{ env.PROJECT_NAME }}/src
-        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE EMSDK_PATH="D:/a/${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}/emsdk-cache/emsdk-main" PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib -B
+        cd ${{ env.PROJECT_REPO_NAME }}/src
+        make PLATFORM=PLATFORM_WEB BUILD_MODE=RELEASE EMSDK_PATH="D:/a/${{ env.PROJECT_REPO_NAME }}/${{ env.PROJECT_REPO_NAME }}/emsdk-cache/emsdk-main" PROJECT_SOURCE_FILES=${{ env.PROJECT_SOURCES }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../../raylib -B
 
     - name: Generate Artifacts
       run: |
@@ -64,17 +75,19 @@ jobs:
         copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.data ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.data
         copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.js ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.js
         copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.html ${{ env.PROJECT_RELEASE_PATH }}\index.html
-        copy /Y ${{ env.PROJECT_NAME }}\README.md ${{ env.PROJECT_RELEASE_PATH }}\README.md
-        copy /Y ${{ env.PROJECT_NAME }}\LICENSE ${{ env.PROJECT_RELEASE_PATH }}\LICENSE
+        copy /Y ${{ env.PROJECT_REPO_NAME }}\README.md ${{ env.PROJECT_RELEASE_PATH }}\README.md
+        copy /Y ${{ env.PROJECT_REPO_NAME }}\LICENSE ${{ env.PROJECT_RELEASE_PATH }}\LICENSE
         dir ${{ env.PROJECT_RELEASE_PATH }}
-        7z a -tzip -r .\${{ env.PROJECT_RELEASE_PATH }}.zip .\${{ env.PROJECT_RELEASE_PATH }}\*
+        7z a .\${{ env.PROJECT_RELEASE_PATH }}.zip .\${{ env.PROJECT_RELEASE_PATH }}\*
       shell: cmd
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PROJECT_RELEASE_PATH }}.zip
-        path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
+        path: |
+            ./${{ env.PROJECT_RELEASE_PATH }}
+            !./${{ env.PROJECT_RELEASE_PATH }}.zip
 
     - name: Upload Artifact to Release
       uses: softprops/action-gh-release@v1

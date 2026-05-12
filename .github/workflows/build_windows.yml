@@ -1,42 +1,55 @@
-name: Windows
+name: Build Project - Windows
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - '.github/workflows/build_windows.yml'
   release:
     types: [published]
+    
+permissions:
+  contents: read
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
+    permissions:
+      contents: write       # for actions/upload-release-asset to upload release asset
     runs-on: windows-latest
 
+    # WARNING: Project (internal) name could not be the same as repository name
     env:
       PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_REPO_NAME: ${{ github.event.repository.name }}
       PROJECT_BUILD_PATH: "${{ github.event.repository.name }}\\projects\\VS2022\\build\\${{ github.event.repository.name }}\\bin\\x64\\Release"
       PROJECT_RELEASE_PATH: ${{ github.event.repository.name }}_dev_win_x64
+      PROJECT_RESOURCES_SRC_PATH: src\resources
+      PROJECT_RESOURCES_DST_PATH: resources
 
     steps:
     - name: Checkout this repo
       uses: actions/checkout@master
       with:
-        path: ${{ env.PROJECT_NAME }}
+        path: ${{ env.PROJECT_REPO_NAME }}
       
     - name: Checkout raylib repo
       uses: actions/checkout@v4
       with:
         repository: raysan5/raylib
         path: raylib
-        
+
     # NOTE: Visual Studio project build configuration already defines all required directories where project is generated:
     # $(SolutionDir)\build\$(ProjectName)\bin\$(Platform)\$(Configuration)\
     - name: Setup Release Paths
       run: |
+        echo "PROJECT_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
         echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_win_x64" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
 
     - name: Setup Environment
-      run: | 
+      run: |
         mkdir ${{ env.PROJECT_RELEASE_PATH }}
         dir
       shell: cmd
@@ -48,8 +61,8 @@ jobs:
     - name: Build raylib Library + Product (VS2022 solution)
       run: |
         dir
-        cd ${{ env.PROJECT_NAME }}/projects/VS2022
-        msbuild.exe ${{ env.PROJECT_NAME }}.sln /target:${{ env.PROJECT_NAME }} /property:Configuration=Release /property:Platform=x64
+        cd ${{ env.PROJECT_REPO_NAME }}/projects/VS2022
+        msbuild.exe ${{ env.PROJECT_NAME }}.sln /target:${{ env.PROJECT_NAME }} /property:Configuration=Release /property:Platform=x64 /property:RaylibSrcPath="..\..\..\..\raylib\src"
         cd ../..
       shell: cmd
 
@@ -57,8 +70,8 @@ jobs:
       run: |
         dir ${{ env.PROJECT_BUILD_PATH }}
         copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.exe ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
-        copy /Y ${{ env.PROJECT_NAME }}\README.md ${{ env.PROJECT_RELEASE_PATH }}\README.md
-        copy /Y ${{ env.PROJECT_NAME }}\LICENSE ${{ env.PROJECT_RELEASE_PATH }}\LICENSE
+        copy /Y ${{ env.PROJECT_REPO_NAME }}\README.md ${{ env.PROJECT_RELEASE_PATH }}\README.md
+        copy /Y ${{ env.PROJECT_REPO_NAME }}\LICENSE ${{ env.PROJECT_RELEASE_PATH }}\LICENSE
         dir ${{ env.PROJECT_RELEASE_PATH }}
         7z a .\${{ env.PROJECT_RELEASE_PATH }}.zip .\${{ env.PROJECT_RELEASE_PATH }}
       shell: cmd
@@ -67,7 +80,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PROJECT_RELEASE_PATH }}.zip
-        path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
+        path: |
+            ./${{ env.PROJECT_RELEASE_PATH }}
+            !./${{ env.PROJECT_RELEASE_PATH }}.zip
 
     - name: Upload Artifact to Release
       uses: softprops/action-gh-release@v1
