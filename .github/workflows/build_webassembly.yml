@@ -21,6 +21,7 @@ jobs:
     # WARNING: Project (internal) name could not be the same as repository name
     env:
       PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_REPO_NAME: ${{ github.event.repository.name }}
       PROJECT_BUILD_PATH: ${{ github.event.repository.name }}\\src
       PROJECT_RELEASE_PATH: ${{ github.event.repository.name }}_dev_wasm
       PROJECT_SOURCES: ${{ github.event.repository.name }}.c
