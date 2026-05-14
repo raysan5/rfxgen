@@ -44,7 +44,7 @@ jobs:
         
     - name: Setup Release Paths
       run: |
-        echo "PROJECT_VERSION=${{ github.event.release.tag_name }} >> $GITHUB_ENV
+        echo "PROJECT_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
         echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_linux_x64" >> $GITHUB_ENV
       shell: bash
       if: github.event_name == 'release' && github.event.action == 'published'
