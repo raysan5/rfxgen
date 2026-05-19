@@ -229,7 +229,6 @@ static const char *toolDescription = TOOL_DESCRIPTION;
 // NOTE: Max length depends on OS, in Windows MAX_PATH = 256
 static char inFileName[512] = { 0 };        // Input file name (required in case of drag & drop over executable)
 static char outFileName[512] = { 0 };       // Output file name (required for file save/export)
-static char presetType[512] = { 0 };        // Type of the preset to be generated
 
 static float volumeValue = 0.6f;            // Master volume
 
@@ -1119,6 +1118,7 @@ static void ProcessCommandLine(int argc, char *argv[])
     // CLI required variables
     bool showUsageInfo = false;         // Toggle command line usage info
     char playFileName[512] = { 0 };     // Play file name
+    char presetType[32] = { 0 };        // Type of the preset to be generated
 
     int sampleRate = 44100;             // Default conversion sample rate
     int sampleSize = 16;                // Default conversion sample size
@@ -1228,7 +1228,7 @@ static void ProcessCommandLine(int argc, char *argv[])
         }
         else if ((strcmp(argv[i], "-g") == 0) || (strcmp(argv[i], "--generate") == 0))
         {
-            strcpy(presetType, argv[i + 1]); // saves the preset to generate
+            strcpy(presetType, argv[i + 1]); // Saves the preset to generate
         }
     }
 
