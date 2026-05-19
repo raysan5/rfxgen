@@ -1,8 +1,8 @@
 #**************************************************************************************************
 #
-#   raylib makefile for Desktop platforms, Raspberry Pi and Web Assembly
+#   raylib makefile for Desktop platforms, Web Assembly (Wasm) and Raspberry Pi (DRM mode)
 #
-#   Copyright (c) 2021-2026 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -38,9 +38,11 @@ PROJECT_SOURCE_FILES  += external/tinyfiledialogs.c
 endif
 
 # raylib library variables
-RAYLIB_PATH           ?= C:/GitHub/raylib
+RAYLIB_PATH           ?= ../../raylib
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_PATH)/src
 RAYLIB_LIB_PATH       ?= $(RAYLIB_PATH)/src
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
+RAYLIB_LIBTYPE        ?= STATIC
 
 # Build mode for project: DEBUG or RELEASE
 BUILD_MODE            ?= RELEASE
@@ -128,7 +130,6 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
         CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
     endif
 endif
-
 
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
