@@ -247,7 +247,7 @@ static void DrawWave(Wave *wave, Rectangle bounds, Color color);    // Draw wave
 static void WaitTimePlayer(int ms);             // Simple time wait in milliseconds for the CLI player
 static void PlayWaveCLI(Wave wave);             // Play provided wave through CLI
 #if !defined(_WIN32)
-static int kbhit(void);                         // Check if a key has been pressed
+static int kbhit(void);                         // Check if key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
 #endif // PLATFORM_DESKTOP
@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
     }
     //-----------------------------------------------------------------------------------
 
-    // Check if a wave parameters file has been provided on command line
+    // Check if wave parameters file has been provided on command line
     if (inFileName[0] != '\0')
     {
         // Clean everything (just in case)
@@ -1424,7 +1424,7 @@ static void PlayWaveCLI(Wave wave)
 }
 
 #if !defined(_WIN32)
-// Check if a key has been pressed
+// Check if key has been pressed
 static int kbhit(void)
 {
     struct termios oldt = { 0 };
