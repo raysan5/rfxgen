@@ -295,6 +295,7 @@ int main(int argc, char *argv[])
 
     //SetConfigFlags(FLAG_MSAA_4X_HINT);        // Window configuration flags
     InitWindow(screenWidth, screenHeight, TextFormat("%s v%s | %s", toolName, toolVersion, toolDescription));
+    EnableEventWaiting();
     SetExitKey(0);
 
     InitAudioDevice();
