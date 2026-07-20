@@ -818,15 +818,16 @@ int main(int argc, char *argv[])
             if (showIssueReportWindow)
             {
                 Rectangle messageBox = { (float)screenWidth/2 - 300/2, (float)screenHeight/2 - 190/2 - 20, 300, 190 };
-                int result = GuiMessageBox(messageBox, "#220#Report Issue",
-                    "Do you want to report any issue or\nfeature request for this program?\n\ngithub.com/raysan5/rfxgen", "#186#Report on GitHub");
+                int btnActive = -1;
+                GuiMessageBox(messageBox, "#220#Report Issue",
+                    "Do you want to report any issue or\nfeature request for this program?\n\ngithub.com/raysan5/rfxgen", "#186#Report on GitHub", &btnActive);
 
-                if (result == 1)    // Report issue pressed
+                if (btnActive == 1) // Report issue pressed
                 {
                     OpenURL("https://github.com/raysan5/rfxgen/issues");
                     showIssueReportWindow = false;
                 }
-                else if (result == 0) showIssueReportWindow = false;
+                else if (btnActive == 0) showIssueReportWindow = false;
             }
             //----------------------------------------------------------------------------------------
 
@@ -835,7 +836,8 @@ int main(int argc, char *argv[])
             if (showExportWindow)
             {
                 Rectangle messageBox = { (float)screenWidth/2 - 248/2, (float)screenHeight/2 - 150, 248, 208 };
-                int result = GuiMessageBox(messageBox, "#7#Export Wave File", " ", "#7# Export Wave");
+                int btnActive = -1;
+                GuiMessageBox(messageBox, "#7#Export Wave File", " ", "#7# Export Wave", &btnActive);
 
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12, 106, 24 }, "File Format:");
                 GuiLabel((Rectangle){ messageBox.x + 12, messageBox.y + 24 + 12 + 24 + 8, 106, 24 }, "Sample Rate:");
@@ -849,7 +851,7 @@ int main(int argc, char *argv[])
                 GuiEnable();
                 GuiComboBox((Rectangle){ messageBox.x + 12 + 100, messageBox.y + 24 + 12 + 72 + 24, 124, 24 }, "Mono;Stereo", &channelsActive);
 
-                if (result == 1)    // Export button pressed
+                if (btnActive == 1)    // Export button pressed
                 {
                     // Update export option from combobox selections
                     if (sampleRateActive == 0) exportSampleRate = 22050;
@@ -867,7 +869,7 @@ int main(int argc, char *argv[])
                     memset(outFileName, 0, 512);
                     strcpy(outFileName, "sound");
                 }
-                else if (result == 0) showExportWindow = false;
+                else if (btnActive == 0) showExportWindow = false;
             }
             //----------------------------------------------------------------------------------
 
@@ -875,10 +877,12 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (showExitWindow)
             {
-                int result = GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 }, "#159#Closing rFXGen", "Do you really want to exit?", "Yes;No");
+                int btnActive = -1;
+                GuiMessageBox((Rectangle){ (float)screenWidth/2 - 125, (float)screenHeight/2 - 50, 250, 100 },
+                    "#159#Closing rFXGen", "Do you really want to exit?", "#112#Yes;#113#No", &btnActive);
 
-                if ((result == 0) || (result == 2)) showExitWindow = false;
-                else if (result == 1) closeWindow = true;
+                if ((btnActive == 0) || (btnActive == 2)) showExitWindow = false;
+                else if (btnActive == 1) closeWindow = true;
             }
             //----------------------------------------------------------------------------------------
 
@@ -907,10 +911,12 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (showSaveFileDialog)
             {
+                int result = -1;
 #if defined(CUSTOM_MODAL_DIALOGS)
-                int result = GuiTextInputBox((Rectangle){ screenWidth/2 - 280/2, screenHeight/2 - 112/2 - 30, 280, 112 }, "#2#Save sound file as...", NULL, "#2#Save", outFileName, 512, NULL);
+                GuiTextInputBox((Rectangle){ screenWidth/2 - 280/2, screenHeight/2 - 112/2 - 30, 280, 112 },
+                    "#2#Save sound file as...", NULL, outFileName, 512, "#2#Save", &result, NULL);
 #else
-                int result = GuiFileDialog(DIALOG_SAVE_FILE, "Save sound parameters file...", outFileName, "*.rfx", "Sound Param Files (*.rfx)");
+                result = GuiFileDialog(DIALOG_SAVE_FILE, "Save sound parameters file...", outFileName, "*.rfx", "Sound Param Files (*.rfx)");
 #endif
                 if (result == 1)
                 {
@@ -935,9 +941,11 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             if (showExportFileDialog)
             {
+                int result = -1;
 #if defined(CUSTOM_MODAL_DIALOGS)
                 //int result = GuiFileDialog(DIALOG_TEXTINPUT, "Export wave file...", outFileName, "Ok;Cancel", NULL);
-                int result = GuiTextInputBox((Rectangle){ screenWidth/2 - 280/2, screenHeight/2 - 112/2 - 30, 280, 112 }, "#7#Export wave file...", NULL, "#7#Export", outFileName, 512, NULL);
+                GuiTextInputBox((Rectangle){ screenWidth/2 - 280/2, screenHeight/2 - 112/2 - 30, 280, 112 },
+                    "#7#Export wave file...", NULL, outFileName, 512, "#7#Export", &result, NULL);
 #else
                 // Consider different supported file types
                 char fileTypeFilters[64] = { 0 };
@@ -947,7 +955,7 @@ int main(int argc, char *argv[])
                 else if (fileTypeActive == 2) { strcpy(fileTypeFilters, "*.raw"); strcat(outFileName, ".raw"); }
                 else if (fileTypeActive == 3) { strcpy(fileTypeFilters, "*.h"); strcat(outFileName, ".h"); }
 
-                int result = GuiFileDialog(DIALOG_SAVE_FILE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
+                result = GuiFileDialog(DIALOG_SAVE_FILE, "Export wave file...", outFileName, fileTypeFilters, TextFormat("File type (%s)", fileTypeFilters));
 #endif
                 if (result == 1)
                 {
