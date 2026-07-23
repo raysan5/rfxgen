@@ -37,7 +37,7 @@
 *       - Line
 *       - Panel         --> StatusBar
 *       - ScrollPanel   --> StatusBar
-*       - TabBar        --> Button
+*       - TabBar        --> Toggle, Button
 *
 *     # Basic Controls
 *       - Label
@@ -163,7 +163,7 @@
 *                         REDESIGNED: GuiColorPanel(), improved HSV <-> RGBA convertion
 *                         REDESIGNED: WARNING: TEXT_LINE_SPACING does not consider text height, only lines spacing
 *                         REDESIGNED: WARNING: GuiMessageBox(), added parameter for btn return, unify result
-*                         REDESIGNED. WARNING: GuiTextInputBox(), added parameter for btn return, unify result
+*                         REDESIGNED: WARNING: GuiTextInputBox(), added parameter for btn return, unify result
 *                         REVIEWED: GuiLoadIconsFromMemory(), fixed memory issues
 *                         REVIEWED: Controls using text labels to use LABEL properties
 *                         REVIEWED: Replaced sprintf() by snprintf() for more safety
@@ -2160,7 +2160,7 @@ int GuiToggleGroup(Rectangle bounds, const char *text, int *active)
     memset(itemText, 0, RAYGUI_TOGGLEGROUP_MAX_ITEM_TEXT_SIZE);
 
     int temp = 0;
-    int prevActive = *active;
+    int prevActive = (active == NULL)? 0 : *active;
     if (active == NULL) active = &temp;
 
     bool toggle = false;    // Required for individual toggles
@@ -2245,7 +2245,7 @@ int GuiToggleSlider(Rectangle bounds, const char *text, int *active)
     GuiState state = guiState;
 
     int temp = 0;
-    int prevActive = *active;
+    int prevActive = (active == NULL)? 0 : *active;
     if (active == NULL) active = &temp;
 
     // Get substrings items from text (items pointers)
@@ -2388,7 +2388,7 @@ int GuiComboBox(Rectangle bounds, const char *text, int *active)
     GuiState state = guiState;
 
     int temp = 0;
-    int prevActive = *active;
+    int prevActive = (active == NULL)? 0 : *active;
     if (active == NULL) active = &temp;
 
     bounds.width -= (GuiGetStyle(COMBOBOX, COMBO_BUTTON_WIDTH) + GuiGetStyle(COMBOBOX, COMBO_BUTTON_SPACING));
@@ -2456,7 +2456,7 @@ int GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMod
     GuiState state = guiState;
 
     int temp = 0;
-    int prevActive = *active;
+    int prevActive = (active == NULL)? 0 : *active;
     if (active == NULL) active = &temp;
 
     int itemSelected = *active;
@@ -3144,7 +3144,7 @@ int GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, in
     int result = RESULT_NONE;
     GuiState state = guiState;
 
-    int prevValue = *value;
+    //int prevValue = *value;
     char textValue[RAYGUI_VALUEBOX_MAX_CHARS + 1] = { 0 };
     snprintf(textValue, RAYGUI_VALUEBOX_MAX_CHARS + 1, "%i", *value);
 
@@ -3288,7 +3288,7 @@ int GuiValueBoxFloat(Rectangle bounds, const char *text, char *textValue, float 
     int result = RESULT_NONE;
     GuiState state = guiState;
 
-    float prevValue = *value;
+    //float prevValue = *value;
 
     Rectangle textBounds = { 0 };
     if (text != NULL)
@@ -3722,7 +3722,7 @@ int GuiListViewEx(Rectangle bounds, char **text, int count, int *scrollIndex, in
 
     int itemFocused = (focus == NULL)? -1 : *focus;
     int itemSelected = (active == NULL)? -1 : *active;
-    int prevActive = *active;
+    int prevActive = (active == NULL)? 0 : *active;
 
     // Check if scroll bar is needed
     bool useScrollBar = false;
@@ -3893,7 +3893,7 @@ int GuiTabBarEx(Rectangle bounds, char **text, int count, int *hscroll, int *act
     if (*active < 0) *active = 0;
     else if (*active > count - 1) *active = count - 1;
 
-    int prevActive = *active;
+    int prevActive = (active == NULL)? 0 : *active;
 
     int offsetX = 0;     // Required in case tabs go out of screen
     offsetX = (*active*tabItemsWidth) - GetScreenWidth();
@@ -4214,7 +4214,7 @@ int GuiColorPicker(Rectangle bounds, const char *text, Color *color)
     // NOTE: this conversion can cause low hue-resolution, if the r, g and b value are very similar, which causes the hue bar to shift around when only the GuiColorPanel is used
     Vector3 hsv = ConvertRGBtoHSV(RAYGUI_CLITERAL(Vector3){ (*color).r/255.0f, (*color).g/255.0f, (*color).b/255.0f });
 
-    if (result != RESULT_CHANGED) result = GuiColorBarHue(boundsHue, NULL, &hsv.x);
+    result = GuiColorBarHue(boundsHue, NULL, &hsv.x);
 
     //color.a = (unsigned char)(GuiColorBarAlpha(boundsAlpha, (float)color.a/255.0f)*255.0f);
     Vector3 rgb = ConvertHSVtoRGB(hsv);
