@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
             (strcmp(argv[1], "-h") != 0) &&
             (strcmp(argv[1], "--help") != 0))       // One argument (file dropped over executable?)
         {
-            if (IsFileExtension(argv[1], ".rfx"))   // || IsFileExtension(argv[1], ".sfs"))
+            if (IsFileExtension(argv[1], ".rfx")) //|| IsFileExtension(argv[1], ".sfs"))
             {
                 strcpy(inFileName, argv[1]);        // Read input filename to open with gui interface
             }
@@ -446,7 +446,7 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!closeWindow)    // Detect window close button
+    while (!closeWindow)    // Program must finish
     {
         // WARNING: ASINCIFY requires this line,
         // it contains the call to emscripten_sleep() for PLATFORM_WEB
