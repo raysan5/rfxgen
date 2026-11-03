@@ -803,7 +803,7 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------------
             windowHelpState.windowBounds.x = (float)screenWidth/2 - windowHelpState.windowBounds.width/2;
             windowHelpState.windowBounds.y = (float)screenHeight/2 - windowHelpState.windowBounds.height/2 - 20;
-            GuiWindowHelp(&windowHelpState);
+            GuiWindowHelp(&windowHelpState, screenWidth, screenHeight);
             //----------------------------------------------------------------------------------------
 
             // GUI: About Window
