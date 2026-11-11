@@ -7,7 +7,8 @@
 *       #include "gui_window_help.h"
 *
 *   On game init call:  GuiWindowHelpState state = InitGuiWindowHelp();
-*   On game draw call:  GuiWindowHelp(&state);
+*   On game draw call:  GuiWindowHelp(&state, screenWidth, screenHeight);
+*   Pass the dimensions of the UI drawing area, which may be a render texture.
 *
 *
 *   LICENSE: zlib/libpng
@@ -73,7 +74,7 @@ extern "C" {            // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 GuiWindowHelpState InitGuiWindowHelp(void);
-void GuiWindowHelp(GuiWindowHelpState *state);
+void GuiWindowHelp(GuiWindowHelpState *state, int screenWidth, int screenHeight);
 
 #ifdef __cplusplus
 }
@@ -173,7 +174,7 @@ GuiWindowHelpState InitGuiWindowHelp(void)
 }
 
 // Gui window help
-void GuiWindowHelp(GuiWindowHelpState *state)
+void GuiWindowHelp(GuiWindowHelpState *state, int screenWidth, int screenHeight)
 {
     if (state->windowActive)
     {
@@ -201,10 +202,10 @@ void GuiWindowHelp(GuiWindowHelpState *state)
 
                 // Check screen limits to avoid moving out of screen
                 if (state->windowBounds.x < 0) state->windowBounds.x = 0;
-                else if (state->windowBounds.x > (GetScreenWidth() - state->windowBounds.width)) state->windowBounds.x = GetScreenWidth() - state->windowBounds.width;
+                else if (state->windowBounds.x > (screenWidth - state->windowBounds.width)) state->windowBounds.x = screenWidth - state->windowBounds.width;
 
                 if (state->windowBounds.y < 40) state->windowBounds.y = 40;
-                else if (state->windowBounds.y > (GetScreenHeight() - state->windowBounds.height - 24)) state->windowBounds.y = GetScreenHeight() - state->windowBounds.height - 24;
+                else if (state->windowBounds.y > (screenHeight - state->windowBounds.height - 24)) state->windowBounds.y = screenHeight - state->windowBounds.height - 24;
 
                 if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) state->dragMode = false;
             }
@@ -213,15 +214,15 @@ void GuiWindowHelp(GuiWindowHelpState *state)
 
         // Update window bounds and size: center to screen and allow scrolling
         //----------------------------------------------------------------------------------------
-        state->windowBounds.x = GetScreenWidth()/2 - state->windowBounds.width/2;
+        state->windowBounds.x = screenWidth/2 - state->windowBounds.width/2;
         state->windowBounds.height = (float)(state->contentHeight + 24 + 4);
-        state->windowBounds.y = GetScreenHeight()/2 - state->windowBounds.height/2;
+        state->windowBounds.y = screenHeight/2 - state->windowBounds.height/2;
 
         // Review size if it does not fit on the screen
-        if (state->windowBounds.height > (GetScreenHeight() - 80))
+        if (state->windowBounds.height > (screenHeight - 80))
         {
-            state->windowBounds.height = (float)GetScreenHeight() - 80;
-            state->windowBounds.y = GetScreenHeight()/2 - state->windowBounds.height/2;
+            state->windowBounds.height = (float)screenHeight - 80;
+            state->windowBounds.y = screenHeight/2 - state->windowBounds.height/2;
         }
         //----------------------------------------------------------------------------------------
 
