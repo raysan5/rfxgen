@@ -418,13 +418,13 @@ int main(int argc, char *argv[])
     for (int i = 0; i < MAX_WAVE_SLOTS; i++) SetSoundVolume(sound[i], volumeValue);
 
     // Render texture to draw wave at x2, it will be scaled down with bilinear filtering (cheapre than MSAA x4)
-    RenderTexture2D waveTarget = LoadRenderTexture((int)waveRec.width*2, (int)waveRec.height*2);
-    SetTextureFilter(waveTarget.texture, TEXTURE_FILTER_BILINEAR);
+    RenderTexture2D rtWave = LoadRenderTexture((int)waveRec.width*2, (int)waveRec.height*2);
+    SetTextureFilter(rtWave.texture, TEXTURE_FILTER_BILINEAR);
 
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
-    RenderTexture2D screenTarget = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
-    SetTextureFilter(screenTarget.texture, TEXTURE_FILTER_POINT);
+    RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);
 
     GuiLoadStyleGenesis();  // Load initial style
 
@@ -686,13 +686,13 @@ int main(int argc, char *argv[])
         // Draw
         //----------------------------------------------------------------------------------
         // Render wave data to texture
-        BeginTextureMode(waveTarget);
+        BeginTextureMode(rtWave);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-            DrawWave(&wave[mainToolbarState.soundSlotActive], (Rectangle){ 0, 0, (float)waveTarget.texture.width, (float)waveTarget.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
+            DrawWave(&wave[mainToolbarState.soundSlotActive], (Rectangle){ 0, 0, (float)rtWave.texture.width, (float)rtWave.texture.height }, GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_PRESSED)));
         EndTextureMode();
 
         // Render all screen to texture (for scaling)
-        BeginTextureMode(screenTarget);
+        BeginTextureMode(target);
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
             // rFXGen Layout: controls drawing
@@ -771,7 +771,7 @@ int main(int argc, char *argv[])
 
             // Draw Wave form
             //--------------------------------------------------------------------------------
-            DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
+            DrawTextureEx(rtWave.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 0.5f, WHITE);
             DrawRectangle((int)waveRec.x, (int)waveRec.y + (int)waveRec.height/2, (int)waveRec.width, 1, Fade(GetColor(GuiGetStyle(DEFAULT, TEXT_COLOR_FOCUSED)), 0.6f));
             DrawRectangleLinesEx(waveRec, 1.0f, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
             //--------------------------------------------------------------------------------
@@ -1044,8 +1044,8 @@ int main(int argc, char *argv[])
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
             // Draw render texture to screen
-            if (screenSizeDouble) DrawTexturePro(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Rectangle){ 0, 0, (float)screenTarget.texture.width*2, (float)screenTarget.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
-            else DrawTextureRec(screenTarget.texture, (Rectangle){ 0, 0, (float)screenTarget.texture.width, -(float)screenTarget.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            if (screenSizeDouble) DrawTexturePro(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, -(float)target.texture.height }, (Rectangle){ 0, 0, (float)target.texture.width*2, (float)target.texture.height*2 }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            else DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, -(float)target.texture.height }, (Vector2){ 0, 0 }, WHITE);
 
         EndDrawing();
         //------------------------------------------------------------------------------------
@@ -1059,8 +1059,8 @@ int main(int argc, char *argv[])
         UnloadWave(wave[i]);    // Unload wave slots (free done internally)
     }
 
-    UnloadRenderTexture(screenTarget);
-    UnloadRenderTexture(waveTarget);
+    UnloadRenderTexture(target);
+    UnloadRenderTexture(rtWave);
 
     CloseAudioDevice();         // Close audio device
     CloseWindow();              // Close window and OpenGL context
